@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>健康庫 HealthKeep — 登入</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+ :root{
+ --ink: #0f2a2b;
+ --paper: #f6f8f6;
+ --navy: #123334;
+ --navy-deep: #0a2021;
+ --mint: #79e2c4;
+ --teal: #2bb8a3;
+ --muted: #9fb8b6;
+ --line: #dfe6e2;
+ --error: #d9534f;
+ --radius: 14px;
+ }
+ *{box-sizing:border-box;}
+ html,body{margin:0;padding:0;height:100%;}
+ body{
+ background:var(--paper);
+ color:var(--ink);
+ font-family:"Noto Sans TC",-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+ display:flex;
+ min-height:100vh;
+ }
+ .stage{ display:flex; width:100%; min-height:100vh; }
+
+ /* LEFT PANEL */
+ .brand{
+ position:relative;
+ flex:1 1 44%;
+ background:linear-gradient(165deg,var(--navy) 0%,var(--navy-deep) 100%);
+ color:var(--paper);
+ display:flex;
+ flex-direction:column;
+ justify-content:space-between;
+ padding:48px 44px;
+ overflow:hidden;
+ min-height:100vh;
+ }
+ .brand::after{
+ content:"";
+ position:absolute;
+ inset:0;
+ background:radial-gradient(circle at 82% 12%, rgba(121,226,196,0.12), transparent 55%);
+ pointer-events:none;
+ }
+ .brand-mark{
+ display:flex;
+ align-items:center;
+ gap:10px;
+ font-family:"Noto Serif TC",serif;
+ font-size:20px;
+ letter-spacing:0.02em;
+ z-index:1;
+ }
+ .brand-mark .dot{
+ width:9px;height:9px;border-radius:50%;background:var(--mint);
+ box-shadow:0 0 12px rgba(121,226,196,0.7);
+ }
+ .brand-copy{ z-index:1; max-width:420px; }
+ .brand-copy h1{
+ font-family:"Noto Serif TC",serif;
+ font-weight:600;
+ font-size:clamp(30px,3.8vw,40px);
+ line-height:1.45;
+ margin:0 0 18px;
+ letter-spacing:0.01em;
+ }
+ .brand-copy h1 em{
+ font-style:normal;
+ color:var(--mint);
+ }
+ .brand-copy p{
+ font-size:15px;
+ line-height:1.85;
+ color:var(--muted);
+ margin:0;
+ }
+ .trust{
+ z-index:1;
+ display:flex;
+ align-items:center;
+ gap:8px;
+ margin-top:22px;
+ font-size:13px;
+ color:var(--muted);
+ }
+ .trust svg{ flex-shrink:0; }
+
+ .pulse-wrap{ z-index:1; }
+ .pulse-wrap svg{ display:block; width:100%; height:auto; }
+ .pulse-line{
+ fill:none;
+ stroke:var(--mint);
+ stroke-width:2.2;
+ stroke-linecap:round;
+ stroke-linejoin:round;
+ stroke-dasharray:600;
+ stroke-dashoffset:600;
+ animation: draw 3.2s ease-in-out infinite;
+ }
+ @keyframes draw{
+ 0%{ stroke-dashoffset:600; }
+ 55%{ stroke-dashoffset:0; }
+ 100%{ stroke-dashoffset:-600; }
+ }
+ @media (prefers-reduced-motion: reduce){
+ .pulse-line{ animation:none; stroke-dashoffset:0; }
+ }
+
+ /* RIGHT PANEL */
+ .panel{
+ flex:1 1 56%;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ padding:40px 24px;
+ }
+ .card{ width:100%; max-width:400px; }
+ .eyebrow{
+ font-size:12.5px;
+ letter-spacing:0.08em;
+ color:#7c8c8a;
+ margin:0 0 8px;
+ }
+ .card h2{
+ font-family:"Noto Serif TC",serif;
+ font-weight:600;
+ font-size:26px;
+ margin:0 0 28px;
+ letter-spacing:0.01em;
+ }
+
+ .mode-toggle{
+ display:flex;
+ background:#e9efec;
+ border-radius:999px;
+ padding:4px;
+ margin-bottom:28px;
+ }
+ .mode-toggle button{
+ flex:1;
+ border:none;
+ background:transparent;
+ padding:9px 0;
+ font-size:14px;
+ font-weight:600;
+ font-family:inherit;
+ color:#6e7f7c;
+ border-radius:999px;
+ cursor:pointer;
+ transition:background .2s ease, color .2s ease;
+ }
+ .mode-toggle button.active{
+ background:var(--navy);
+ color:var(--paper);
+ }
+
+ .google-btn{
+ width:100%;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ gap:10px;
+ padding:12px 16px;
+ border-radius:10px;
+ border:1px solid var(--line);
+ background:#fff;
+ font-family:inherit;
+ font-size:14.5px;
+ font-weight:600;
+ color:var(--ink);
+ cursor:pointer;
+ transition:border-color .15s ease, box-shadow .15s ease;
+ }
+ .google-btn:hover{ border-color:#c3d1cc; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+ .google-btn:focus-visible, input:focus-visible, .mode-toggle button:focus-visible, .submit-btn:focus-visible{
+ outline:2px solid var(--navy);
+ outline-offset:2px;
+ }
+
+ .divider{
+ display:flex;
+ align-items:center;
+ gap:12px;
+ margin:22px 0;
+ color:#8b9895;
+ font-size:12.5px;
+ letter-spacing:0.02em;
+ }
+ .divider::before, .divider::after{
+ content:"";
+ flex:1;
+ height:1px;
+ background:var(--line);
+ }
+
+ form{ display:flex; flex-direction:column; gap:16px; }
+ .field label{
+ display:block;
+ font-size:13px;
+ font-weight:600;
+ margin-bottom:6px;
+ color:#4c5a57;
+ }
+ .field input{
+ width:100%;
+ padding:11px 13px;
+ border-radius:10px;
+ border:1px solid var(--line);
+ background:#fff;
+ font-family:inherit;
+ font-size:14.5px;
+ color:var(--ink);
+ }
+ .field input::placeholder{ color:#b3bdb9; }
+ .field small.err{
+ display:none;
+ color:var(--error);
+ font-size:12.5px;
+ margin-top:5px;
+ }
+ .field.invalid input{ border-color:var(--error); }
+ .field.invalid small.err{ display:block; }
+
+ .submit-btn{
+ margin-top:6px;
+ width:100%;
+ padding:12.5px 16px;
+ border:none;
+ border-radius:10px;
+ background:var(--navy);
+ color:var(--paper);
+ font-family:inherit;
+ font-size:15px;
+ font-weight:700;
+ cursor:pointer;
+ transition:background .15s ease, transform .1s ease;
+ }
+ .submit-btn:hover{ background:#0e2829; }
+ .submit-btn:active{ transform:scale(0.99); }
+
+ .foot{
+ margin-top:22px;
+ font-size:13.5px;
+ color:#7c8c8a;
+ text-align:center;
+ }
+ .foot button{
+ background:none;
+ border:none;
+ font-family:inherit;
+ font-size:13.5px;
+ font-weight:700;
+ color:var(--navy);
+ cursor:pointer;
+ padding:0;
+ }
+ .legal{
+ margin-top:16px;
+ font-size:12px;
+ line-height:1.7;
+ color:#9aa8a5;
+ text-align:center;
+ }
+
+ .toast{
+ position:fixed;
+ bottom:24px;
+ left:50%;
+ transform:translateX(-50%) translateY(20px);
+ background:var(--navy);
+ color:var(--paper);
+ padding:13px 22px;
+ border-radius:10px;
+ font-size:14px;
+ opacity:0;
+ pointer-events:none;
+ transition:opacity .25s ease, transform .25s ease;
+ display:flex;
+ align-items:center;
+ gap:8px;
+ box-shadow:0 10px 30px rgba(0,0,0,0.25);
+ }
+ .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+ .toast .dot{ width:8px;height:8px;border-radius:50%;background:var(--mint); }
+
+ /* LANGUAGE SELECTOR */
+ .language-switcher{
+ position:absolute;
+ top:28px;
+ right:28px;
+ z-index:5;
+ }
+ .language-switcher select{
+ appearance:none;
+ border:1px solid rgba(223,230,226,.8);
+ background:rgba(255,255,255,.08);
+ color:var(--paper);
+ border-radius:999px;
+ padding:8px 34px 8px 12px;
+ font:500 13px/1 "Noto Sans TC",sans-serif;
+ cursor:pointer;
+ outline:none;
+ background-image:linear-gradient(45deg,transparent 50%,#b9ccc8 50%),linear-gradient(135deg,#b9ccc8 50%,transparent 50%);
+ background-position:calc(100% - 16px) 50%,calc(100% - 11px) 50%;
+ background-size:5px 5px,5px 5px;
+ background-repeat:no-repeat;
+ }
+ .language-switcher select:hover{background-color:rgba(255,255,255,.14);}
+ .language-switcher select option{color:var(--ink);background:#fff;}
+
+ @media (max-width: 860px){
+ .stage{ flex-direction:column; }
+ .brand{ min-height:auto; padding:36px 28px; }
+ .pulse-wrap{ margin-top:20px; }
+ .panel{ padding:36px 22px 56px; }
+ }
+</style>
+</head>
+<body>
+
+<div class="stage">
+ <div class="brand">
+ <div class="language-switcher" aria-label="Language selector">
+ <select id="language-select">
+ <option value="zh-TW">繁體中文</option>
+ <option value="zh-CN">简体中文</option>
+ <option value="en">English</option>
+ <option value="ja">日本語</option>
+ <option value="ko">한국어</option>
+ </select>
+ </div>
+ <div class="brand-mark"><span class="dot"></span> 健康庫 HealthKeep</div>
+ <div class="brand-copy">
+ <h1>把每一次<em>就診紀錄</em><br>好好留下來</h1>
+ <p>檢驗報告、用藥紀錄、影像資料，統一安全存放。就醫時隨手調閱，換醫院、換科別都不用再重新說明一次病史。</p>
+ <div class="trust">
+ <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+ <path d="M12 2L4 5v6c0 5 3.4 8.7 8 9.9 4.6-1.2 8-4.9 8-9.9V5l-8-3z" stroke="#79e2c4" stroke-width="1.6" stroke-linejoin="round"/>
+ </svg>
+ <span>資料採加密儲存，僅本人與您授權的醫療人員可讀取</span>
+ </div>
+ </div>
+ <div class="pulse-wrap" aria-hidden="true">
+ <svg viewBox="0 0 420 70" xmlns="http://www.w3.org/2000/svg">
+ <polyline class="pulse-line" points="0,35 60,35 80,35 95,10 110,60 125,35 150,35 170,35 185,20 200,50 215,35 420,35"/>
+ </svg>
+ </div>
+ </div>
+
+ <div class="panel">
+ <div class="card">
+ <p class="eyebrow" id="eyebrow">歡迎回來</p>
+ <h2 id="heading">登入您的健康紀錄</h2>
+
+ <div class="mode-toggle" role="tablist" aria-label="選擇登入或註冊">
+ <button type="button" class="active" id="tab-signin" role="tab" aria-selected="true">登入</button>
+ <button type="button" id="tab-signup" role="tab" aria-selected="false">註冊</button>
+ </div>
+
+ <button type="button" class="google-btn" id="google-btn">
+ <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+ <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/>
+ <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.81.55-1.85.87-3.04.87-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/>
+ <path fill="#FBBC05" d="M3.97 10.73A5.4 5.4 0 0 1 3.68 9c0-.6.1-1.19.29-1.73V4.94H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.06l3.01-2.33z"/>
+ <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.94l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/>
+ </svg>
+ 使用 Google 繼續
+ </button>
+
+ <div class="divider">或使用電子郵件</div>
+
+ <form id="auth-form" novalidate>
+ <div class="field" id="name-field" style="display:none;">
+ <label for="name">姓名</label>
+ <input type="text" id="name" placeholder="請輸入您的姓名" autocomplete="name">
+ <small class="err">請輸入姓名。</small>
+ </div>
+ <div class="field" id="email-field">
+ <label for="email">電子郵件</label>
+ <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+ <small class="err">請輸入有效的電子郵件地址。</small>
+ </div>
+ <div class="field" id="password-field">
+ <label for="password">密碼</label>
+ <input type="password" id="password" placeholder="至少 8 個字元" autocomplete="current-password">
+ <small class="err">密碼至少需要 8 個字元。</small>
+ </div>
+ <button type="submit" class="submit-btn" id="submit-btn">登入</button>
+ </form>
+
+ <p class="foot">
+ <span id="foot-text">還沒有帳號？</span>
+ <button type="button" id="foot-switch">建立帳號</button>
+ </p>
+
+ <p class="legal">註冊即表示您同意我們的服務條款與隱私權政策，<br>您的健康資料受《個人資料保護法》規範保護。</p>
+ </div>
+ </div>
+</div>
+
+<div class="toast" id="toast"><span class="dot"></span><span id="toast-text"></span></div>
+
+<script type="module">
+ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+ import {
+ getAuth,
+ GoogleAuthProvider,
+ signInWithPopup,
+ createUserWithEmailAndPassword,
+ signInWithEmailAndPassword,
+ updateProfile,
+ onAuthStateChanged
+ } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+
+ const firebaseConfig = {
+ apiKey: "AIzaSyDsKJOzaQKosJeJgUfZXBc0pahDzBKV7e8",
+ authDomain: "tmu-medical.firebaseapp.com",
+ projectId: "tmu-medical",
+ storageBucket: "tmu-medical.firebasestorage.app",
+ messagingSenderId: "370307905675",
+ appId: "1:370307905675:web:bcb25f57995fbe5965fc8e",
+ measurementId: "G-4YVJDN5Y7C"
+ };
+
+ const app = initializeApp(firebaseConfig);
+ const auth = getAuth(app);
+ const googleProvider = new GoogleAuthProvider();
+
+ const tabSignin = document.getElementById('tab-signin');
+ const tabSignup = document.getElementById('tab-signup');
+ const heading = document.getElementById('heading');
+ const eyebrow = document.getElementById('eyebrow');
+ const nameField = document.getElementById('name-field');
+ const submitBtn = document.getElementById('submit-btn');
+ const footText = document.getElementById('foot-text');
+ const footSwitch = document.getElementById('foot-switch');
+ const passwordInput = document.getElementById('password');
+ const googleBtn = document.getElementById('google-btn');
+
+ let mode = 'signin';
+
+ function setMode(next){
+ mode = next;
+ const t = translations[currentLanguage] || translations['zh-TW'];
+ const isSignup = mode === 'signup';
+
+ tabSignin.textContent = t.signIn;
+ tabSignup.textContent = t.signUp;
+
+ tabSignin.classList.toggle('active', !isSignup);
+ tabSignup.classList.toggle('active', isSignup);
+ tabSignin.setAttribute('aria-selected', String(!isSignup));
+ tabSignup.setAttribute('aria-selected', String(isSignup));
+ nameField.style.display = isSignup ? 'block' : 'none';
+ heading.textContent = isSignup ? t.signUpTitle : t.signInTitle;
+ eyebrow.textContent = isSignup ? t.start : t.welcome;
+ submitBtn.textContent = isSignup ? t.create : t.signIn;
+ footText.textContent = isSignup ? t.hasAccount : t.noAccount;
+ footSwitch.textContent = isSignup ? t.signIn : t.createAccount;
+ passwordInput.setAttribute('autocomplete', isSignup ? 'new-password' : 'current-password');
+ clearErrors();
+ }
+
+ tabSignin.addEventListener('click', () => setMode('signin'));
+ tabSignup.addEventListener('click', () => setMode('signup'));
+ footSwitch.addEventListener('click', () => setMode(mode === 'signin' ? 'signup' : 'signin'));
+
+ function clearErrors(){
+ document.querySelectorAll('.field').forEach(f => f.classList.remove('invalid'));
+ }
+
+ function showToast(text){
+ const toast = document.getElementById('toast');
+ document.getElementById('toast-text').textContent = text;
+ toast.classList.add('show');
+ setTimeout(()=> toast.classList.remove('show'), 2600);
+ }
+
+ function setLoading(isLoading){
+ submitBtn.disabled = isLoading;
+ googleBtn.disabled = isLoading;
+ }
+
+ function translateAuthError(code){
+ const t = translations[currentLanguage] || translations['zh-TW'];
+ return t.errors[code] || t.generic;
+ }
+
+ const translations = {
+ 'zh-TW': {
+ htmlLang:'zh-Hant-TW', title:'健康庫 HealthKeep — 登入',
+ brandMark:'健康庫 HealthKeep', h1:'把每一次<em>就診紀錄</em><br>好好留下來',
+ brandDesc:'檢驗報告、用藥紀錄、影像資料，統一安全存放。就醫時隨手調閱，換醫院、換科別都不用再重新說明一次病史。',
+ trust:'資料採加密儲存，僅本人與您授權的醫療人員可讀取',
+ welcome:'歡迎回來', start:'開始使用', signInTitle:'登入您的健康紀錄', signUpTitle:'建立您的健康紀錄帳號',
+ signIn:'登入', signUp:'註冊', google:'使用 Google 繼續', orEmail:'或使用電子郵件',
+ name:'姓名', namePh:'請輸入您的姓名', email:'電子郵件', emailPh:'you@example.com',
+ password:'密碼', passwordPh:'至少 8 個字元', create:'建立帳號', noAccount:'還沒有帳號？', hasAccount:'已經有帳號了？',
+ createAccount:'建立帳號', terms:'註冊即表示您同意我們的服務條款與隱私權政策，', privacy:'您的健康資料受《個人資料保護法》規範保護。',
+ errName:'請輸入姓名。', errEmail:'請輸入有效的電子郵件地址。', errPassword:'密碼至少需要 8 個字元。',
+ successSignup:'帳號建立成功，歡迎加入健康庫', successSignin:'登入成功', welcomeUser:'歡迎，',
+ errors:{
+ 'auth/email-already-in-use':'這個電子郵件已經註冊過了，請直接登入。','auth/invalid-email':'電子郵件格式不正確。',
+ 'auth/weak-password':'密碼強度不足，請使用至少 8 個字元。','auth/user-not-found':'找不到這個帳號，請確認電子郵件或先註冊。',
+ 'auth/wrong-password':'密碼錯誤，請再試一次。','auth/invalid-credential':'帳號或密碼錯誤，請再試一次。',
+ 'auth/too-many-requests':'嘗試次數過多，請稍後再試。','auth/popup-closed-by-user':'Google 登入視窗已關閉。',
+ 'auth/network-request-failed':'網路連線異常，請稍後再試。'
+ }, generic:'發生錯誤，請稍後再試。'
+ },
+ 'zh-CN': {
+ htmlLang:'zh-CN', title:'健康库 HealthKeep — 登录',
+ brandMark:'健康库 HealthKeep', h1:'把每一次<em>就诊记录</em><br>好好留下来',
+ brandDesc:'检验报告、用药记录、影像资料，统一安全存放。就医时随手调阅，换医院、换科别都不用再重新说明一次病史。',
+ trust:'资料采用加密储存，仅本人及您授权的医疗人员可读取',
+ welcome:'欢迎回来', start:'开始使用', signInTitle:'登录您的健康记录', signUpTitle:'建立您的健康记录账号',
+ signIn:'登录', signUp:'注册', google:'使用 Google 继续', orEmail:'或使用电子邮件',
+ name:'姓名', namePh:'请输入您的姓名', email:'电子邮件', emailPh:'you@example.com',
+ password:'密码', passwordPh:'至少 8 个字符', create:'建立账号', noAccount:'还没有账号？', hasAccount:'已经有账号了？',
+ createAccount:'建立账号', terms:'注册即表示您同意我们的服务条款与隐私权政策，', privacy:'您的健康资料受《个人资料保护法》规范保护。',
+ errName:'请输入姓名。', errEmail:'请输入有效的电子邮件地址。', errPassword:'密码至少需要 8 个字符。',
+ successSignup:'账号建立成功，欢迎加入健康库', successSignin:'登录成功', welcomeUser:'欢迎，',
+ errors:{
+ 'auth/email-already-in-use':'这个电子邮件已经注册過了，请直接登录。','auth/invalid-email':'电子邮件格式不正确。',
+ 'auth/weak-password':'密码强度不足，请使用至少 8 个字符。','auth/user-not-found':'找不到这个账号，请确认电子邮件或先注册。',
+ 'auth/wrong-password':'密码错误，请再试一次。','auth/invalid-credential':'账号或密码错误，请再试一次。',
+ 'auth/too-many-requests':'尝试次数过多，请稍后再试。','auth/popup-closed-by-user':'Google 登录窗口已关闭。',
+ 'auth/network-request-failed':'网络连接异常，请稍后再试。'
+ }, generic:'发生错误，请稍后再试。'
+ },
+ 'en': {
+ htmlLang:'en', title:'HealthKeep — Sign in',
+ brandMark:'HealthKeep', h1:'Keep every <em>medical record</em><br>safe and accessible',
+ brandDesc:'Store test reports, medication records, and medical images securely in one place. Access them whenever you need them, without having to repeat your history when changing hospitals or departments.',
+ trust:'Encrypted storage. Accessible only by you and healthcare professionals you authorize.',
+ welcome:'Welcome back', start:'Get started', signInTitle:'Sign in to your health records', signUpTitle:'Create your HealthKeep account',
+ signIn:'Sign in', signUp:'Sign up', google:'Continue with Google', orEmail:'or use email',
+ name:'Name', namePh:'Enter your name', email:'Email', emailPh:'you@example.com',
+ password:'Password', passwordPh:'At least 8 characters', create:'Create account', noAccount:"Don't have an account?", hasAccount:'Already have an account?',
+ createAccount:'Create account', terms:'By signing up, you agree to our Terms of Service and Privacy Policy.', privacy:'Your health data is protected under applicable personal data protection laws.',
+ errName:'Please enter your name.', errEmail:'Please enter a valid email address.', errPassword:'Password must be at least 8 characters.',
+ successSignup:'Account created successfully. Welcome to HealthKeep!', successSignin:'Signed in successfully', welcomeUser:'Welcome, ',
+ errors:{
+ 'auth/email-already-in-use':'This email is already registered. Please sign in.','auth/invalid-email':'Please enter a valid email address.',
+ 'auth/weak-password':'Password is too weak. Please use at least 8 characters.','auth/user-not-found':'Account not found. Please check your email or sign up first.',
+ 'auth/wrong-password':'Incorrect password. Please try again.','auth/invalid-credential':'Incorrect email or password. Please try again.',
+ 'auth/too-many-requests':'Too many attempts. Please try again later.','auth/popup-closed-by-user':'The Google sign-in window was closed.',
+ 'auth/network-request-failed':'Network error. Please try again later.'
+ }, generic:'Something went wrong. Please try again later.'
+ },
+ 'ja': {
+ htmlLang:'ja', title:'HealthKeep — ログイン',
+ brandMark:'健康庫 HealthKeep', h1:'すべての<em>診療記録</em>を<br>大切に保存',
+ brandDesc:'検査報告書、服薬記録、画像データを安全に一元管理。必要なときにすぐ確認でき、病院や診療科が変わっても病歴を何度も説明する必要がありません。',
+ trust:'データは暗号化して保存され、本人と許可された医療関係者のみが閲覧できます。',
+ welcome:'おかえりなさい', start:'はじめましょう', signInTitle:'健康記録にログイン', signUpTitle:'HealthKeep アカウントを作成',
+ signIn:'ログイン', signUp:'登録', google:'Google で続行', orEmail:'またはメールアドレスを使用',
+ name:'氏名', namePh:'氏名を入力してください', email:'メールアドレス', emailPh:'you@example.com',
+ password:'パスワード', passwordPh:'8文字以上', create:'アカウントを作成', noAccount:'アカウントをお持ちでないですか？', hasAccount:'すでにアカウントをお持ちですか？',
+ createAccount:'アカウントを作成', terms:'登録すると、利用規約とプライバシーポリシーに同意したものとみなされます。', privacy:'健康データは個人情報保護に関する法令に基づき適切に保護されます。',
+ errName:'氏名を入力してください。', errEmail:'有効なメールアドレスを入力してください。', errPassword:'パスワードは8文字以上で入力してください。',
+ successSignup:'アカウントを作成しました。HealthKeep へようこそ！', successSignin:'ログインしました', welcomeUser:'ようこそ、',
+ errors:{
+ 'auth/email-already-in-use':'このメールアドレスはすでに登録されています。ログインしてください。','auth/invalid-email':'メールアドレスの形式が正しくありません。',
+ 'auth/weak-password':'パスワードが弱すぎます。8文字以上で設定してください。','auth/user-not-found':'アカウントが見つかりません。メールアドレスを確認するか、先に登録してください。',
+ 'auth/wrong-password':'パスワードが正しくありません。もう一度お試しください。','auth/invalid-credential':'メールアドレスまたはパスワードが正しくありません。',
+ 'auth/too-many-requests':'試行回数が多すぎます。しばらくしてからお試しください。','auth/popup-closed-by-user':'Google ログイン画面が閉じられました。',
+ 'auth/network-request-failed':'ネットワーク接続に問題があります。しばらくしてからお試しください。'
+ }, generic:'エラーが発生しました。しばらくしてからお試しください。'
+ },
+ 'ko': {
+ htmlLang:'ko', title:'HealthKeep — 로그인',
+ brandMark:'건강庫 HealthKeep', h1:'모든 <em>진료 기록</em>을<br>소중하게 보관하세요',
+ brandDesc:'검사 결과, 복약 기록, 의료 영상 자료를 안전하게 한곳에 보관하세요. 필요할 때 바로 확인할 수 있어 병원이나 진료과가 바뀌어도 병력을 다시 설명할 필요가 없습니다.',
+ trust:'데이터는 암호화되어 저장되며, 본인과 사용자가 승인한 의료진만 열람할 수 있습니다.',
+ welcome:'다시 오신 것을 환영합니다', start:'시작하기', signInTitle:'건강 기록에 로그인', signUpTitle:'HealthKeep 계정 만들기',
+ signIn:'로그인', signUp:'회원가입', google:'Google로 계속하기', orEmail:'또는 이메일 사용',
+ name:'이름', namePh:'이름을 입력하세요', email:'이메일', emailPh:'you@example.com',
+ password:'비밀번호', passwordPh:'8자 이상', create:'계정 만들기', noAccount:'아직 계정이 없으신가요?', hasAccount:'이미 계정이 있으신가요?',
+ createAccount:'계정 만들기', terms:'가입하면 서비스 약관 및 개인정보처리방침에 동의하는 것으로 간주됩니다.', privacy:'건강 데이터는 관련 개인정보 보호 법률에 따라 안전하게 보호됩니다.',
+ errName:'이름을 입력하세요.', errEmail:'유효한 이메일 주소를 입력하세요.', errPassword:'비밀번호는 8자 이상이어야 합니다.',
+ successSignup:'계정이 생성되었습니다. HealthKeep에 오신 것을 환영합니다!', successSignin:'로그인되었습니다', welcomeUser:'환영합니다,',
+ errors:{
+ 'auth/email-already-in-use':'이 이메일은 이미 등록되어 있습니다. 로그인해 주세요.','auth/invalid-email':'이메일 형식이 올바르지 않습니다.',
+ 'auth/weak-password':'비밀번호가 너무 약합니다. 8자 이상으로 설정해 주세요.','auth/user-not-found':'계정을 찾을 수 없습니다. 이메일을 확인하거나 먼저 가입해 주세요.',
+ 'auth/wrong-password':'비밀번호가 올바르지 않습니다. 다시 시도해 주세요.','auth/invalid-credential':'이메일 또는 비밀번호가 올바르지 않습니다.',
+ 'auth/too-many-requests':'시도 횟수가 너무 많습니다. 잠시 후 다시 시도해 주세요.','auth/popup-closed-by-user':'Google 로그인 창이 닫혔습니다.',
+ 'auth/network-request-failed':'네트워크 연결에 문제가 있습니다. 잠시 후 다시 시도해 주세요.'
+ }, generic:'오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'
+ }
+ };
+
+ const languageSelect = document.getElementById('language-select');
+ let currentLanguage = localStorage.getItem('healthkeep-language') || (navigator.language || 'zh-TW');
+ if (!translations[currentLanguage]) {
+ currentLanguage = currentLanguage.startsWith('zh') ? 'zh-TW' : currentLanguage.startsWith('ja') ? 'ja' : currentLanguage.startsWith('ko') ? 'ko' : 'en';
+ }
+
+ function applyLanguage(lang){
+ const t = translations[lang] || translations['zh-TW'];
+ currentLanguage = lang;
+ localStorage.setItem('healthkeep-language', lang);
+ document.documentElement.lang = t.htmlLang;
+ document.title = t.title;
+ document.querySelector('.brand-mark').lastChild.textContent = ' ' + t.brandMark;
+ document.querySelector('.brand-copy h1').innerHTML = t.h1;
+ document.querySelector('.brand-copy p').textContent = t.brandDesc;
+ document.querySelector('.trust span').textContent = t.trust;
+ document.getElementById('google-btn').lastChild.textContent = ' ' + t.google;
+ document.querySelector('.divider').textContent = t.orEmail;
+ document.querySelector('label[for="name"]').textContent = t.name;
+ document.getElementById('name').placeholder = t.namePh;
+ document.querySelector('label[for="email"]').textContent = t.email;
+ document.getElementById('email').placeholder = t.emailPh;
+ document.querySelector('label[for="password"]').textContent = t.password;
+ passwordInput.placeholder = t.passwordPh;
+ document.querySelector('#name-field .err').textContent = t.errName;
+ document.querySelector('#email-field .err').textContent = t.errEmail;
+ document.querySelector('#password-field .err').textContent = t.errPassword;
+ document.querySelector('.legal').innerHTML = `${t.terms}<br>${t.privacy}`;
+ languageSelect.value = lang;
+ setMode(mode);
+ }
+
+ languageSelect.addEventListener('change', e => applyLanguage(e.target.value));
+
+ applyLanguage(currentLanguage);
+
+ googleBtn.addEventListener('click', async () => {
+ setLoading(true);
+ try {
+ const result = await signInWithPopup(auth, googleProvider);
+ const t = translations[currentLanguage] || translations['zh-TW'];
+ showToast(`${t.welcomeUser}${result.user.displayName || result.user.email}`);
+ window.location.href = 'dashboard-zhtw.html';
+ } catch (err) {
+ console.error(err);
+ showToast(translateAuthError(err.code));
+ } finally {
+ setLoading(false);
+ }
+ });
+
+ document.getElementById('auth-form').addEventListener('submit', async (e) => {
+ e.preventDefault();
+ clearErrors();
+ let valid = true;
+
+ const name = document.getElementById('name').value.trim();
+ if(mode === 'signup' && !name){
+ document.getElementById('name-field').classList.add('invalid');
+ valid = false;
+ }
+
+ const email = document.getElementById('email').value.trim();
+ const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+ if(!emailOk){
+ document.getElementById('email-field').classList.add('invalid');
+ valid = false;
+ }
+
+ const password = document.getElementById('password').value;
+ if(password.length < 8){
+ document.getElementById('password-field').classList.add('invalid');
+ valid = false;
+ }
+
+ if(!valid) return;
+
+ setLoading(true);
+ const t = translations[currentLanguage] || translations['zh-TW'];
+ try {
+ if(mode === 'signup'){
+ const cred = await createUserWithEmailAndPassword(auth, email, password);
+ await updateProfile(cred.user, { displayName: name });
+ showToast(t.successSignup);
+ } else {
+ await signInWithEmailAndPassword(auth, email, password);
+ showToast(t.successSignin);
+ }
+ window.location.href = 'dashboard-zhtw.html';
+ } catch (err) {
+ console.error(err);
+ showToast(translateAuthError(err.code));
+ } finally {
+ setLoading(false);
+ }
+ });
+
+ onAuthStateChanged(auth, (user) => {
+ if (user) {
+ console.log('目前已登入使用者：', user.email);
+ }
+ });
+</script>
+
+</body>
+</html>
