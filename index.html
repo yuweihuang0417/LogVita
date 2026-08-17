@@ -434,6 +434,11 @@
  const auth = getAuth(app);
  const googleProvider = new GoogleAuthProvider();
 
+ // 強制每次登入都重新顯示帳號選擇彈出視窗
+ googleProvider.setCustomParameters({
+ prompt: 'select_account'
+ });
+
  const tabSignin = document.getElementById('tab-signin');
  const tabSignup = document.getElementById('tab-signup');
  const heading = document.getElementById('heading');
@@ -528,7 +533,7 @@
  errName:'请输入姓名。', errEmail:'请输入有效的电子邮件地址。', errPassword:'密码至少需要 8 个字符。',
  successSignup:'账号建立成功，欢迎加入健康库', successSignin:'登录成功', welcomeUser:'欢迎，',
  errors:{
- 'auth/email-already-in-use':'这个电子邮件已经注册過了，请直接登录。','auth/invalid-email':'电子邮件格式不正确。',
+ 'auth/email-already-in-use':'这个电子邮件已经注册过了，请直接登录。','auth/invalid-email':'电子邮件格式不正确。',
  'auth/weak-password':'密码强度不足，请使用至少 8 个字符。','auth/user-not-found':'找不到这个账号，请确认电子邮件或先注册。',
  'auth/wrong-password':'密码错误，请再试一次。','auth/invalid-credential':'账号或密码错误，请再试一次。',
  'auth/too-many-requests':'尝试次数过多，请稍后再试。','auth/popup-closed-by-user':'Google 登录窗口已关闭。',
