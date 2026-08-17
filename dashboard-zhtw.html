@@ -269,7 +269,7 @@
     </nav>
 
     <div class="sidebar-foot">
-      <div class="avatar" id="user-initial">使用者</div>
+      <div class="avatar" id="user-initial">用</div>
       <div class="who">
         <div class="name" id="user-name">載入中...</div>
         <div class="mail" id="user-email">載入中...</div>
@@ -286,7 +286,7 @@
     <section class="panel active" id="panel-profile">
       <div class="page-head">
         <h1>個人檔案</h1>
-        <div class="sub">這些資訊會顯示給你授權的醫療人員與家人</div>
+        <div class="sub">這些資訊會安全儲存於您的個人 Google Drive</div>
       </div>
 
       <div class="card">
@@ -300,7 +300,7 @@
           <div class="row">
             <div class="field">
               <label for="p-name">姓名</label>
-              <input type="text" id="p-name" value="">
+              <input type="text" id="p-name" placeholder="讀取中...">
             </div>
             <div class="field">
               <label for="p-birth">出生日期</label>
@@ -324,7 +324,7 @@
           <div class="row">
             <div class="field">
               <label for="p-phone">聯絡電話</label>
-              <input type="tel" id="p-phone" value="0912-345-678">
+              <input type="tel" id="p-phone" placeholder="0912-345-678">
             </div>
             <div class="field">
               <label for="p-emergency">緊急聯絡人</label>
@@ -345,7 +345,7 @@
             <label for="p-allergy">過敏史</label>
             <textarea id="p-allergy" placeholder="例如：青黴素過敏"></textarea>
           </div>
-          <button type="submit" class="btn-primary">儲存變更</button>
+          <button type="submit" class="btn-primary">儲存變更至 Google Drive</button>
         </form>
       </div>
     </section>
@@ -366,21 +366,21 @@
             <div class="t-title">允許家人查看我的紀錄</div>
             <div class="t-desc">開啟後，被授權的家庭成員可以在「授權管理」中查看你的病歷摘要</div>
           </div>
-          <label class="switch"><input type="checkbox" checked><span class="track"></span><span class="thumb"></span></label>
+          <label class="switch"><input type="checkbox" id="p-share-family" checked><span class="track"></span><span class="thumb"></span></label>
         </div>
         <div class="toggle-row">
           <div>
             <div class="t-title">允許家人匯入報告</div>
             <div class="t-desc">開啟後，被授權的家庭成員可以代替你上傳檢驗報告或就診紀錄</div>
           </div>
-          <label class="switch"><input type="checkbox" checked><span class="track"></span><span class="thumb"></span></label>
+          <label class="switch"><input type="checkbox" id="p-import-family" checked><span class="track"></span><span class="thumb"></span></label>
         </div>
         <div class="toggle-row">
           <div>
             <div class="t-title">將去識別化資料用於醫學研究</div>
             <div class="t-desc">資料會移除姓名等個人識別資訊後，用於公共衛生研究，可隨時關閉</div>
           </div>
-          <label class="switch"><input type="checkbox"><span class="track"></span><span class="thumb"></span></label>
+          <label class="switch"><input type="checkbox" id="p-research"><span class="track"></span><span class="thumb"></span></label>
         </div>
       </div>
 
@@ -389,11 +389,11 @@
         <div class="card-sub">選擇你想收到的通知方式</div>
         <div class="toggle-row">
           <div><div class="t-title">電子郵件通知</div><div class="t-desc">新報告上傳、授權異動時寄送通知</div></div>
-          <label class="switch"><input type="checkbox" checked><span class="track"></span><span class="thumb"></span></label>
+          <label class="switch"><input type="checkbox" id="p-notify-email" checked><span class="track"></span><span class="thumb"></span></label>
         </div>
         <div class="toggle-row">
           <div><div class="t-title">簡訊通知</div><div class="t-desc">僅在重要帳號安全事件時發送</div></div>
-          <label class="switch"><input type="checkbox"><span class="track"></span><span class="thumb"></span></label>
+          <label class="switch"><input type="checkbox" id="p-notify-sms"><span class="track"></span><span class="thumb"></span></label>
         </div>
       </div>
     </section>
@@ -479,13 +479,12 @@
 
       <div class="card">
         <h2>登入中的裝置</h2>
-        <div class="card-sub" id="device-count-label">正在確認活躍裝置...</div>
+        <div class="card-sub" id="device-count-label">目前有 1 個裝置保持登入狀態</div>
         <div id="session-container">
-          <!-- 目前使用的裝置 (僅顯示裝置與國家) -->
           <div class="session-item" id="current-session-item">
             <div class="meta">
-              <div class="device" id="current-device-info">正在確認裝置...</div>
-              <div class="loc" id="current-loc-info">國家獲取中... · 最後活動：剛剛</div>
+              <div class="device" id="current-device-info">此裝置</div>
+              <div class="loc" id="current-loc-info">台灣 · 最後活動：剛剛</div>
             </div>
             <span class="badge-current">目前裝置</span>
             <button type="button" class="btn-ghost session-logout-current" style="margin-left: 8px;">登出</button>
@@ -597,11 +596,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-  import { 
-    getAuth, 
-    signOut, 
-    onAuthStateChanged 
-  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDsKJOzaQKosJeJgUfZXBc0pahDzBKV7e8",
@@ -616,140 +611,9 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
-  // 1. 監聽 Firebase 登入狀態並更新個人資料
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      const displayName = user.displayName || '使用者';
-      const email = user.email || '';
-      const initial = displayName.charAt(0).toUpperCase();
+  const FILE_NAME = 'healthkeep_config.json';
 
-      document.getElementById('user-initial').textContent = initial;
-      document.getElementById('avatar-lg-text').textContent = initial;
-      document.getElementById('user-name').textContent = displayName;
-      document.getElementById('user-email').textContent = email;
-      document.getElementById('p-name').value = displayName;
-      document.getElementById('google-auth-email').textContent = `${email} · 已連結`;
-    } else {
-      window.location.href = 'index.html';
-    }
-  });
-
-  // 2. 登出主邏輯 function
-  async function handleLogout() {
-    try {
-      await signOut(auth);
-      showToast('已安全登出');
-      setTimeout(() => {
-        window.location.href = 'index.html';
-      }, 500);
-    } catch (error) {
-      console.error('登出失敗：', error);
-      showToast('登出失敗，請重試');
-    }
-  }
-
-  // 綁定側邊欄登出按鈕
-  document.getElementById('logout-btn').addEventListener('click', handleLogout);
-
-  // 3. 裝置追蹤（只保留裝置類型與國家）
-  function detectDeviceType() {
-    const ua = navigator.userAgent;
-    if (/iPhone|iPad|iPod/i.test(ua)) return "iPhone / iPad 裝置";
-    if (/Android/i.test(ua)) return "Android 裝置";
-    if (/Windows/i.test(ua)) return "Windows 電腦";
-    if (/Macintosh/i.test(ua)) return "Mac 電腦";
-    if (/Linux/i.test(ua)) return "Linux 電腦";
-    return "行動/電腦裝置";
-  }
-
-  function detectCountry() {
-    try {
-      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
-      if (timeZone.includes("Taipei")) return "台灣";
-      if (timeZone.includes("Tokyo")) return "日本";
-      if (timeZone.includes("Seoul")) return "韓國";
-      if (timeZone.includes("Shanghai") || timeZone.includes("Chongqing")) return "中國";
-      if (timeZone.includes("Hong_Kong")) return "香港";
-      if (timeZone.includes("America")) return "美國";
-      if (timeZone.includes("Europe")) return "歐洲地區";
-      return "本地地區";
-    } catch (e) {
-      return "未知國家";
-    }
-  }
-
-  function updateDeviceSessions() {
-    // 寫入當前裝置與國家
-    document.getElementById('current-device-info').textContent = detectDeviceType();
-    document.getElementById('current-loc-info').textContent = `${detectCountry()} · 最後活動：剛剛`;
-
-    // 模擬載入其他已登入的歷史裝置（僅顯示國家）
-    const mockOtherSessions = [
-      { id: 'sess_1', device: 'Windows 電腦', loc: '台灣 · 最後活動：3 天前' }
-    ];
-
-    const container = document.getElementById('session-container');
-
-    // 渲染其他裝置
-    mockOtherSessions.forEach(sess => {
-      const div = document.createElement('div');
-      div.className = 'session-item other-session';
-      div.dataset.id = sess.id;
-      div.innerHTML = `
-        <div class="meta">
-          <div class="device">${sess.device}</div>
-          <div class="loc">${sess.loc}</div>
-        </div>
-        <button type="button" class="btn-ghost session-revoke">登出</button>
-      `;
-      container.appendChild(div);
-    });
-
-    updateCount();
-
-    // 登出「目前裝置」
-    document.querySelector('.session-logout-current').addEventListener('click', handleLogout);
-
-    // 登出個別「其他裝置」
-    container.addEventListener('click', (e) => {
-      if (e.target.classList.contains('session-revoke')) {
-        const item = e.target.closest('.session-item');
-        item.style.opacity = '0.4';
-        showToast('該裝置已登出');
-        setTimeout(() => {
-          item.remove();
-          updateCount();
-        }, 300);
-      }
-    });
-
-    // 登出所有其他裝置
-    document.getElementById('logout-all').addEventListener('click', () => {
-      const otherItems = container.querySelectorAll('.other-session');
-      if(otherItems.length === 0) {
-        showToast('目前無其他登入中的裝置');
-        return;
-      }
-      otherItems.forEach(item => {
-        item.style.opacity = '0.4';
-        setTimeout(() => item.remove(), 300);
-      });
-      setTimeout(() => {
-        updateCount();
-        showToast('已登出所有其他裝置');
-      }, 350);
-    });
-  }
-
-  function updateCount() {
-    const total = document.querySelectorAll('#session-container .session-item').length;
-    document.getElementById('device-count-label').textContent = `目前有 ${total} 個裝置保持登入狀態`;
-  }
-
-  // 初始化裝置追蹤
-  updateDeviceSessions();
-
-  // ---- UI 切換與面板邏輯 ----
+  // 1. 頁面切換邏輯
   const navButtons = document.querySelectorAll('.nav button[data-panel]');
   navButtons.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -760,6 +624,166 @@
     });
   });
 
+  // 2. Auth 狀態監聽
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const displayName = user.displayName || '使用者';
+      const initial = displayName.charAt(0).toUpperCase();
+
+      document.getElementById('user-initial').textContent = initial;
+      document.getElementById('avatar-lg-text').textContent = initial;
+      document.getElementById('user-name').textContent = displayName;
+      document.getElementById('user-email').textContent = user.email || '';
+      document.getElementById('p-name').value = displayName;
+      document.getElementById('google-auth-email').textContent = `${user.email} · 已連結`;
+
+      // 自動從 Google Drive 讀取設定檔
+      await loadFromDrive();
+    } else {
+      window.location.href = 'index.html';
+    }
+  });
+
+  // 3. Google Drive REST API
+  function getAccessToken() {
+    return sessionStorage.getItem('drive_access_token');
+  }
+
+  async function findDriveFileId() {
+    const token = getAccessToken();
+    if (!token) return null;
+
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}' and trashed=false`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await res.json();
+      return (data.files && data.files.length > 0) ? data.files[0].id : null;
+    } catch (err) {
+      console.error('搜尋 Drive 檔案失敗:', err);
+      return null;
+    }
+  }
+
+  async function loadFromDrive() {
+    const token = getAccessToken();
+    if (!token) {
+      showToast('未取得 Google Drive 授權，請使用 Google 登入');
+      return;
+    }
+
+    const fileId = await findDriveFileId();
+    if (!fileId) return;
+
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const config = await res.json();
+
+      if (config.name) document.getElementById('p-name').value = config.name;
+      if (config.birth) document.getElementById('p-birth').value = config.birth;
+      if (config.gender) document.getElementById('p-gender').value = config.gender;
+      if (config.blood) document.getElementById('p-blood').value = config.blood;
+      if (config.phone) document.getElementById('p-phone').value = config.phone;
+      if (config.emergency) document.getElementById('p-emergency').value = config.emergency;
+      if (config.height) document.getElementById('p-height').value = config.height;
+      if (config.weight) document.getElementById('p-weight').value = config.weight;
+      if (config.allergy) document.getElementById('p-allergy').value = config.allergy;
+
+      if (config.privacy) {
+        document.getElementById('p-share-family').checked = config.privacy.shareFamily ?? true;
+        document.getElementById('p-import-family').checked = config.privacy.importFamily ?? true;
+        document.getElementById('p-research').checked = config.privacy.research ?? false;
+        document.getElementById('p-notify-email').checked = config.privacy.notifyEmail ?? true;
+        document.getElementById('p-notify-sms').checked = config.privacy.notifySms ?? false;
+      }
+
+      showToast('已成功從您的 Google Drive 載入設定');
+    } catch (err) {
+      console.error('載入 Drive 內容失敗:', err);
+    }
+  }
+
+  async function saveToDrive(dataPayload) {
+    const token = getAccessToken();
+    if (!token) {
+      showToast('無權限存取 Google Drive，請重新登入');
+      return;
+    }
+
+    const fileId = await findDriveFileId();
+    const metadata = { name: FILE_NAME, mimeType: 'application/json' };
+    const file = new Blob([JSON.stringify(dataPayload)], { type: 'application/json' });
+
+    const formData = new FormData();
+    formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+    formData.append('file', file);
+
+    let url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+    let method = 'POST';
+
+    if (fileId) {
+      url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`;
+      method = 'PATCH';
+    }
+
+    try {
+      const res = await fetch(url, {
+        method: method,
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+      });
+
+      if (res.ok) {
+        showToast('已同步儲存至您的 Google Drive');
+      } else {
+        showToast('儲存失敗，請重試');
+      }
+    } catch (err) {
+      console.error('上傳至 Drive 失敗:', err);
+      showToast('網路連線失敗');
+    }
+  }
+
+  // 4. 表單與按鈕綁定
+  document.getElementById('profile-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+      name: document.getElementById('p-name').value,
+      birth: document.getElementById('p-birth').value,
+      gender: document.getElementById('p-gender').value,
+      blood: document.getElementById('p-blood').value,
+      phone: document.getElementById('p-phone').value,
+      emergency: document.getElementById('p-emergency').value,
+      height: document.getElementById('p-height').value,
+      weight: document.getElementById('p-weight').value,
+      allergy: document.getElementById('p-allergy').value,
+      privacy: {
+        shareFamily: document.getElementById('p-share-family').checked,
+        importFamily: document.getElementById('p-import-family').checked,
+        research: document.getElementById('p-research').checked,
+        notifyEmail: document.getElementById('p-notify-email').checked,
+        notifySms: document.getElementById('p-notify-sms').checked,
+      },
+      updatedAt: new Date().toISOString()
+    };
+
+    await saveToDrive(payload);
+  });
+
+  // 登出
+  async function handleLogout() {
+    sessionStorage.removeItem('drive_access_token');
+    await signOut(auth);
+    window.location.href = 'index.html';
+  }
+
+  document.getElementById('logout-btn').addEventListener('click', handleLogout);
+  document.querySelector('.session-logout-current').addEventListener('click', handleLogout);
+
   function showToast(text){
     const toast = document.getElementById('toast');
     document.getElementById('toast-text').textContent = text;
@@ -767,111 +791,13 @@
     setTimeout(()=> toast.classList.remove('show'), 2600);
   }
 
-  document.getElementById('profile-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    showToast('個人檔案已更新');
-  });
-
-  document.getElementById('password-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const pw = document.getElementById('pw-new').value;
-    const confirm = document.getElementById('pw-confirm').value;
-    if(pw.length < 8){ showToast('新密碼至少需要 8 個字元'); return; }
-    if(pw !== confirm){ showToast('兩次輸入的新密碼不一致'); return; }
-    showToast('密碼已更新');
-    e.target.reset();
-  });
-
-  document.querySelectorAll('.revoke-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const item = btn.closest('.auth-item');
-      item.style.opacity = '0.4';
-      showToast('授權已撤銷');
-      setTimeout(() => item.remove(), 300);
-    });
-  });
-
-  // ---- 新增授權 modal ----
+  // 模態框操作
   const accessBackdrop = document.getElementById('access-backdrop');
   const accessForm = document.getElementById('access-form');
-  const accessList = document.getElementById('access-list');
-  const scopeSelect = document.getElementById('a-scope');
-  const scopeCustom = document.getElementById('a-scope-custom');
-  const expirySelect = document.getElementById('a-expiry');
-  const expiryDateField = document.getElementById('a-expiry-date-field');
-
-  function openAccessModal(){ accessBackdrop.classList.add('show'); }
-  function closeAccessModal(){ accessBackdrop.classList.remove('show'); accessForm.reset(); scopeCustom.style.display='none'; expiryDateField.style.display='none'; }
-
-  document.getElementById('add-access-btn').addEventListener('click', openAccessModal);
-  document.getElementById('access-close').addEventListener('click', closeAccessModal);
-  document.getElementById('access-cancel').addEventListener('click', closeAccessModal);
-  accessBackdrop.addEventListener('click', (e) => { if(e.target === accessBackdrop) closeAccessModal(); });
-
-  scopeSelect.addEventListener('change', () => {
-    scopeCustom.style.display = scopeSelect.value === 'custom' ? 'block' : 'none';
-  });
-  expirySelect.addEventListener('change', () => {
-    expiryDateField.style.display = expirySelect.value === 'custom' ? 'block' : 'none';
-  });
-
-  const scopeLabel = { full:'完整病歷', summary:'僅摘要', lab:'僅檢驗報告', custom:'自訂範圍' };
-
-  function expiryText(){
-    const v = expirySelect.value;
-    if(v === 'permanent') return '永久授權';
-    if(v === 'custom'){
-      const d = document.getElementById('a-expiry-date').value;
-      return d ? `授權至 ${d.replace(/-/g,'/')}` : '授權至指定日期';
-    }
-    return `授權 ${v} 天`;
-  }
-
-  accessForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const email = document.getElementById('a-email').value.trim();
-    if(!email){ return; }
-
-    const name = document.getElementById('a-name').value.trim() || email;
-    const typeText = { family:'家庭成員', doctor:'醫療人員', other:'其他' }[document.getElementById('a-type').value];
-    const scopeVal = scopeSelect.value;
-    const scopeText = scopeLabel[scopeVal];
-
-    const item = document.createElement('div');
-    item.className = 'auth-item';
-    item.innerHTML = `
-      <div class="auth-avatar">${escapeHtmlAcc(name.slice(0,1))}</div>
-      <div class="auth-main">
-        <div class="name">${escapeHtmlAcc(name)}</div>
-        <div class="meta">${typeText} · ${expiryText()} · 邀請寄至 ${escapeHtmlAcc(email)}</div>
-      </div>
-      <span class="auth-scope ${scopeVal === 'full' ? 'full' : ''}">${scopeText}</span>
-      <button type="button" class="btn-ghost revoke-btn">撤銷</button>
-    `;
-    item.querySelector('.revoke-btn').addEventListener('click', () => {
-      item.style.opacity = '0.4';
-      showToast('授權已撤銷');
-      setTimeout(() => item.remove(), 300);
-    });
-    accessList.prepend(item);
-
-    closeAccessModal();
-    showToast(`邀請已寄出至 ${email}`);
-  });
-
-  function escapeHtmlAcc(str){
-    const d = document.createElement('div');
-    d.textContent = str;
-    return d.innerHTML;
-  }
-
-  document.getElementById('delete-account').addEventListener('click', () => {
-    showToast('請再次確認後才會刪除帳號（示範，尚未串接確認流程）');
-  });
-
-  document.getElementById('change-avatar').addEventListener('click', () => {
-    showToast('選擇照片（示範，尚未串接 Firebase Storage 上傳）');
-  });
+  
+  document.getElementById('add-access-btn').addEventListener('click', () => accessBackdrop.classList.add('show'));
+  document.getElementById('access-close').addEventListener('click', () => accessBackdrop.classList.remove('show'));
+  document.getElementById('access-cancel').addEventListener('click', () => accessBackdrop.classList.remove('show'));
 </script>
 
 </body>
