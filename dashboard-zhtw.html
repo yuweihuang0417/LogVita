@@ -479,13 +479,13 @@
 
       <div class="card">
         <h2>登入中的裝置</h2>
-        <div class="card-sub" id="device-count-label">正在偵看活躍裝置...</div>
+        <div class="card-sub" id="device-count-label">正在確認活躍裝置...</div>
         <div id="session-container">
-          <!-- 目前使用的裝置 (自動偵測) -->
+          <!-- 目前使用的裝置 (僅顯示裝置與國家) -->
           <div class="session-item" id="current-session-item">
             <div class="meta">
-              <div class="device" id="current-device-info">正在偵測裝置資訊...</div>
-              <div class="loc" id="current-loc-info">位置獲取中... · 最後活動：剛剛</div>
+              <div class="device" id="current-device-info">正在確認裝置...</div>
+              <div class="loc" id="current-loc-info">國家獲取中... · 最後活動：剛剛</div>
             </div>
             <span class="badge-current">目前裝置</span>
             <button type="button" class="btn-ghost session-logout-current" style="margin-left: 8px;">登出</button>
@@ -651,47 +651,44 @@
   // 綁定側邊欄登出按鈕
   document.getElementById('logout-btn').addEventListener('click', handleLogout);
 
-  // 3. 裝置追蹤實作與判斷
-  function detectDeviceInfo() {
+  // 3. 裝置追蹤（只保留裝置類型與國家）
+  function detectDeviceType() {
     const ua = navigator.userAgent;
-    let browser = "Web Browser";
-    let os = "Unknown OS";
+    if (/iPhone|iPad|iPod/i.test(ua)) return "iPhone / iPad 裝置";
+    if (/Android/i.test(ua)) return "Android 裝置";
+    if (/Windows/i.test(ua)) return "Windows 電腦";
+    if (/Macintosh/i.test(ua)) return "Mac 電腦";
+    if (/Linux/i.test(ua)) return "Linux 電腦";
+    return "行動/電腦裝置";
+  }
 
-    // 瀏覽器判斷
-    if (ua.includes("Firefox/")) browser = "Firefox";
-    else if (ua.includes("Edg/")) browser = "Edge";
-    else if (ua.includes("Chrome/")) browser = "Chrome";
-    else if (ua.includes("Safari/")) browser = "Safari";
-
-    // 作業系統判斷
-    if (ua.includes("iPhone")) os = "iPhone";
-    else if (ua.includes("iPad")) os = "iPad";
-    else if (ua.includes("Android")) os = "Android";
-    else if (ua.includes("Windows")) os = "Windows";
-    else if (ua.includes("Mac OS")) os = "Macintosh";
-    else if (ua.includes("Linux")) os = "Linux";
-
-    return `${os} · ${browser}`;
+  function detectCountry() {
+    try {
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+      if (timeZone.includes("Taipei")) return "台灣";
+      if (timeZone.includes("Tokyo")) return "日本";
+      if (timeZone.includes("Seoul")) return "韓國";
+      if (timeZone.includes("Shanghai") || timeZone.includes("Chongqing")) return "中國";
+      if (timeZone.includes("Hong_Kong")) return "香港";
+      if (timeZone.includes("America")) return "美國";
+      if (timeZone.includes("Europe")) return "歐洲地區";
+      return "本地地區";
+    } catch (e) {
+      return "未知國家";
+    }
   }
 
   function updateDeviceSessions() {
-    // 寫入當前裝置名稱
-    document.getElementById('current-device-info').textContent = detectDeviceInfo();
-    
-    // 使用時區大略取得地區
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
-    let locationName = "台灣";
-    if (timeZone.includes("Taipei")) locationName = "台北市";
+    // 寫入當前裝置與國家
+    document.getElementById('current-device-info').textContent = detectDeviceType();
+    document.getElementById('current-loc-info').textContent = `${detectCountry()} · 最後活動：剛剛`;
 
-    document.getElementById('current-loc-info').textContent = `${locationName} · 最後活動：剛剛`;
-
-    // 模擬載入其他已登入的歷史裝置
+    // 模擬載入其他已登入的歷史裝置（僅顯示國家）
     const mockOtherSessions = [
-      { id: 'sess_1', device: 'Windows · Chrome', loc: '台北市 · 最後活動：3 天前' }
+      { id: 'sess_1', device: 'Windows 電腦', loc: '台灣 · 最後活動：3 天前' }
     ];
 
     const container = document.getElementById('session-container');
-    const label = document.getElementById('device-count-label');
 
     // 渲染其他裝置
     mockOtherSessions.forEach(sess => {
