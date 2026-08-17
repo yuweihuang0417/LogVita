@@ -434,10 +434,11 @@
  const auth = getAuth(app);
  const googleProvider = new GoogleAuthProvider();
 
- // 強制每次登入都重新顯示帳號選擇彈出視窗
+ // 強制每次登入都重新顯示帳號選擇彈出視窗，並要求 Google Drive 權限
  googleProvider.setCustomParameters({
  prompt: 'select_account'
  });
+ googleProvider.addScope('https://www.googleapis.com/auth/drive.file');
 
  const tabSignin = document.getElementById('tab-signin');
  const tabSignup = document.getElementById('tab-signup');
@@ -520,26 +521,6 @@
  'auth/network-request-failed':'網路連線異常，請稍後再試。'
  }, generic:'發生錯誤，請稍後再試。'
  },
- 'zh-CN': {
- htmlLang:'zh-CN', title:'健康库 HealthKeep — 登录',
- brandMark:'健康库 HealthKeep', h1:'把每一次<em>就诊记录</em><br>好好留下来',
- brandDesc:'检验报告、用药记录、影像资料，统一安全存放。就医时随手调阅，换医院、换科别都不用再重新说明一次病史。',
- trust:'资料采用加密储存，仅本人及您授权的医疗人员可读取',
- welcome:'欢迎回来', start:'开始使用', signInTitle:'登录您的健康记录', signUpTitle:'建立您的健康记录账号',
- signIn:'登录', signUp:'注册', google:'使用 Google 继续', orEmail:'或使用电子邮件',
- name:'姓名', namePh:'请输入您的姓名', email:'电子邮件', emailPh:'you@example.com',
- password:'密码', passwordPh:'至少 8 个字符', create:'建立账号', noAccount:'还没有账号？', hasAccount:'已经有账号了？',
- createAccount:'建立账号', terms:'注册即表示您同意我们的服务条款与隐私权政策，', privacy:'您的健康资料受《个人资料保护法》规范保护。',
- errName:'请输入姓名。', errEmail:'请输入有效的电子邮件地址。', errPassword:'密码至少需要 8 个字符。',
- successSignup:'账号建立成功，欢迎加入健康库', successSignin:'登录成功', welcomeUser:'欢迎，',
- errors:{
- 'auth/email-already-in-use':'这个电子邮件已经注册过了，请直接登录。','auth/invalid-email':'电子邮件格式不正确。',
- 'auth/weak-password':'密码强度不足，请使用至少 8 个字符。','auth/user-not-found':'找不到这个账号，请确认电子邮件或先注册。',
- 'auth/wrong-password':'密码错误，请再试一次。','auth/invalid-credential':'账号或密码错误，请再试一次。',
- 'auth/too-many-requests':'尝试次数过多，请稍后再试。','auth/popup-closed-by-user':'Google 登录窗口已关闭。',
- 'auth/network-request-failed':'网络连接异常，请稍后再试。'
- }, generic:'发生错误，请稍后再试。'
- },
  'en': {
  htmlLang:'en', title:'HealthKeep — Sign in',
  brandMark:'HealthKeep', h1:'Keep every <em>medical record</em><br>safe and accessible',
@@ -559,53 +540,13 @@
  'auth/too-many-requests':'Too many attempts. Please try again later.','auth/popup-closed-by-user':'The Google sign-in window was closed.',
  'auth/network-request-failed':'Network error. Please try again later.'
  }, generic:'Something went wrong. Please try again later.'
- },
- 'ja': {
- htmlLang:'ja', title:'HealthKeep — ログイン',
- brandMark:'健康庫 HealthKeep', h1:'すべての<em>診療記録</em>を<br>大切に保存',
- brandDesc:'検査報告書、服薬記録、画像データを安全に一元管理。必要なときにすぐ確認でき、病院や診療科が変わっても病歴を何度も説明する必要がありません。',
- trust:'データは暗号化して保存され、本人と許可された医療関係者のみが閲覧できます。',
- welcome:'おかえりなさい', start:'はじめましょう', signInTitle:'健康記録にログイン', signUpTitle:'HealthKeep アカウントを作成',
- signIn:'ログイン', signUp:'登録', google:'Google で続行', orEmail:'またはメールアドレスを使用',
- name:'氏名', namePh:'氏名を入力してください', email:'メールアドレス', emailPh:'you@example.com',
- password:'パスワード', passwordPh:'8文字以上', create:'アカウントを作成', noAccount:'アカウントをお持ちでないですか？', hasAccount:'すでにアカウントをお持ちですか？',
- createAccount:'アカウントを作成', terms:'登録すると、利用規約とプライバシーポリシーに同意したものとみなされます。', privacy:'健康データは個人情報保護に関する法令に基づき適切に保護されます。',
- errName:'氏名を入力してください。', errEmail:'有効なメールアドレスを入力してください。', errPassword:'パスワードは8文字以上で入力してください。',
- successSignup:'アカウントを作成しました。HealthKeep へようこそ！', successSignin:'ログインしました', welcomeUser:'ようこそ、',
- errors:{
- 'auth/email-already-in-use':'このメールアドレスはすでに登録されています。ログインしてください。','auth/invalid-email':'メールアドレスの形式が正しくありません。',
- 'auth/weak-password':'パスワードが弱すぎます。8文字以上で設定してください。','auth/user-not-found':'アカウントが見つかりません。メールアドレスを確認するか、先に登録してください。',
- 'auth/wrong-password':'パスワードが正しくありません。もう一度お試しください。','auth/invalid-credential':'メールアドレスまたはパスワードが正しくありません。',
- 'auth/too-many-requests':'試行回数が多すぎます。しばらくしてからお試しください。','auth/popup-closed-by-user':'Google ログイン画面が閉じられました。',
- 'auth/network-request-failed':'ネットワーク接続に問題があります。しばらくしてからお試しください。'
- }, generic:'エラーが発生しました。しばらくしてからお試しください。'
- },
- 'ko': {
- htmlLang:'ko', title:'HealthKeep — 로그인',
- brandMark:'건강庫 HealthKeep', h1:'모든 <em>진료 기록</em>을<br>소중하게 보관하세요',
- brandDesc:'검사 결과, 복약 기록, 의료 영상 자료를 안전하게 한곳에 보관하세요. 필요할 때 바로 확인할 수 있어 병원이나 진료과가 바뀌어도 병력을 다시 설명할 필요가 없습니다.',
- trust:'데이터는 암호화되어 저장되며, 본인과 사용자가 승인한 의료진만 열람할 수 있습니다.',
- welcome:'다시 오신 것을 환영합니다', start:'시작하기', signInTitle:'건강 기록에 로그인', signUpTitle:'HealthKeep 계정 만들기',
- signIn:'로그인', signUp:'회원가입', google:'Google로 계속하기', orEmail:'또는 이메일 사용',
- name:'이름', namePh:'이름을 입력하세요', email:'이메일', emailPh:'you@example.com',
- password:'비밀번호', passwordPh:'8자 이상', create:'계정 만들기', noAccount:'아직 계정이 없으신가요?', hasAccount:'이미 계정이 있으신가요?',
- createAccount:'계정 만들기', terms:'가입하면 서비스 약관 및 개인정보처리방침에 동의하는 것으로 간주됩니다.', privacy:'건강 데이터는 관련 개인정보 보호 법률에 따라 안전하게 보호됩니다.',
- errName:'이름을 입력하세요.', errEmail:'유효한 이메일 주소를 입력하세요.', errPassword:'비밀번호는 8자 이상이어야 합니다.',
- successSignup:'계정이 생성되었습니다. HealthKeep에 오신 것을 환영합니다!', successSignin:'로그인되었습니다', welcomeUser:'환영합니다,',
- errors:{
- 'auth/email-already-in-use':'이 이메일은 이미 등록되어 있습니다. 로그인해 주세요.','auth/invalid-email':'이메일 형식이 올바르지 않습니다.',
- 'auth/weak-password':'비밀번호가 너무 약합니다. 8자 이상으로 설정해 주세요.','auth/user-not-found':'계정을 찾을 수 없습니다. 이메일을 확인하거나 먼저 가입해 주세요.',
- 'auth/wrong-password':'비밀번호가 올바르지 않습니다. 다시 시도해 주세요.','auth/invalid-credential':'이메일 또는 비밀번호가 올바르지 않습니다.',
- 'auth/too-many-requests':'시도 횟수가 너무 많습니다. 잠시 후 다시 시도해 주세요.','auth/popup-closed-by-user':'Google 로그인 창이 닫혔습니다.',
- 'auth/network-request-failed':'네트워크 연결에 문제가 있습니다. 잠시 후 다시 시도해 주세요.'
- }, generic:'오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'
  }
  };
 
  const languageSelect = document.getElementById('language-select');
  let currentLanguage = localStorage.getItem('healthkeep-language') || (navigator.language || 'zh-TW');
  if (!translations[currentLanguage]) {
- currentLanguage = currentLanguage.startsWith('zh') ? 'zh-TW' : currentLanguage.startsWith('ja') ? 'ja' : currentLanguage.startsWith('ko') ? 'ko' : 'en';
+ currentLanguage = currentLanguage.startsWith('zh') ? 'zh-TW' : 'en';
  }
 
  function applyLanguage(lang){
@@ -635,13 +576,18 @@
  }
 
  languageSelect.addEventListener('change', e => applyLanguage(e.target.value));
-
  applyLanguage(currentLanguage);
 
  googleBtn.addEventListener('click', async () => {
  setLoading(true);
  try {
  const result = await signInWithPopup(auth, googleProvider);
+ const credential = GoogleAuthProvider.credentialFromResult(result);
+ 
+ if (credential && credential.accessToken) {
+ sessionStorage.setItem('drive_access_token', credential.accessToken);
+ }
+
  const t = translations[currentLanguage] || translations['zh-TW'];
  showToast(`${t.welcomeUser}${result.user.displayName || result.user.email}`);
  window.location.href = 'dashboard-zhtw.html';
@@ -696,12 +642,6 @@
  showToast(translateAuthError(err.code));
  } finally {
  setLoading(false);
- }
- });
-
- onAuthStateChanged(auth, (user) => {
- if (user) {
- console.log('目前已登入使用者：', user.email);
  }
  });
 </script>
