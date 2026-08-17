@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>健康庫 HealthKeep — 帳號設定</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0f2a2b; --paper:#f6f8f6; --card:#ffffff;
+    --navy:#123334; --navy-deep:#0a2021;
+    --mint:#79e2c4; --teal:#2bb8a3;
+    --muted:#9fb8b6; --line:#e3e9e5;
+    --error:#d9534f; --amber:#e0a839;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Noto Sans TC",-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+    min-height:100vh;
+  }
+  a{color:inherit;}
+
+  .app{ display:flex; min-height:100vh; }
+
+  /* SIDEBAR */
+  .sidebar{
+    flex:0 0 248px;
+    background:linear-gradient(180deg,var(--navy) 0%,var(--navy-deep) 100%);
+    color:var(--paper);
+    display:flex;
+    flex-direction:column;
+    padding:28px 18px;
+    position:sticky;
+    top:0;
+    height:100vh;
+  }
+  .brand-mark{
+    display:flex; align-items:center; gap:10px;
+    font-family:"Noto Serif TC",serif;
+    font-size:18px;
+    padding:0 10px 10px;
+  }
+  .brand-mark .dot{
+    width:8px;height:8px;border-radius:50%;background:var(--mint);
+    box-shadow:0 0 10px rgba(121,226,196,.7);
+  }
+  .back-link{
+    display:flex; align-items:center; gap:8px;
+    font-size:12.5px; color:#8ea3a0; text-decoration:none;
+    padding:6px 10px 22px; margin-bottom:6px; border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .back-link:hover{ color:#fff; }
+
+  .nav{ display:flex; flex-direction:column; gap:2px; flex:1; }
+  .nav button{
+    display:flex; align-items:center; gap:12px;
+    width:100%;
+    border:none; background:transparent;
+    padding:11px 12px;
+    border-radius:10px;
+    font-family:inherit;
+    font-size:14.5px;
+    font-weight:500;
+    color:#c7d6d3;
+    text-align:left;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .nav button svg{ flex-shrink:0; opacity:.85; }
+  .nav button:hover{ background:rgba(255,255,255,.06); color:#fff; }
+  .nav button.active{ background:rgba(121,226,196,.14); color:var(--mint); font-weight:700; }
+  .nav .section-label{
+    font-size:11px; letter-spacing:.08em; color:#6f8683;
+    padding:18px 12px 6px;
+  }
+  .sidebar-foot{
+    border-top:1px solid rgba(255,255,255,.08);
+    padding-top:14px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .avatar{
+    width:34px;height:34px;border-radius:50%;
+    background:var(--mint);
+    color:var(--navy-deep);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700; font-size:14px; flex-shrink:0;
+  }
+  .sidebar-foot .who{ line-height:1.3; overflow:hidden; }
+  .sidebar-foot .who .name{ font-size:13.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sidebar-foot .who .mail{ font-size:11.5px; color:#8ea3a0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .logout-btn{
+    margin-left:auto; background:none; border:none; color:#8ea3a0;
+    cursor:pointer; padding:6px; border-radius:8px; flex-shrink:0;
+  }
+  .logout-btn:hover{ color:#fff; background:rgba(255,255,255,.08); }
+
+  /* MAIN */
+  .main{ flex:1; min-width:0; padding:32px 40px 60px; max-width:760px; }
+  .page-head{ margin-bottom:28px; }
+  .page-head h1{
+    font-family:"Noto Serif TC",serif; font-weight:600; font-size:24px; margin:0 0 6px;
+  }
+  .page-head .sub{ font-size:13.5px; color:#7c8c8a; }
+
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:24px; margin-bottom:18px;
+  }
+  .card h2{
+    font-family:"Noto Serif TC",serif; font-weight:600; font-size:17px; margin:0 0 4px;
+  }
+  .card .card-sub{ font-size:13px; color:#8b9895; margin-bottom:18px; }
+
+  /* form elements */
+  .row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:#4c5a57; }
+  .field input, .field select, .field textarea{
+    width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--line);
+    font-family:inherit; font-size:14px; color:var(--ink); background:#fff;
+  }
+  .field textarea{ resize:vertical; min-height:64px; }
+  .avatar-row{ display:flex; align-items:center; gap:16px; margin-bottom:20px; }
+  .avatar-lg{
+    width:64px; height:64px; border-radius:50%; background:var(--mint); color:var(--navy-deep);
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:22px; flex-shrink:0;
+  }
+  .btn-ghost{
+    background:#fff; border:1px solid var(--line); color:#5c6b68;
+    padding:9px 16px; border-radius:10px; font-family:inherit; font-size:13.5px; font-weight:700; cursor:pointer;
+  }
+  .btn-ghost:hover{ border-color:#b9c7c3; }
+  .btn-primary{
+    background:var(--navy); color:#fff; border:none;
+    padding:11px 20px; border-radius:10px;
+    font-family:inherit; font-size:14px; font-weight:700; cursor:pointer;
+  }
+  .btn-primary:hover{ background:#0e2829; }
+  .btn-danger{
+    background:#fff; border:1px solid #f0c6c4; color:var(--error);
+    padding:9px 16px; border-radius:10px; font-family:inherit; font-size:13.5px; font-weight:700; cursor:pointer;
+  }
+  .btn-danger:hover{ background:#fdf2f1; }
+
+  /* toggle switches */
+  .toggle-row{
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    padding:14px 0; border-bottom:1px solid var(--line);
+  }
+  .toggle-row:last-child{ border-bottom:none; padding-bottom:0; }
+  .toggle-row .t-title{ font-size:14.5px; font-weight:700; margin-bottom:3px; }
+  .toggle-row .t-desc{ font-size:12.5px; color:#8b9895; line-height:1.6; }
+  .switch{
+    position:relative; width:42px; height:24px; flex-shrink:0; cursor:pointer;
+  }
+  .switch input{ opacity:0; width:0; height:0; position:absolute; }
+  .switch .track{
+    position:absolute; inset:0; background:#d5dedb; border-radius:999px; transition:background .15s ease;
+  }
+  .switch .thumb{
+    position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff;
+    transition:transform .15s ease; box-shadow:0 1px 3px rgba(0,0,0,.2);
+  }
+  .switch input:checked + .track{ background:var(--teal); }
+  .switch input:checked + .track + .thumb{ transform:translateX(18px); }
+
+  /* authorization list */
+  .auth-item{
+    display:flex; align-items:center; gap:14px;
+    padding:14px 0; border-bottom:1px solid var(--line);
+  }
+  .auth-item:last-child{ border-bottom:none; padding-bottom:0; }
+  .auth-avatar{
+    width:40px; height:40px; border-radius:50%; background:#eef4f2; color:var(--teal);
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0;
+  }
+  .auth-main{ flex:1; min-width:0; }
+  .auth-main .name{ font-size:14.5px; font-weight:700; }
+  .auth-main .meta{ font-size:12.5px; color:#8b9895; margin-top:2px; }
+  .auth-scope{
+    font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:999px;
+    background:#eef4f2; color:#5c6b68; white-space:nowrap;
+  }
+  .auth-scope.full{ background:#eef1fb; color:#5b6fd6; }
+
+  .session-item{
+    display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid var(--line);
+  }
+  .session-item:last-child{ border-bottom:none; padding-bottom:0; }
+  .session-item .meta{ flex:1; }
+  .session-item .device{ font-size:14px; font-weight:700; }
+  .session-item .loc{ font-size:12.5px; color:#8b9895; margin-top:2px; }
+  .session-item .badge-current{
+    font-size:11px; font-weight:700; color:var(--teal); background:#e7f5f0; padding:3px 9px; border-radius:999px;
+  }
+
+  .danger-zone{ border-color:#f0c6c4; }
+
+  /* OVERVIEW PANEL (dashboard content) */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:20px; margin-bottom:28px; flex-wrap:wrap;
+  }
+  .topbar-actions{ display:flex; align-items:center; gap:10px; }
+  .search{
+    display:flex; align-items:center; gap:8px;
+    background:#fff; border:1px solid var(--line); border-radius:10px;
+    padding:9px 13px; min-width:230px;
+  }
+  .search input{ border:none; outline:none; font-family:inherit; font-size:14px; width:100%; color:var(--ink); }
+  .search svg{ flex-shrink:0; opacity:.5; }
+
+  .stats{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:14px;
+    margin-bottom:24px;
+  }
+  .stat-card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px 20px;
+  }
+  .stat-card .num{ font-family:"Noto Serif TC",serif; font-size:28px; font-weight:600; color:var(--navy); }
+  .stat-card .label{ font-size:12.5px; color:#8b9895; margin-top:4px; }
+  .stat-card.alert .num{ color:var(--amber); }
+
+  .filters{ display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+  .filter-btn{
+    border:1px solid var(--line); background:#fff;
+    padding:8px 16px; border-radius:999px;
+    font-family:inherit; font-size:13.5px; font-weight:600; color:#5c6b68;
+    cursor:pointer; transition:all .15s ease;
+  }
+  .filter-btn.active{ background:var(--navy); border-color:var(--navy); color:#fff; }
+  .filter-btn:hover:not(.active){ border-color:#b9c7c3; }
+
+  .records{ display:flex; flex-direction:column; gap:10px; }
+  .record-card{
+    display:flex; align-items:center; gap:16px;
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px 18px; cursor:pointer;
+    transition:box-shadow .15s ease, border-color .15s ease;
+  }
+  .record-card:hover{ box-shadow:0 4px 16px rgba(15,42,43,.06); border-color:#cddbd7; }
+  .rec-icon{
+    width:42px; height:42px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .rec-icon.lab{ background:#e7f5f0; color:var(--teal); }
+  .rec-icon.med{ background:#eef1fb; color:#5b6fd6; }
+  .rec-icon.img{ background:#fbeee9; color:#d9784f; }
+  .rec-icon.visit{ background:#f6f0fb; color:#8b5fd6; }
+  .rec-main{ flex:1; min-width:0; }
+  .rec-main .title{ font-size:15px; font-weight:700; margin-bottom:3px; }
+  .rec-main .meta{ font-size:13px; color:#8b9895; }
+  .rec-tag{
+    font-size:11.5px; font-weight:700; padding:4px 10px;
+    border-radius:999px; background:#eef4f2; color:#5c6b68; white-space:nowrap;
+  }
+  .rec-date{ font-size:13px; color:#a3b0ad; white-space:nowrap; min-width:74px; text-align:right; }
+
+  .empty{ text-align:center; padding:60px 20px; color:#93a19e; }
+  .empty .big{ font-size:15px; font-weight:700; color:#5c6b68; margin-bottom:6px; }
+
+  .dropzone{
+    border:1.5px dashed #c4d2ce; border-radius:12px; padding:26px;
+    text-align:center; color:#8b9895; font-size:13.5px; margin-bottom:16px;
+    cursor:pointer; transition:border-color .15s ease, background .15s ease;
+  }
+  .dropzone:hover{ border-color:var(--teal); background:#f5faf8; }
+  .dropzone strong{ color:var(--navy); }
+
+  /* MODAL */
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(15,42,43,.45);
+    display:none; align-items:center; justify-content:center;
+    padding:20px; z-index:50;
+  }
+  .modal-backdrop.show{ display:flex; }
+  .modal{
+    background:#fff; border-radius:16px; width:100%; max-width:480px;
+    padding:28px; max-height:90vh; overflow-y:auto; position:relative;
+  }
+  .modal h3{
+    font-family:"Noto Serif TC",serif; font-weight:600; font-size:20px; margin:0 0 8px;
+  }
+  .modal-actions{ display:flex; gap:10px; margin-top:22px; }
+  .modal .btn-primary{ flex:1; justify-content:center; }
+  .modal .btn-ghost{ flex:1; }
+  .close-x{
+    position:absolute; top:20px; right:20px; background:none; border:none;
+    color:#93a19e; cursor:pointer; padding:4px;
+  }
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--navy); color:#fff; padding:13px 22px; border-radius:10px; font-size:14px;
+    opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease;
+    display:flex; align-items:center; gap:8px; box-shadow:0 10px 30px rgba(0,0,0,.25); z-index:60;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast .dot{ width:8px;height:8px;border-radius:50%;background:var(--mint); }
+
+  @media (max-width: 860px){
+    .app{ flex-direction:column; }
+    .sidebar{ position:static; height:auto; padding:16px; }
+    .row{ grid-template-columns:1fr; }
+    .main{ padding:24px 18px 50px; max-width:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand-mark"><span class="dot"></span> 健康庫 HealthKeep</div>
+    <nav class="nav">
+      <div class="section-label">帳號設定</div>
+      <button data-panel="profile" class="active">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        個人檔案
+      </button>
+      <button data-panel="privacy">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L4 5v6c0 5 3.4 8.7 8 9.9 4.6-1.2 8-4.9 8-9.9V5l-8-3z"/></svg>
+        隱私設定
+      </button>
+      <button data-panel="access">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        授權管理
+      </button>
+      <button data-panel="security">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="16" r="1.5"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        帳號安全
+      </button>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="avatar" id="user-initial">王</div>
+      <div class="who">
+        <div class="name">王小明</div>
+        <div class="mail">example@gmail.com</div>
+      </div>
+      <button class="logout-btn" id="logout-btn" title="登出" aria-label="登出">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- 個人檔案 -->
+    <section class="panel active" id="panel-profile">
+      <div class="page-head">
+        <h1>個人檔案</h1>
+        <div class="sub">這些資訊會顯示給你授權的醫療人員與家人</div>
+      </div>
+
+      <div class="card">
+        <div class="avatar-row">
+          <div class="avatar-lg">王</div>
+          <div>
+            <button type="button" class="btn-ghost" id="change-avatar">更換照片</button>
+          </div>
+        </div>
+        <form id="profile-form">
+          <div class="row">
+            <div class="field">
+              <label for="p-name">姓名</label>
+              <input type="text" id="p-name" value="王小明">
+            </div>
+            <div class="field">
+              <label for="p-birth">出生日期</label>
+              <input type="date" id="p-birth" value="1990-04-12">
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="p-gender">性別</label>
+              <select id="p-gender">
+                <option>男</option><option>女</option><option>不透露</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="p-blood">血型</label>
+              <select id="p-blood">
+                <option>A</option><option>B</option><option>AB</option><option>O</option><option>不確定</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="p-phone">聯絡電話</label>
+              <input type="tel" id="p-phone" value="0912-345-678">
+            </div>
+            <div class="field">
+              <label for="p-emergency">緊急聯絡人</label>
+              <input type="text" id="p-emergency" placeholder="姓名 / 電話">
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="p-height">身高（公分）</label>
+              <input type="number" id="p-height" placeholder="例如：170" min="0" step="0.1">
+            </div>
+            <div class="field">
+              <label for="p-weight">體重（公斤）</label>
+              <input type="number" id="p-weight" placeholder="例如：65" min="0" step="0.1">
+            </div>
+          </div>
+          <div class="field">
+            <label for="p-allergy">過敏史</label>
+            <textarea id="p-allergy" placeholder="例如：青黴素過敏"></textarea>
+          </div>
+          <button type="submit" class="btn-primary">儲存變更</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- 隱私設定 -->
+    <section class="panel" id="panel-privacy">
+      <div class="page-head">
+        <h1>隱私設定</h1>
+        <div class="sub">控制你的健康資料可以被如何使用與分享</div>
+      </div>
+
+      <div class="card">
+        <h2>資料分享</h2>
+        <div class="card-sub">管理誰可以看到你的健康紀錄</div>
+
+        <div class="toggle-row">
+          <div>
+            <div class="t-title">允許家人查看我的紀錄</div>
+            <div class="t-desc">開啟後，被授權的家庭成員可以在「授權管理」中查看你的病歷摘要</div>
+          </div>
+          <label class="switch"><input type="checkbox" checked><span class="track"></span><span class="thumb"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="t-title">允許家人匯入報告</div>
+            <div class="t-desc">開啟後，被授權的家庭成員可以代替你上傳檢驗報告或就診紀錄</div>
+          </div>
+          <label class="switch"><input type="checkbox" checked><span class="track"></span><span class="thumb"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="t-title">將去識別化資料用於醫學研究</div>
+            <div class="t-desc">資料會移除姓名等個人識別資訊後，用於公共衛生研究，可隨時關閉</div>
+          </div>
+          <label class="switch"><input type="checkbox"><span class="track"></span><span class="thumb"></span></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>通知偏好</h2>
+        <div class="card-sub">選擇你想收到的通知方式</div>
+        <div class="toggle-row">
+          <div><div class="t-title">電子郵件通知</div><div class="t-desc">新報告上傳、授權異動時寄送通知</div></div>
+          <label class="switch"><input type="checkbox" checked><span class="track"></span><span class="thumb"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div><div class="t-title">簡訊通知</div><div class="t-desc">僅在重要帳號安全事件時發送</div></div>
+          <label class="switch"><input type="checkbox"><span class="track"></span><span class="thumb"></span></label>
+        </div>
+      </div>
+    </section>
+
+    <!-- 授權管理 -->
+    <section class="panel" id="panel-access">
+      <div class="page-head">
+        <h1>授權管理</h1>
+        <div class="sub">管理可以查看你健康紀錄的人員與機構</div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+          <h2 style="margin:0;">目前已授權</h2>
+          <button type="button" class="btn-primary" id="add-access-btn">＋ 新增授權</button>
+        </div>
+        <div class="card-sub">共 2 位可存取你的紀錄</div>
+
+        <div id="access-list">
+          <div class="auth-item">
+            <div class="auth-avatar">陳</div>
+            <div class="auth-main">
+              <div class="name">陳醫師 — 家庭醫學科</div>
+              <div class="meta">萬芳醫院 · 授權至 2026/12/31</div>
+            </div>
+            <span class="auth-scope full">完整病歷</span>
+            <button type="button" class="btn-ghost revoke-btn">撤銷</button>
+          </div>
+          <div class="auth-item">
+            <div class="auth-avatar">林</div>
+            <div class="auth-main">
+              <div class="name">林小美（配偶）</div>
+              <div class="meta">家庭成員 · 永久授權</div>
+            </div>
+            <span class="auth-scope">僅摘要</span>
+            <button type="button" class="btn-ghost revoke-btn">撤銷</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 帳號安全 -->
+    <section class="panel" id="panel-security">
+      <div class="page-head">
+        <h1>帳號安全</h1>
+        <div class="sub">管理登入方式、密碼與裝置</div>
+      </div>
+
+      <div class="card">
+        <h2>登入方式</h2>
+        <div class="card-sub">目前使用的登入方式</div>
+        <div class="auth-item">
+          <div class="auth-avatar" style="background:#e8f0fe; color:#4285F4;">G</div>
+          <div class="auth-main">
+            <div class="name">Google 帳號</div>
+            <div class="meta">example@gmail.com · 已連結</div>
+          </div>
+          <button type="button" class="btn-ghost">取消連結</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>變更密碼</h2>
+        <div class="card-sub">建議定期更換密碼，並避免與其他網站共用</div>
+        <form id="password-form">
+          <div class="field">
+            <label for="pw-current">目前密碼</label>
+            <input type="password" id="pw-current" placeholder="••••••••">
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="pw-new">新密碼</label>
+              <input type="password" id="pw-new" placeholder="至少 8 個字元">
+            </div>
+            <div class="field">
+              <label for="pw-confirm">確認新密碼</label>
+              <input type="password" id="pw-confirm" placeholder="再輸入一次">
+            </div>
+          </div>
+          <button type="submit" class="btn-primary">更新密碼</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>登入中的裝置</h2>
+        <div class="card-sub">目前有 2 個裝置保持登入狀態</div>
+        <div class="session-item">
+          <div class="meta">
+            <div class="device">iPhone 15 · Safari</div>
+            <div class="loc">台北市 · 最後活動：剛剛</div>
+          </div>
+          <span class="badge-current">目前裝置</span>
+        </div>
+        <div class="session-item">
+          <div class="meta">
+            <div class="device">Windows · Chrome</div>
+            <div class="loc">台北市 · 最後活動：3 天前</div>
+          </div>
+          <button type="button" class="btn-ghost session-revoke">登出</button>
+        </div>
+        <div style="margin-top:16px;">
+          <button type="button" class="btn-danger" id="logout-all">登出所有其他裝置</button>
+        </div>
+      </div>
+
+      <div class="card danger-zone">
+        <h2 style="color:var(--error);">刪除帳號</h2>
+        <div class="card-sub">刪除後，你所有的健康紀錄將永久移除，此動作無法復原</div>
+        <button type="button" class="btn-danger" id="delete-account">刪除我的帳號</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- 新增授權 MODAL -->
+<div class="modal-backdrop" id="access-backdrop">
+  <div class="modal">
+    <button class="close-x" id="access-close" aria-label="關閉">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <h3>新增授權</h3>
+    <div class="card-sub" style="margin-bottom:20px;">邀請家人或醫療人員查看你的健康紀錄，對方會收到一封邀請信</div>
+
+    <form id="access-form">
+      <div class="field">
+        <label for="a-type">授權對象</label>
+        <select id="a-type">
+          <option value="family">家人</option>
+          <option value="doctor">醫療人員</option>
+          <option value="other">其他</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="a-email">電子郵件</label>
+        <input type="email" id="a-email" placeholder="對方的電子郵件地址" required>
+      </div>
+
+      <div class="field">
+        <label for="a-name">稱呼（選填）</label>
+        <input type="text" id="a-name" placeholder="例如：陳醫師、林小美">
+      </div>
+
+      <div class="field">
+        <label for="a-scope">存取範圍</label>
+        <select id="a-scope">
+          <option value="full">完整病歷</option>
+          <option value="summary">僅摘要</option>
+          <option value="lab">僅檢驗報告</option>
+          <option value="custom">自訂項目</option>
+        </select>
+      </div>
+
+      <div class="field" id="a-scope-custom" style="display:none;">
+        <label>可查看的紀錄類型</label>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;">
+          <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink);">
+            <input type="checkbox" value="lab" checked> 檢驗報告
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink);">
+            <input type="checkbox" value="med"> 用藥紀錄
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink);">
+            <input type="checkbox" value="img"> 影像資料
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink);">
+            <input type="checkbox" value="visit"> 就診紀錄
+          </label>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="a-expiry">授權期限</label>
+          <select id="a-expiry">
+            <option value="permanent">永久，直到我撤銷</option>
+            <option value="30">30 天</option>
+            <option value="90">90 天</option>
+            <option value="365">1 年</option>
+            <option value="custom">自訂日期</option>
+          </select>
+        </div>
+        <div class="field" id="a-expiry-date-field" style="display:none;">
+          <label for="a-expiry-date">到期日</label>
+          <input type="date" id="a-expiry-date">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="a-note">邀請訊息（選填）</label>
+        <textarea id="a-note" placeholder="會附在邀請信裡，例如：這是我這次回診要用的資料"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" id="access-cancel">取消</button>
+        <button type="submit" class="btn-primary">送出邀請</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="dot"></span><span id="toast-text"></span></div>
+
+<script>
+  // panel switching
+  const navButtons = document.querySelectorAll('.nav button[data-panel]');
+  navButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      navButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
+    });
+  });
+
+  function showToast(text){
+    const toast = document.getElementById('toast');
+    document.getElementById('toast-text').textContent = text;
+    toast.classList.add('show');
+    setTimeout(()=> toast.classList.remove('show'), 2600);
+  }
+
+  document.getElementById('profile-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    // TODO: 呼叫 Firestore 更新使用者的個人檔案文件
+    showToast('個人檔案已更新');
+  });
+
+  document.getElementById('password-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const pw = document.getElementById('pw-new').value;
+    const confirm = document.getElementById('pw-confirm').value;
+    if(pw.length < 8){ showToast('新密碼至少需要 8 個字元'); return; }
+    if(pw !== confirm){ showToast('兩次輸入的新密碼不一致'); return; }
+    // TODO: 呼叫 Firebase Authentication 的 updatePassword()
+    showToast('密碼已更新');
+    e.target.reset();
+  });
+
+  document.querySelectorAll('.revoke-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.auth-item');
+      item.style.opacity = '0.4';
+      showToast('授權已撤銷');
+      setTimeout(() => item.remove(), 300);
+    });
+  });
+
+  // ---- 新增授權 modal ----
+  const accessBackdrop = document.getElementById('access-backdrop');
+  const accessForm = document.getElementById('access-form');
+  const accessList = document.getElementById('access-list');
+  const scopeSelect = document.getElementById('a-scope');
+  const scopeCustom = document.getElementById('a-scope-custom');
+  const expirySelect = document.getElementById('a-expiry');
+  const expiryDateField = document.getElementById('a-expiry-date-field');
+
+  function openAccessModal(){ accessBackdrop.classList.add('show'); }
+  function closeAccessModal(){ accessBackdrop.classList.remove('show'); accessForm.reset(); scopeCustom.style.display='none'; expiryDateField.style.display='none'; }
+
+  document.getElementById('add-access-btn').addEventListener('click', openAccessModal);
+  document.getElementById('access-close').addEventListener('click', closeAccessModal);
+  document.getElementById('access-cancel').addEventListener('click', closeAccessModal);
+  accessBackdrop.addEventListener('click', (e) => { if(e.target === accessBackdrop) closeAccessModal(); });
+
+  scopeSelect.addEventListener('change', () => {
+    scopeCustom.style.display = scopeSelect.value === 'custom' ? 'block' : 'none';
+  });
+  expirySelect.addEventListener('change', () => {
+    expiryDateField.style.display = expirySelect.value === 'custom' ? 'block' : 'none';
+  });
+
+  const scopeLabel = { full:'完整病歷', summary:'僅摘要', lab:'僅檢驗報告', custom:'自訂範圍' };
+  const typeAvatarStyle = {
+    family: '',
+    doctor: '',
+    org: ''
+  };
+
+  function expiryText(){
+    const v = expirySelect.value;
+    if(v === 'permanent') return '永久授權';
+    if(v === 'custom'){
+      const d = document.getElementById('a-expiry-date').value;
+      return d ? `授權至 ${d.replace(/-/g,'/')}` : '授權至指定日期';
+    }
+    return `授權 ${v} 天`;
+  }
+
+  accessForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('a-email').value.trim();
+    if(!email){ return; }
+
+    const name = document.getElementById('a-name').value.trim() || email;
+    const typeText = { family:'家庭成員', doctor:'醫療人員', other:'其他' }[document.getElementById('a-type').value];
+    const scopeVal = scopeSelect.value;
+    const scopeText = scopeLabel[scopeVal];
+
+    const item = document.createElement('div');
+    item.className = 'auth-item';
+    item.innerHTML = `
+      <div class="auth-avatar">${escapeHtmlAcc(name.slice(0,1))}</div>
+      <div class="auth-main">
+        <div class="name">${escapeHtmlAcc(name)}</div>
+        <div class="meta">${typeText} · ${expiryText()} · 邀請寄至 ${escapeHtmlAcc(email)}</div>
+      </div>
+      <span class="auth-scope ${scopeVal === 'full' ? 'full' : ''}">${scopeText}</span>
+      <button type="button" class="btn-ghost revoke-btn">撤銷</button>
+    `;
+    item.querySelector('.revoke-btn').addEventListener('click', () => {
+      item.style.opacity = '0.4';
+      showToast('授權已撤銷');
+      setTimeout(() => item.remove(), 300);
+    });
+    accessList.prepend(item);
+
+    // TODO: 實際串接時，這裡改成：
+    // 1) 在 Firestore 建立一筆邀請 document（含 email、scope、expiry、狀態 = pending）
+    // 2) 觸發 Cloud Function 寄送邀請信，內含接受連結
+    // 3) 對方登入並接受後，才將 grant 狀態改為 active，Security Rules 依此判斷讀取權限
+
+    closeAccessModal();
+    showToast(`邀請已寄出至 ${email}`);
+  });
+
+  function escapeHtmlAcc(str){
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  document.querySelector('.session-revoke').addEventListener('click', (e) => {
+    const item = e.target.closest('.session-item');
+    item.style.opacity = '0.4';
+    showToast('該裝置已登出');
+    setTimeout(() => item.remove(), 300);
+  });
+
+  document.getElementById('logout-all').addEventListener('click', () => {
+    showToast('已登出所有其他裝置');
+  });
+
+  document.getElementById('delete-account').addEventListener('click', () => {
+    showToast('請再次確認後才會刪除帳號（示範，尚未串接確認流程）');
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    showToast('已登出（示範，尚未串接 signOut()）');
+  });
+
+  document.getElementById('change-avatar').addEventListener('click', () => {
+    showToast('選擇照片（示範，尚未串接 Firebase Storage 上傳）');
+  });
+</script>
+
+</body>
+</html>
