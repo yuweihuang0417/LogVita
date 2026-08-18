@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;600&family=Noto+Serif+TC:wght@400;600&display=swap" rel="stylesheet">
-
 <style>
  :root{
  --ink: #0f2a2b;
@@ -23,14 +22,13 @@
  }
  *{box-sizing:border-box;}
  html,body{margin:0;padding:0;height:100%;}
- body {
-  background: var(--paper);
-  color: var(--ink);
-  font-family: "Noto Sans TC", "Noto Sans SC", -apple-system, "PingFang SC", "PingFang TC", "Microsoft YaHei", "Microsoft JhengHei", sans-serif;
-  display: flex;
-  min-height: 100vh;
-}
-
+ body{
+ background:var(--paper);
+ color:var(--ink);
+ font-family:"Noto Sans TC", "Noto Sans SC", -apple-system, "PingFang SC", "PingFang TC", "Microsoft YaHei", "Microsoft JhengHei", sans-serif;
+ display:flex;
+ min-height:100vh;
+ }
  .stage{ display:flex; width:100%; min-height:100vh; }
 
  /* LEFT PANEL */
@@ -61,6 +59,7 @@
  font-size:20px;
  letter-spacing:0.02em;
  z-index:1;
+ max-width: calc(100% - 130px);
  }
  .brand-mark .dot{
  width:9px;height:9px;border-radius:50%;background:var(--mint);
@@ -297,9 +296,9 @@
  /* LANGUAGE SELECTOR */
  .language-switcher{
  position:absolute;
- top:28px;
- right:28px;
- z-index:5;
+ top:48px;
+ right:44px;
+ z-index:10;
  }
  .language-switcher select{
  appearance:none;
@@ -324,6 +323,8 @@
  .brand{ min-height:auto; padding:36px 28px; }
  .pulse-wrap{ margin-top:20px; }
  .panel{ padding:36px 22px 56px; }
+ .language-switcher{ top:36px; right:28px; }
+ .brand-mark{ max-width:calc(100% - 110px); }
  }
 </style>
 </head>
@@ -342,7 +343,7 @@
  </div>
  <div class="brand-mark"><span class="dot"></span> 健康庫 HealthKeep</div>
  <div class="brand-copy">
- <h1>把每一次<em>就診紀錄</em><br>好好留下來</h1>
+ <h1>把 concert<em>就診紀錄</em><br>好好留下來</h1>
  <p>檢驗報告、用藥紀錄、影像資料，統一安全存放。就醫時隨手調閱，換醫院、換科別都不用再重新說明一次病史。</p>
  <div class="trust">
  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
