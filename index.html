@@ -408,157 +408,17 @@
 
 <div class="toast" id="toast"><span class="dot"></span><span id="toast-text"></span></div>
 
-// 補齊完整翻譯字典 (zh-TW, zh-CN, en, ja, ko)
-const translations = {
-  'zh-TW': {
-    htmlLang:'zh-Hant-TW', title:'健康庫 HealthKeep — 登入',
-    brandMark:'健康庫 HealthKeep', h1:'把每一次<em>就診紀錄</em><br>好好留下來',
-    brandDesc:'檢驗報告、用藥紀錄、影像資料，統一安全存放。就醫時隨手調閱，換醫院、換科別都不用再重新說明一次病史。',
-    trust:'資料採加密儲存，僅本人與您授權的醫療人員可讀取',
-    welcome:'歡迎回來', start:'開始使用', signInTitle:'登入您的健康紀錄', signUpTitle:'建立您的健康紀錄帳號',
-    signIn:'登入', signUp:'註冊', google:'使用 Google 繼續', orEmail:'或使用電子郵件',
-    name:'姓名', namePh:'請輸入您的姓名', email:'電子郵件', emailPh:'you@example.com',
-    password:'密碼', passwordPh:'至少 8 個字元', create:'建立帳號', noAccount:'還沒有帳號？', hasAccount:'已經有帳號了？',
-    createAccount:'建立帳號', terms:'註冊即表示您同意我們的服務條款與隱私權政策，', privacy:'您的健康資料受《個人資料保護法》規範保護。',
-    errName:'請輸入姓名。', errEmail:'請輸入有效的電子郵件地址。', errPassword:'密碼至少需要 8 個字元。',
-    successSignup:'帳號建立成功，歡迎加入健康庫', successSignin:'登入成功', welcomeUser:'歡迎，',
-    errors:{
-      'auth/email-already-in-use':'這個電子郵件已經註冊過了，請直接登入。','auth/invalid-email':'電子郵件格式不正確。',
-      'auth/weak-password':'密碼強度不足，請使用至少 8 個字元。','auth/user-not-found':'找不到這個帳號，請確認電子郵件或先註冊。',
-      'auth/wrong-password':'密碼錯誤，請再試一次。','auth/invalid-credential':'帳號或密碼錯誤，請再試一次。',
-      'auth/too-many-requests':'嘗試次數過多，請稍後再試。','auth/popup-closed-by-user':'Google 登入視窗已關閉。',
-      'auth/network-request-failed':'網路連線異常，請稍後再試。'
-    }, generic:'發生錯誤，請稍後再試。'
-  },
-  'zh-CN': {
-    htmlLang:'zh-Hans-CN', title:'健康库 HealthKeep — 登录',
-    brandMark:'健康库 HealthKeep', h1:'把每一次<em>就诊记录</em><br>好好留存',
-    brandDesc:'检验报告、用药记录、影像资料，统一安全存放。就医时随手调阅，换医院、换科别都不用再重新说明病史。',
-    trust:'数据采用加密存储，仅本人与您授权的医疗人员可读取',
-    welcome:'欢迎回来', start:'开始使用', signInTitle:'登录您的健康记录', signUpTitle:'创建您的健康记录账号',
-    signIn:'登录', signUp:'注册', google:'使用 Google 继续', orEmail:'或使用电子邮件',
-    name:'姓名', namePh:'请输入您的姓名', email:'电子邮件', emailPh:'you@example.com',
-    password:'密码', passwordPh:'至少 8 个字符', create:'创建账号', noAccount:'还没有账号？', hasAccount:'已经有账号了？',
-    createAccount:'创建账号', terms:'注册即表示您同意我们的服务条款与隐私政策，', privacy:'您的健康数据受个人信息保护法律法规保护。',
-    errName:'请输入姓名。', errEmail:'请输入有效的电子邮件地址。', errPassword:'密码至少需要 8 个字符。',
-    successSignup:'账号创建成功，欢迎加入健康库', successSignin:'登录成功', welcomeUser:'欢迎，',
-    errors:{
-      'auth/email-already-in-use':'该电子邮件已被注册，请直接登录。','auth/invalid-email':'电子邮件格式不正确。',
-      'auth/weak-password':'密码强度不足，请使用至少 8 个字符。','auth/user-not-found':'找不到该账号，请检查邮箱或先注册。',
-      'auth/wrong-password':'密码错误，请再试一次。','auth/invalid-credential':'账号或密码错误，请再试一次。',
-      'auth/too-many-requests':'尝试次数过多，请稍后再试。','auth/popup-closed-by-user':'Google 登录窗口已关闭。',
-      'auth/network-request-failed':'网络连接异常，请稍后再试。'
-    }, generic:'发生错误，请稍后再试。'
-  },
-  'en': {
-    htmlLang:'en', title:'HealthKeep — Sign in',
-    brandMark:'HealthKeep', h1:'Keep every <em>medical record</em><br>safe and accessible',
-    brandDesc:'Store test reports, medication records, and medical images securely in one place. Access them whenever you need them.',
-    trust:'Encrypted storage. Accessible only by you and authorized healthcare professionals.',
-    welcome:'Welcome back', start:'Get started', signInTitle:'Sign in to your health records', signUpTitle:'Create your HealthKeep account',
-    signIn:'Sign in', signUp:'Sign up', google:'Continue with Google', orEmail:'or use email',
-    name:'Name', namePh:'Enter your name', email:'Email', emailPh:'you@example.com',
-    password:'Password', passwordPh:'At least 8 characters', create:'Create account', noAccount:"Don't have an account?", hasAccount:'Already have an account?',
-    createAccount:'Create account', terms:'By signing up, you agree to our Terms of Service and Privacy Policy.', privacy:'Your health data is protected under data privacy laws.',
-    errName:'Please enter your name.', errEmail:'Please enter a valid email address.', errPassword:'Password must be at least 8 characters.',
-    successSignup:'Account created successfully.', successSignin:'Signed in successfully', welcomeUser:'Welcome, ',
-    errors:{
-      'auth/email-already-in-use':'This email is already registered. Please sign in.','auth/invalid-email':'Please enter a valid email address.',
-      'auth/weak-password':'Password is too weak. Please use at least 8 characters.','auth/user-not-found':'Account not found. Please sign up first.',
-      'auth/wrong-password':'Incorrect password. Please try again.','auth/invalid-credential':'Incorrect email or password.',
-      'auth/too-many-requests':'Too many attempts. Please try again later.','auth/popup-closed-by-user':'Google sign-in window was closed.',
-      'auth/network-request-failed':'Network error. Please try again later.'
-    }, generic:'Something went wrong. Please try again later.'
-  },
-  'ja': {
-    htmlLang:'ja', title:'HealthKeep — ログイン',
-    brandMark:'HealthKeep', h1:'すべての<em>診療記録</em>を<br>安全に保管',
-    brandDesc:'検査結果、処方箋、画像データを一箇所で安全に管理。転院時も病歴の説明がスムーズに。',
-    trust:'暗号化保管。あなたと許可された医療従事者のみが閲覧可能。',
-    welcome:'おかえりなさい', start:'はじめる', signInTitle:'健康記録にログイン', signUpTitle:'HealthKeepアカウントの作成',
-    signIn:'ログイン', signUp:'新規登録', google:'Google で継続', orEmail:'またはメールアドレスで',
-    name:'お名前', namePh:'お名前を入力してください', email:'メールアドレス', emailPh:'you@example.com',
-    password:'パスワード', passwordPh:'8文字以上', create:'アカウント作成', noAccount:'アカウントをお持ちでないですか？', hasAccount:'すでにアカウントをお持ちですか？',
-    createAccount:'アカウント作成', terms:'登録することで、利用規約とプライバシーポリシーに同意したことになります。', privacy:'個人情報保護法に基づき安全に保護されます。',
-    errName:'お名前を入力してください。', errEmail:'有効なメールアドレスを入力してください。', errPassword:'パスワードは8文字以上である必要があります。',
-    successSignup:'アカウントが作成されました。', successSignin:'ログインしました', welcomeUser:'ようこそ、',
-    errors:{
-      'auth/email-already-in-use':'このメールアドレスは既に登録されています。','auth/invalid-email':'無効なメールアドレス形式です。',
-      'auth/weak-password':'パスワードが脆弱です。8文字以上で設定してください。','auth/user-not-found':'アカウントが見つかりません。',
-      'auth/wrong-password':'パスワードが正しくありません。','auth/invalid-credential':'メールアドレスまたはパスワードが正しくありません。',
-      'auth/too-many-requests':'試行回数が多すぎます。しばらく時間をおいて再試行してください。','auth/popup-closed-by-user':'Google ログインウィンドウが閉じられました。',
-      'auth/network-request-failed':'ネットワークエラーが発生しました。'
-    }, generic:'エラーが発生しました。時間をおいて再試行してください。'
-  },
-  'ko': {
-    htmlLang:'ko', title:'HealthKeep — 로그인',
-    brandMark:'HealthKeep', h1:'모든 <em>진료 기록</em>을<br>안전하게 보관하세요',
-    brandDesc:'검사 결과, 처방 기록, 영상 자료를 한곳에 안전하게 저장하고 언제든지 쉽게 확인하세요.',
-    trust:'암호화 저장. 본인 및 승인된 의료진만 접근 가능합니다.',
-    welcome:'환영합니다', start:'시작하기', signInTitle:'건강 기록 로그인', signUpTitle:'HealthKeep 계정 생성',
-    signIn:'로그인', signUp:'회원가입', google:'Google로 계속하기', orEmail:'또는 이메일 사용',
-    name:'이름', namePh:'이름을 입력하세요', email:'이메일', emailPh:'you@example.com',
-    password:'비밀번호', passwordPh:'최소 8자 이상', create:'계정 생성', noAccount:'계정이 없으신가요?', hasAccount:'이미 계정이 있으신가요?',
-    createAccount:'계정 생성', terms:'가입하시면 서비스 약관 및 개인정보 처리방침에 동의하게 됩니다.', privacy:'개인정보 보호법에 따라 안전하게 보호됩니다.',
-    errName:'이름을 입력해 주세요.', errEmail:'올바른 이메일 주소를 입력해 주세요.', errPassword:'비밀번호는 최소 8자 이상이어야 합니다.',
-    successSignup:'계정이 성공적으로 생성되었습니다.', successSignin:'로그인 성공', welcomeUser:'환영합니다, ',
-    errors:{
-      'auth/email-already-in-use':'이미 가입된 이메일입니다.','auth/invalid-email':'올바르지 않은 이메일 형식입니다.',
-      'auth/weak-password':'비밀번호가 취약합니다. 최소 8자 이상 사용하세요.','auth/user-not-found':'계정을 찾을 수 없습니다.',
-      'auth/wrong-password':'비밀번호가 올바르지 않습니다.','auth/invalid-credential':'이메일 또는 비밀번호가 올바르지 않습니다.',
-      'auth/too-many-requests':'시도 횟수가 너무 많습니다. 나중에 다시 시도하세요.','auth/popup-closed-by-user':'Google 로그인 창이 닫혔습니다.',
-      'auth/network-request-failed':'네트워크 오류가 발생했습니다.'
-    }, generic:'오류가 발생했습니다. 나중에 다시 시도해 주세요.'
-  }
-};
-
-const languageSelect = document.getElementById('language-select');
-
-// 判定預設語言
-let currentLanguage = localStorage.getItem('healthkeep-language') || navigator.language;
-if (!translations[currentLanguage]) {
-  const langPrefix = currentLanguage.split('-')[0];
-  if (langPrefix === 'zh') currentLanguage = currentLanguage.includes('CN') ? 'zh-CN' : 'zh-TW';
-  else if (langPrefix === 'ja') currentLanguage = 'ja';
-  else if (langPrefix === 'ko') currentLanguage = 'ko';
-  else currentLanguage = 'en';
-}
-
-function applyLanguage(lang){
-  const t = translations[lang] || translations['zh-TW'];
-  currentLanguage = lang;
-  localStorage.setItem('healthkeep-language', lang);
-  
-  document.documentElement.lang = t.htmlLang;
-  document.title = t.title;
-  
-  // 更新 UI 文字內容
-  const brandMark = document.querySelector('.brand-mark');
-  if (brandMark && brandMark.lastChild) brandMark.lastChild.textContent = ' ' + t.brandMark;
-  
-  document.querySelector('.brand-copy h1').innerHTML = t.h1;
-  document.querySelector('.brand-copy p').textContent = t.brandDesc;
-  document.querySelector('.trust span').textContent = t.trust;
-  document.getElementById('google-btn').lastChild.textContent = ' ' + t.google;
-  document.querySelector('.divider').textContent = t.orEmail;
-  document.querySelector('label[for="name"]').textContent = t.name;
-  document.getElementById('name').placeholder = t.namePh;
-  document.querySelector('label[for="email"]').textContent = t.email;
-  document.getElementById('email').placeholder = t.emailPh;
-  document.querySelector('label[for="password"]').textContent = t.password;
-  passwordInput.placeholder = t.passwordPh;
-  document.querySelector('#name-field .err').textContent = t.errName;
-  document.querySelector('#email-field .err').textContent = t.errEmail;
-  document.querySelector('#password-field .err').textContent = t.errPassword;
-  document.querySelector('.legal').innerHTML = `${t.terms}<br>${t.privacy}`;
-  
-  // 同步下拉選單數值
-  languageSelect.value = lang;
-  setMode(mode);
-}
-
-languageSelect.addEventListener('change', e => applyLanguage(e.target.value));
-applyLanguage(currentLanguage);
+<script type="module">
+ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+ import {
+ getAuth,
+ GoogleAuthProvider,
+ signInWithPopup,
+ createUserWithEmailAndPassword,
+ signInWithEmailAndPassword,
+ updateProfile,
+ onAuthStateChanged
+ } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
  const firebaseConfig = {
  apiKey: "AIzaSyDsKJOzaQKosJeJgUfZXBc0pahDzBKV7e8",
