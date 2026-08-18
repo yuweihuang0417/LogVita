@@ -569,18 +569,9 @@
 <div class="toast" id="toast"><span class="dot"></span><span id="toast-text"></span></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-// 💡 加入 Firestore 模組
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-
-const firebaseConfig = { /* 原本的配置 */ };
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app); // 💡 初始化 Firestore
-
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDsKJOzaQKosJeJgUfZXBc0pahDzBKV7e8",
@@ -594,9 +585,10 @@ const db = getFirestore(app); // 💡 初始化 Firestore
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  const db = getFirestore(app);
 
   const FILE_NAME = 'healthkeep_config.json';
-  const DROPBOX_APP_KEY = '9g6nfv9vs6jdbk2'; // 請填入你的 Dropbox App Key
+  const DROPBOX_APP_KEY = 'YOUR_DROPBOX_APP_KEY'; // 請保持替換為您的 Dropbox App Key
 
   // 1. 真實裝置與國家判斷
   function detectDeviceType() {
@@ -635,7 +627,7 @@ const db = getFirestore(app); // 💡 初始化 Firestore
     });
   });
 
-  // 3. Auth 狀態變更監聽
+  // 3. Auth 狀態變更監聽與跨裝置 Token 同步
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       const displayName = user.displayName || '使用者';
@@ -652,9 +644,21 @@ const db = getFirestore(app); // 💡 初始化 Firestore
       document.getElementById('current-device-info').textContent = detectDeviceType();
       document.getElementById('current-loc-info').textContent = `${detectCountry()} · 最後活動：剛剛`;
 
-      // 檢查並嘗試載入雲端資料 (優先嘗試 Google Drive，次之 Dropbox)
-      const dropboxToken = getDropboxToken();
+      // 檢查網頁網址是否剛好為 Dropbox OAuth 回傳畫面
+      const hash = window.location.hash.substring(1);
+      const params = new URLSearchParams(hash);
+      const urlToken = params.get('access_token');
+
+      if (urlToken) {
+        // 將最新授權的 Token 存入 Firestore 進行跨裝置永久綁定
+        await saveDropboxTokenToFirestore(user.uid, urlToken);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
+      // 從 Firestore 資料庫獲取該帳號對應的 Dropbox Token
+      const dropboxToken = await getDropboxTokenFromFirestore(user.uid);
       if (dropboxToken) {
+        sessionStorage.setItem('dropbox_access_token', dropboxToken);
         document.getElementById('dropbox-status').textContent = '已連結';
         await loadFromDropbox();
       } else {
@@ -665,7 +669,31 @@ const db = getFirestore(app); // 💡 初始化 Firestore
     }
   });
 
-  // 4. Google Drive REST API 工具組
+  // 4. Firestore 工具組
+  async function saveDropboxTokenToFirestore(uid, token) {
+    try {
+      const userRef = doc(db, 'users', uid);
+      await setDoc(userRef, { dropboxToken: token }, { merge: true });
+      showToast('已成功跨裝置連結您的 Dropbox');
+    } catch (err) {
+      console.error("寫入 Firestore 失敗:", err);
+    }
+  }
+
+  async function getDropboxTokenFromFirestore(uid) {
+    try {
+      const userRef = doc(db, 'users', uid);
+      const docSnap = await getDoc(userRef);
+      if (docSnap.exists() && docSnap.data().dropboxToken) {
+        return docSnap.data().dropboxToken;
+      }
+    } catch (err) {
+      console.error("讀取 Firestore 失敗:", err);
+    }
+    return null;
+  }
+
+  // 5. Google Drive REST API 工具組
   function getAccessToken() {
     return sessionStorage.getItem('drive_access_token');
   }
@@ -689,9 +717,7 @@ const db = getFirestore(app); // 💡 初始化 Firestore
 
   async function loadFromDrive() {
     const token = getAccessToken();
-    if (!token) {
-      return;
-    }
+    if (!token) return;
 
     const fileId = await findDriveFileId();
     if (!fileId) return;
@@ -744,7 +770,7 @@ const db = getFirestore(app); // 💡 初始化 Firestore
     }
   }
 
-  // 5. Dropbox API 工具組
+  // 6. Dropbox API 工具組
   function connectDropbox() {
     const redirectUri = window.location.origin + window.location.pathname;
     const authUrl = `https://www.dropbox.com/oauth2/authorize?` +
@@ -755,21 +781,11 @@ const db = getFirestore(app); // 💡 初始化 Firestore
     window.open(authUrl, 'ConnectDropbox', 'width=500,height=600');
   }
 
-  function getDropboxToken() {
-    const hash = window.location.hash.substring(1);
-    const params = new URLSearchParams(hash);
-    const token = params.get('access_token');
-    
-    if (token) {
-      sessionStorage.setItem('dropbox_access_token', token);
-      window.history.replaceState({}, document.title, window.location.pathname);
-      return token;
-    }
-    return sessionStorage.getItem('dropbox_access_token');
-  }
-
   async function saveToDropbox(dataPayload) {
-    const token = getDropboxToken();
+    const user = auth.currentUser;
+    if (!user) return false;
+
+    const token = await getDropboxTokenFromFirestore(user.uid);
     if (!token) return false;
 
     try {
@@ -796,7 +812,10 @@ const db = getFirestore(app); // 💡 初始化 Firestore
   }
 
   async function loadFromDropbox() {
-    const token = getDropboxToken();
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const token = await getDropboxTokenFromFirestore(user.uid);
     if (!token) return;
 
     try {
@@ -838,7 +857,7 @@ const db = getFirestore(app); // 💡 初始化 Firestore
     }
   }
 
-  // 6. 表單提交與事件觸發
+  // 7. 表單提交與事件觸發
   document.getElementById('connect-dropbox-btn').addEventListener('click', connectDropbox);
 
   document.getElementById('profile-form').addEventListener('submit', async (e) => {
@@ -873,7 +892,7 @@ const db = getFirestore(app); // 💡 初始化 Firestore
     }
   });
 
-  // 7. 登出
+  // 8. 登出
   async function handleLogout() {
     sessionStorage.removeItem('drive_access_token');
     sessionStorage.removeItem('dropbox_access_token');
