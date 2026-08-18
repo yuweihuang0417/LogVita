@@ -254,7 +254,7 @@
     <section class="panel active" id="panel-profile">
       <div class="page-head">
         <h1>個人檔案</h1>
-        <div class="sub">這些資訊會安全儲存於您的個人 Google Drive</div>
+        <div class="sub">這些資訊會安全儲存於您的個人 Google Drive 或 Dropbox</div>
       </div>
 
       <div class="card">
@@ -313,7 +313,7 @@
             <label for="p-allergy">過敏史</label>
             <textarea id="p-allergy" placeholder="例如：青黴素過敏"></textarea>
           </div>
-          <button type="submit" class="btn-primary">儲存變更至 Google Drive</button>
+          <button type="submit" class="btn-primary">儲存變更至雲端硬碟</button>
         </form>
       </div>
     </section>
@@ -412,7 +412,7 @@
 
       <div class="card">
         <h2>登入方式</h2>
-        <div class="card-sub">目前使用的登入方式</div>
+        <div class="card-sub">目前使用的登入方式與雲端連結</div>
         <div class="auth-item">
           <div class="auth-avatar" style="background:#e8f0fe; color:#4285F4;">G</div>
           <div class="auth-main">
@@ -420,6 +420,14 @@
             <div class="meta" id="google-auth-email">載入中...</div>
           </div>
           <button type="button" class="btn-ghost">取消連結</button>
+        </div>
+        <div class="auth-item">
+          <div class="auth-avatar" style="background:#e3f2fd; color:#0061fe; font-weight:bold;">Db</div>
+          <div class="auth-main">
+            <div class="name">Dropbox 雲端硬碟</div>
+            <div class="meta" id="dropbox-status">未連結</div>
+          </div>
+          <button type="button" class="btn-ghost" id="connect-dropbox-btn">連結 Dropbox</button>
         </div>
       </div>
 
@@ -578,6 +586,7 @@
   const auth = getAuth(app);
 
   const FILE_NAME = 'healthkeep_config.json';
+  const DROPBOX_APP_KEY = 'YOUR_DROPBOX_APP_KEY'; // 請填入你的 Dropbox App Key
 
   // 1. 真實裝置與國家判斷
   function detectDeviceType() {
@@ -633,8 +642,14 @@
       document.getElementById('current-device-info').textContent = detectDeviceType();
       document.getElementById('current-loc-info').textContent = `${detectCountry()} · 最後活動：剛剛`;
 
-      // 自動從 Google Drive 讀取設定檔
-      await loadFromDrive();
+      // 檢查並嘗試載入雲端資料 (優先嘗試 Google Drive，次之 Dropbox)
+      const dropboxToken = getDropboxToken();
+      if (dropboxToken) {
+        document.getElementById('dropbox-status').textContent = '已連結';
+        await loadFromDropbox();
+      } else {
+        await loadFromDrive();
+      }
     } else {
       window.location.href = 'index.html';
     }
@@ -665,7 +680,6 @@
   async function loadFromDrive() {
     const token = getAccessToken();
     if (!token) {
-      showToast('未取得 Google Drive 授權，請重新使用 Google 登入');
       return;
     }
 
@@ -679,24 +693,7 @@
       );
       const config = await res.json();
 
-      if (config.name) document.getElementById('p-name').value = config.name;
-      if (config.birth) document.getElementById('p-birth').value = config.birth;
-      if (config.gender) document.getElementById('p-gender').value = config.gender;
-      if (config.blood) document.getElementById('p-blood').value = config.blood;
-      if (config.phone) document.getElementById('p-phone').value = config.phone;
-      if (config.emergency) document.getElementById('p-emergency').value = config.emergency;
-      if (config.height) document.getElementById('p-height').value = config.height;
-      if (config.weight) document.getElementById('p-weight').value = config.weight;
-      if (config.allergy) document.getElementById('p-allergy').value = config.allergy;
-
-      if (config.privacy) {
-        document.getElementById('p-share-family').checked = config.privacy.shareFamily ?? true;
-        document.getElementById('p-import-family').checked = config.privacy.importFamily ?? true;
-        document.getElementById('p-research').checked = config.privacy.research ?? false;
-        document.getElementById('p-notify-email').checked = config.privacy.notifyEmail ?? true;
-        document.getElementById('p-notify-sms').checked = config.privacy.notifySms ?? false;
-      }
-
+      applyConfigToForm(config);
       showToast('已成功從您的 Google Drive 載入資料');
     } catch (err) {
       console.error('載入 Drive 內容失敗:', err);
@@ -705,10 +702,7 @@
 
   async function saveToDrive(dataPayload) {
     const token = getAccessToken();
-    if (!token) {
-      showToast('無權限存取 Google Drive，請重新登入');
-      return;
-    }
+    if (!token) return false;
 
     const fileId = await findDriveFileId();
     const metadata = { name: FILE_NAME, mimeType: 'application/json' };
@@ -733,18 +727,110 @@
         body: formData
       });
 
-      if (res.ok) {
-        showToast('已同步儲存至您的 Google Drive');
-      } else {
-        showToast('儲存失敗，請重試');
-      }
+      return res.ok;
     } catch (err) {
       console.error('上傳至 Drive 失敗:', err);
-      showToast('網路連線失敗');
+      return false;
     }
   }
 
-  // 5. 表單提交事件
+  // 5. Dropbox API 工具組
+  function connectDropbox() {
+    const redirectUri = window.location.origin + window.location.pathname;
+    const authUrl = `https://www.dropbox.com/oauth2/authorize?` +
+      `client_id=${DROPBOX_APP_KEY}&` +
+      `response_type=token&` +
+      `redirect_uri=${encodeURIComponent(redirectUri)}`;
+
+    window.open(authUrl, 'ConnectDropbox', 'width=500,height=600');
+  }
+
+  function getDropboxToken() {
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    const token = params.get('access_token');
+    
+    if (token) {
+      sessionStorage.setItem('dropbox_access_token', token);
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return token;
+    }
+    return sessionStorage.getItem('dropbox_access_token');
+  }
+
+  async function saveToDropbox(dataPayload) {
+    const token = getDropboxToken();
+    if (!token) return false;
+
+    try {
+      const res = await fetch('https://content.dropboxapi.com/2/files/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Dropbox-API-Arg': JSON.stringify({
+            path: `/${FILE_NAME}`,
+            mode: 'overwrite',
+            autorename: false,
+            mute: false
+          }),
+          'Content-Type': 'application/octet-stream'
+        },
+        body: JSON.stringify(dataPayload)
+      });
+
+      return res.ok;
+    } catch (err) {
+      console.error('Dropbox 上傳失敗:', err);
+      return false;
+    }
+  }
+
+  async function loadFromDropbox() {
+    const token = getDropboxToken();
+    if (!token) return;
+
+    try {
+      const res = await fetch('https://content.dropboxapi.com/2/files/download', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Dropbox-API-Arg': JSON.stringify({ path: `/${FILE_NAME}` })
+        }
+      });
+
+      if (res.ok) {
+        const config = await res.json();
+        applyConfigToForm(config);
+        showToast('已成功從 Dropbox 載入您的資料');
+      }
+    } catch (err) {
+      console.error('Dropbox 載入失敗:', err);
+    }
+  }
+
+  function applyConfigToForm(config) {
+    if (config.name) document.getElementById('p-name').value = config.name;
+    if (config.birth) document.getElementById('p-birth').value = config.birth;
+    if (config.gender) document.getElementById('p-gender').value = config.gender;
+    if (config.blood) document.getElementById('p-blood').value = config.blood;
+    if (config.phone) document.getElementById('p-phone').value = config.phone;
+    if (config.emergency) document.getElementById('p-emergency').value = config.emergency;
+    if (config.height) document.getElementById('p-height').value = config.height;
+    if (config.weight) document.getElementById('p-weight').value = config.weight;
+    if (config.allergy) document.getElementById('p-allergy').value = config.allergy;
+
+    if (config.privacy) {
+      document.getElementById('p-share-family').checked = config.privacy.shareFamily ?? true;
+      document.getElementById('p-import-family').checked = config.privacy.importFamily ?? true;
+      document.getElementById('p-research').checked = config.privacy.research ?? false;
+      document.getElementById('p-notify-email').checked = config.privacy.notifyEmail ?? true;
+      document.getElementById('p-notify-sms').checked = config.privacy.notifySms ?? false;
+    }
+  }
+
+  // 6. 表單提交與事件觸發
+  document.getElementById('connect-dropbox-btn').addEventListener('click', connectDropbox);
+
   document.getElementById('profile-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = {
@@ -767,12 +853,20 @@
       updatedAt: new Date().toISOString()
     };
 
-    await saveToDrive(payload);
+    const driveSuccess = await saveToDrive(payload);
+    const dropboxSuccess = await saveToDropbox(payload);
+
+    if (driveSuccess || dropboxSuccess) {
+      showToast('已同步儲存至您的雲端硬碟');
+    } else {
+      showToast('請先授權連結 Google Drive 或 Dropbox');
+    }
   });
 
-  // 6. 登出
+  // 7. 登出
   async function handleLogout() {
     sessionStorage.removeItem('drive_access_token');
+    sessionStorage.removeItem('dropbox_access_token');
     await signOut(auth);
     window.location.href = 'index.html';
   }
