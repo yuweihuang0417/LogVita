@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>健康庫 HealthKeep — 登入</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;600&family=Noto+Serif+TC:wght@400;600&display=swap" rel="stylesheet">
 <style>
  :root{
  --ink: #0f2a2b;
@@ -24,7 +25,7 @@
  body{
  background:var(--paper);
  color:var(--ink);
- font-family:"Noto Sans TC",-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+ font-family:"Noto Sans TC", "Noto Sans SC", -apple-system, "PingFang SC", "PingFang TC", "Microsoft YaHei", "Microsoft JhengHei", sans-serif;
  display:flex;
  min-height:100vh;
  }
@@ -54,7 +55,7 @@
  display:flex;
  align-items:center;
  gap:10px;
- font-family:"Noto Serif TC",serif;
+ font-family:"Noto Serif TC", "Noto Serif SC", serif;
  font-size:20px;
  letter-spacing:0.02em;
  z-index:1;
@@ -65,7 +66,7 @@
  }
  .brand-copy{ z-index:1; max-width:420px; }
  .brand-copy h1{
- font-family:"Noto Serif TC",serif;
+ font-family:"Noto Serif TC", "Noto Serif SC", serif;
  font-weight:600;
  font-size:clamp(30px,3.8vw,40px);
  line-height:1.45;
@@ -130,7 +131,7 @@
  margin:0 0 8px;
  }
  .card h2{
- font-family:"Noto Serif TC",serif;
+ font-family:"Noto Serif TC", "Noto Serif SC", serif;
  font-weight:600;
  font-size:26px;
  margin:0 0 28px;
@@ -148,7 +149,7 @@
  flex:1;
  border:none;
  background:transparent;
- padding:99px 0;
+ padding:9px 0;
  font-size:14px;
  font-weight:600;
  font-family:inherit;
@@ -339,7 +340,28 @@
  </div>
  <div class="brand-mark"><span class="dot"></span> 健康庫 HealthKeep</div>
  <div class="brand-copy">
- <h1>把<div class="mode-toggle" role="tablist" aria-label="選擇登入或註冊">
+ <h1>把每一次<em>就診紀錄</em><br>好好留下來</h1>
+ <p>檢驗報告、用藥紀錄、影像資料，統一安全存放。就醫時隨手調閱，換醫院、換科別都不用再重新說明一次病史。</p>
+ <div class="trust">
+ <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+ <path d="M12 2L4 5v6c0 5 3.4 8.7 8 9.9 4.6-1.2 8-4.9 8-9.9V5l-8-3z" stroke="#79e2c4" stroke-width="1.6" stroke-linejoin="round"/>
+ </svg>
+ <span>資料採加密儲存，僅本人與您授權的醫療人員可讀取</span>
+ </div>
+ </div>
+ <div class="pulse-wrap" aria-hidden="true">
+ <svg viewBox="0 0 420 70" xmlns="http://www.w3.org/2000/svg">
+ <polyline class="pulse-line" points="0,35 60,35 80,35 95,10 110,60 125,35 150,35 170,35 185,20 200,50 215,35 420,35"/>
+ </svg>
+ </div>
+ </div>
+
+ <div class="panel">
+ <div class="card">
+ <p class="eyebrow" id="eyebrow">歡迎回來</p>
+ <h2 id="heading">登入您的健康紀錄</h2>
+
+ <div class="mode-toggle" role="tablist" aria-label="選擇登入或註冊">
  <button type="button" class="active" id="tab-signin" role="tab" aria-selected="true">登入</button>
  <button type="button" id="tab-signup" role="tab" aria-selected="false">註冊</button>
  </div>
@@ -435,7 +457,7 @@
  const translations = {
  'zh-TW': {
  htmlLang:'zh-Hant-TW', title:'健康庫 HealthKeep — 登入',
- brandMark:'健康庫 HealthKeep', h1:'把每一次<em>就診紀錄</em><br>好好留下來',
+ brandMark:'健康庫 HealthKeep', h1:'把ผ每一個<em>就診紀錄</em><br>好好留下來',
  brandDesc:'檢驗報告、用藥紀錄、影像資料，統一安全存放。就醫時隨手調閱，換醫院、換科別都不用再重新說明一次病史。',
  trust:'資料採加密儲存，僅本人與您授權的醫療人員可讀取',
  welcome:'歡迎回來', start:'開始使用', signInTitle:'登入您的健康紀錄', signUpTitle:'建立您的健康紀錄帳號',
