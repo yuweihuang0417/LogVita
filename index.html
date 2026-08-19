@@ -537,33 +537,52 @@
 <div class="toast" id="toast"><span class="dot"></span><span id="toast-text"></span></div>
 
 <script type="module">
- import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
- import {
- getAuth,
- GoogleAuthProvider,
- signInWithPopup,
- createUserWithEmailAndPassword,
- signInWithEmailAndPassword,
- sendPasswordResetEmail,
- updateProfile
- } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+ // --- Firebase 以動態 import 載入，並用 try/catch 包起來 ---
+ // 原本用「靜態 import」放在檔案最上面：只要這兩行載入失敗（例如用 file:// 直接開啟
+ // 這個檔案、公司網路/廣告攔截器封鎖了 gstatic.com、或離線），整個 <script type="module">
+ // 會直接中斷，導致下面所有程式碼（分頁切換、忘記密碼按鈕等）完全不會執行。
+ // 改成動態 import + try/catch 後，即使 Firebase 載入失敗，UI 邏輯仍可正常運作，
+ // 只有真正需要帳號功能（Google 登入、Email 登入/註冊、重設密碼）時才會提示錯誤。
+ let initializeApp, getAuth, GoogleAuthProvider, signInWithPopup,
+     createUserWithEmailAndPassword, signInWithEmailAndPassword,
+     sendPasswordResetEmail, updateProfile;
+ let app, auth, googleProvider;
+ let firebaseReady = false;
+ let firebaseLoadError = null;
 
- const firebaseConfig = {
- apiKey: "AIzaSyDsKJOzaQKosJeJgUfZXBc0pahDzBKV7e8",
- authDomain: "tmu-medical.firebaseapp.com",
- projectId: "tmu-medical",
- storageBucket: "tmu-medical.firebasestorage.app",
- messagingSenderId: "370307905675",
- appId: "1:370307905675:web:bcb25f57995fbe5965fc8e",
- measurementId: "G-4YVJDN5Y7C"
- };
+ try {
+   const [{ initializeApp: _initializeApp }, authModule] = await Promise.all([
+     import("https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js"),
+     import("https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js")
+   ]);
+   ({
+     getAuth, GoogleAuthProvider, signInWithPopup,
+     createUserWithEmailAndPassword, signInWithEmailAndPassword,
+     sendPasswordResetEmail, updateProfile
+   } = authModule);
+   initializeApp = _initializeApp;
 
- const app = initializeApp(firebaseConfig);
- const auth = getAuth(app);
- const googleProvider = new GoogleAuthProvider();
+   const firebaseConfig = {
+     apiKey: "AIzaSyDsKJOzaQKosJeJgUfZXBc0pahDzBKV7e8",
+     authDomain: "tmu-medical.firebaseapp.com",
+     projectId: "tmu-medical",
+     storageBucket: "tmu-medical.firebasestorage.app",
+     messagingSenderId: "370307905675",
+     appId: "1:370307905675:web:bcb25f57995fbe5965fc8e",
+     measurementId: "G-4YVJDN5Y7C"
+   };
 
- googleProvider.setCustomParameters({ prompt: 'select_account' });
- googleProvider.addScope('https://www.googleapis.com/auth/drive.file');
+   app = initializeApp(firebaseConfig);
+   auth = getAuth(app);
+   googleProvider = new GoogleAuthProvider();
+   googleProvider.setCustomParameters({ prompt: 'select_account' });
+   googleProvider.addScope('https://www.googleapis.com/auth/drive.file');
+
+   firebaseReady = true;
+ } catch (err) {
+   firebaseLoadError = err;
+   console.error('Firebase 載入失敗，帳號相關功能將無法使用（但介面互動仍可正常運作）:', err);
+ }
 
  const tabSignin = document.getElementById('tab-signin');
  const tabSignup = document.getElementById('tab-signup');
@@ -1165,12 +1184,17 @@
  return t.errors[code] || t.generic;
  }
 
- document.addEventListener('click', async (e) => {
- if (e.target && e.target.id === 'forgot-password-btn') {
+ document.getElementById('forgot-password-btn')?.addEventListener('click', async () => {
  clearErrors();
+ const t = translations[currentLanguage] || translations['zh-TW'];
+
+ if(!firebaseReady){
+ showToast(t.generic);
+ return;
+ }
+
  const email = document.getElementById('email').value.trim();
  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
- const t = translations[currentLanguage] || translations['zh-TW'];
 
  if(!emailOk){
  document.getElementById('email-field').classList.add('invalid');
@@ -1188,12 +1212,16 @@
  } finally {
  setLoading(false);
  }
- }
  });
 
  applyLanguage(currentLanguage);
 
  googleBtn.addEventListener('click', async () => {
+ const t0 = translations[currentLanguage] || translations['zh-TW'];
+ if(!firebaseReady){
+ showToast(t0.generic);
+ return;
+ }
  setLoading(true);
  try {
  const result = await signInWithPopup(auth, googleProvider);
@@ -1240,8 +1268,13 @@
 
  if(!valid) return;
 
- setLoading(true);
  const t = translations[currentLanguage] || translations['zh-TW'];
+ if(!firebaseReady){
+ showToast(t.generic);
+ return;
+ }
+
+ setLoading(true);
  try {
  const recaptchaToken = await new Promise((resolve, reject) => {
    if (typeof grecaptcha === 'undefined') {
