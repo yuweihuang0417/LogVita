@@ -425,9 +425,10 @@
         <div class="auth-item" id="item-google">
           <div class="auth-avatar" style="background:#e8f0fe; color:#4285F4;">G</div>
           <div class="auth-main">
-            <div class="name">Google 帳號</div>
-            <div class="meta" id="google-auth-email">載入中...</div>
+            <div class="name">Google Drive</div>
+            <div class="meta" id="google-auth-email">未連結</div>
           </div>
+          <button type="button" class="btn-ghost" id="connect-google-btn">連結 Google Drive</button>
         </div>
         <div class="auth-item" id="item-dropbox">
           <div class="auth-avatar" style="background:#e3f2fd; color:#0061fe; font-weight:bold;">Db</div>
@@ -578,7 +579,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-  import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import { getAuth, signOut, onAuthStateChanged, GoogleAuthProvider, reauthenticateWithPopup, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -639,6 +640,7 @@
   function updateStorageConnectionUI(activeProvider) {
     const itemGoogle = document.getElementById('item-google');
     const itemDropbox = document.getElementById('item-dropbox');
+    const btnGoogle = document.getElementById('connect-google-btn');
     const btnDropbox = document.getElementById('connect-dropbox-btn');
 
     if (activeProvider === 'dropbox') {
@@ -648,13 +650,26 @@
       btnDropbox.textContent = '已連結';
 
       itemGoogle.classList.add('disabled-item');
+      btnGoogle.disabled = true;
+      btnGoogle.textContent = '已停用（已使用Dropbox）';
     } else if (activeProvider === 'google') {
       // 連結 Google 時：啟用 Google、反黑停用 Dropbox
       itemGoogle.classList.remove('disabled-item');
+      btnGoogle.disabled = false;
+      btnGoogle.textContent = '已連結';
 
       itemDropbox.classList.add('disabled-item');
       btnDropbox.disabled = true;
       btnDropbox.textContent = '已停用（已使用Google）';
+    } else {
+      // 兩者皆未連結 (如用 Email 登入)
+      itemGoogle.classList.remove('disabled-item');
+      btnGoogle.disabled = false;
+      btnGoogle.textContent = '連結 Google Drive';
+
+      itemDropbox.classList.remove('disabled-item');
+      btnDropbox.disabled = false;
+      btnDropbox.textContent = '連結 Dropbox';
     }
   }
 
@@ -669,7 +684,6 @@
       document.getElementById('user-name').textContent = displayName;
       document.getElementById('user-email').textContent = user.email || '';
       document.getElementById('p-name').value = displayName;
-      document.getElementById('google-auth-email').textContent = `${user.email} · 已連結`;
 
       // 即時填入真實裝置資訊
       document.getElementById('current-device-info').textContent = detectDeviceType();
@@ -681,25 +695,52 @@
       const urlToken = params.get('access_token');
 
       if (urlToken) {
-        // 將最新授權的 Token 存入 Firestore 進行跨裝置永久綁定
         await saveDropboxTokenToFirestore(user.uid, urlToken);
         window.history.replaceState({}, document.title, window.location.pathname);
       }
 
-      // 從 Firestore 資料庫獲取該帳號對應的 Dropbox Token
+      // 判斷雲端硬碟連結狀態
       const dropboxToken = await getDropboxTokenFromFirestore(user.uid);
+      const driveToken = getAccessToken();
+
       if (dropboxToken) {
         sessionStorage.setItem('dropbox_access_token', dropboxToken);
         document.getElementById('dropbox-status').textContent = '已連結';
+        document.getElementById('google-auth-email').textContent = '未連結';
         updateStorageConnectionUI('dropbox');
         await loadFromDropbox();
-      } else {
-        // 預設採用 Google Drive
+      } else if (driveToken) {
+        document.getElementById('google-auth-email').textContent = `${user.email} · 已連結`;
+        document.getElementById('dropbox-status').textContent = '未連結';
         updateStorageConnectionUI('google');
         await loadFromDrive();
+      } else {
+        document.getElementById('google-auth-email').textContent = '未連結';
+        document.getElementById('dropbox-status').textContent = '未連結';
+        updateStorageConnectionUI(null);
       }
     } else {
       window.location.href = 'index.html';
+    }
+  });
+
+  // Google Drive 手動授權連結 (供 Email 登入者使用)
+  document.getElementById('connect-google-btn').addEventListener('click', async () => {
+    const provider = new GoogleAuthProvider();
+    provider.addScope('https://www.googleapis.com/auth/drive.file');
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      if (credential && credential.accessToken) {
+        sessionStorage.setItem('drive_access_token', credential.accessToken);
+        document.getElementById('google-auth-email').textContent = `${result.user.email} · 已連結`;
+        updateStorageConnectionUI('google');
+        showToast('已成功授權連結 Google Drive');
+        await loadFromDrive();
+      }
+    } catch (err) {
+      console.error('Google Drive 連結失敗:', err);
+      showToast('Google Drive 授權失敗');
     }
   });
 
