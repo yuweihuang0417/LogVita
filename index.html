@@ -235,25 +235,25 @@
  .field.invalid input{ border-color:var(--error); }
  .field.invalid small.err{ display:block; }
 
- .forgot-action-row{
- display:block;
- text-align:right;
- margin-top:-6px;
- margin-bottom:-2px;
+ .label-row {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ margin-bottom: 6px;
  }
- .forgot-action-row[hidden]{
- display:none !important;
+ .label-row label {
+ margin-bottom: 0 !important;
  }
- .forgot-btn{
- background:none !important;
- border:none !important;
- font-family:inherit;
- font-size:12.5px !important;
- font-weight:600 !important;
- color:var(--navy) !important;
- cursor:pointer !important;
- padding:0 !important;
- text-decoration:underline !important;
+ .forgot-btn-inline {
+ background: none;
+ border: none;
+ font-family: inherit;
+ font-size: 12.5px;
+ font-weight: 600;
+ color: var(--navy);
+ cursor: pointer;
+ padding: 0;
+ text-decoration: underline;
  }
 
  .submit-btn{
@@ -494,13 +494,12 @@
  <small class="err">請輸入有效的電子郵件地址。</small>
  </div>
  <div class="field" id="password-field">
+ <div class="label-row">
  <label for="password">密碼</label>
+ <button type="button" class="forgot-btn-inline" id="forgot-password-btn">忘記密碼？</button>
+ </div>
  <input type="password" id="password" placeholder="至少 8 個字元" autocomplete="current-password">
  <small class="err">密碼至少需要 8 個字元。</small>
- </div>
- 
- <div class="forgot-action-row" id="forgot-wrap">
- <button type="button" class="forgot-btn" id="forgot-password-btn">忘記密碼？</button>
  </div>
 
  <button type="submit" class="submit-btn" id="submit-btn">登入</button>
@@ -576,6 +575,7 @@
  const passwordInput = document.getElementById('password');
  const googleBtn = document.getElementById('google-btn');
  const languageSelect = document.getElementById('language-select');
+ const forgotBtn = document.getElementById('forgot-password-btn');
 
  window.openModal = function(id) {
    document.getElementById(id)?.classList.add('show');
@@ -1035,7 +1035,7 @@
  signIn:'로그인', signUp:'회원가입', google:'Google로 계속하기', orEmail:'또는 이메일 사용',
  name:'이름', namePh:'이름을 입력하세요', email:'이메일', emailPh:'you@example.com',
  password:'비밀번호', passwordPh:'최소 8자 이상', create:'계정 생성', noAccount:'계정이 없으신가요?', hasAccount:'이미 계정이 있으신가요?',
- createAccount:'계정 생성', terms:'가입하시면 <a id="open-tos-btn">서비스 약관</a> 및 <a id="open-privacy-방침">개인정보 처리방침</a>에 동의하게 됩니다.', privacy:'개인정보 보호법에 따라 안전하게 보호됩니다.',
+ createAccount:'계정 생성', terms:'가입하시면 <a id="open-tos-btn">서비스 약관</a> 및 <a id="open-privacy-btn">개인정보 처리방침</a>에 동의하게 됩니다.', privacy:'개인정보 보호법에 따라 안전하게 보호됩니다.',
  errName:'이름을 입력해 주세요.', errEmail:'올바른 이메일 주소를 입력해 주세요.', errPassword:'비밀번호는 최소 8자 이상이어야 합니다.',
  forgotPassword:'비밀번호를 잊으셨나요?', enterEmailPrompt:'먼저 이메일을 입력해 주세요.', resetSentToast:'비밀번호 재설정 이메일이 발송되었습니다.',
  successSignup:'계정이 성공적으로 생성되었습니다.', successSignin:'로그인 성공', welcomeUser:'환영합니다, ',
@@ -1072,13 +1072,8 @@
  tabSignup.setAttribute('aria-selected', String(isSignup));
  nameField.style.display = isSignup ? 'block' : 'none';
 
- const forgotWrap = document.getElementById('forgot-wrap');
- if (forgotWrap) {
-   if (isSignup) {
-     forgotWrap.setAttribute('hidden', '');
-   } else {
-     forgotWrap.removeAttribute('hidden');
-   }
+ if (forgotBtn) {
+   forgotBtn.style.display = isSignup ? 'none' : 'inline-block';
  }
 
  heading.textContent = isSignup ? t.signUpTitle : t.signInTitle;
@@ -1114,7 +1109,6 @@
  document.querySelector('label[for="password"]').textContent = t.password;
  passwordInput.placeholder = t.passwordPh;
 
- const forgotBtn = document.getElementById('forgot-password-btn');
  if (forgotBtn) forgotBtn.textContent = t.forgotPassword;
 
  document.querySelector('#name-field .err').textContent = t.errName;
@@ -1161,7 +1155,6 @@
  function setLoading(isLoading){
  submitBtn.disabled = isLoading;
  googleBtn.disabled = isLoading;
- const forgotBtn = document.getElementById('forgot-password-btn');
  if (forgotBtn) forgotBtn.disabled = isLoading;
  }
 
@@ -1172,7 +1165,7 @@
 
  applyLanguage(currentLanguage);
 
- document.getElementById('forgot-password-btn')?.addEventListener('click', async () => {
+ forgotBtn?.addEventListener('click', async () => {
  clearErrors();
  const email = document.getElementById('email').value.trim();
  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
