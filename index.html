@@ -3,10 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>健康庫 LogVita — 登入</title>
+<title>健康庫 HealthKeep — 登入</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;600&family=Noto+Serif+TC:wght@400;600&display=swap" rel="stylesheet">
+
+<!-- Google reCAPTCHA v3 SDK (請替換 YOUR_RECAPTCHA_SITE_KEY) -->
+<script src="https://www.google.com/recaptcha/api.js?render=6LdmRI0tAAAAADVz24cBddUISehgAZqtO9r2Qmp4"></script>
 
 <style>
  :root{
@@ -340,7 +343,7 @@
  <option value="ko">한국어</option>
  </select>
  </div>
- <div class="brand-mark"><span class="dot"></span> 健康庫 LogVita</div>
+ <div class="brand-mark"><span class="dot"></span> 健康庫 HealthKeep</div>
  <div class="brand-copy">
  <h1>把每一次<em>就診紀錄</em><br>好好留下來</h1>
  <p>檢驗報告、用藥紀錄、影像資料，統一安全存放。就醫時隨手調閱，換醫院、換科別都不用再重新說明一次病史。</p>
@@ -458,8 +461,8 @@
 
  const translations = {
  'zh-TW': {
- htmlLang:'zh-Hant-TW', title:'健康庫 LogVita — 登入',
- brandMark:'健康庫 LogVita', h1:'把每一次<em>就診紀錄</em><br>好好留下來',
+ htmlLang:'zh-Hant-TW', title:'健康庫 HealthKeep — 登入',
+ brandMark:'健康庫 HealthKeep', h1:'把每一次<em>就診紀錄</em><br>好好留下來',
  brandDesc:'檢驗報告、用藥紀錄、影像資料，統一安全存放。就醫時隨手調閱，換醫院、換科別都不用再重新說明一次病史。',
  trust:'資料採加密儲存，僅本人與您授權的醫療人員可讀取',
  welcome:'歡迎回來', start:'開始使用', signInTitle:'登入您的健康紀錄', signUpTitle:'建立您的健康紀錄帳號',
@@ -468,7 +471,7 @@
  password:'密碼', passwordPh:'至少 8 個字元', create:'建立帳號', noAccount:'還沒有帳號？', hasAccount:'已經有帳號了？',
  createAccount:'建立帳號', terms:'註冊即表示您同意我們的服務條款與隱私權政策，', privacy:'您的健康資料受《個人資料保護法》規範保護。',
  errName:'請輸入姓名。', errEmail:'請輸入有效的電子郵件地址。', errPassword:'密碼至少需要 8 個字元。',
- successSignup:'帳號建立成功，歡迎加入健康庫 LogVita', successSignin:'登入成功', welcomeUser:'歡迎，',
+ successSignup:'帳號建立成功，歡迎加入健康庫', successSignin:'登入成功', welcomeUser:'歡迎，',
  errors:{
  'auth/email-already-in-use':'這個電子郵件已經註冊過了，請直接登入。','auth/invalid-email':'電子郵件格式不正確。',
  'auth/weak-password':'密碼強度不足，請使用至少 8 個字元。','auth/user-not-found':'找不到這個帳號，請確認電子郵件或先註冊。',
@@ -478,8 +481,8 @@
  }, generic:'發生錯誤，請稍後再試。'
  },
  'zh-CN': {
- htmlLang:'zh-Hans-CN', title:'健康库 LogVita — 登录',
- brandMark:'健康库 LogVita', h1:'把每一次<em>就诊记录</em><br>好好留存',
+ htmlLang:'zh-Hans-CN', title:'健康库 HealthKeep — 登录',
+ brandMark:'健康库 HealthKeep', h1:'把每一次<em>就诊记录</em><br>好好留存',
  brandDesc:'检验报告、用药记录、影像资料，统一安全存放。就医时随手调阅，换医院、换科别都不用再重新说明病史。',
  trust:'数据采用加密存储，仅本人与您授权的医疗人员可读取',
  welcome:'欢迎回来', start:'开始使用', signInTitle:'登录您的健康记录', signUpTitle:'创建您的健康记录账号',
@@ -488,7 +491,7 @@
  password:'密码', passwordPh:'至少 8 个字符', create:'创建账号', noAccount:'还没有账号？', hasAccount:'已经有账号了？',
  createAccount:'创建账号', terms:'注册即表示您同意我们的服务条款与隐私政策，', privacy:'您的健康数据受个人信息保护法律法规保护。',
  errName:'请输入姓名。', errEmail:'请输入有效的电子邮件地址。', errPassword:'密码至少需要 8 个字符。',
- successSignup:'账号创建成功，欢迎加入健康库 LogVita', successSignin:'登录成功', welcomeUser:'欢迎，',
+ successSignup:'账号创建成功，欢迎加入健康库', successSignin:'登录成功', welcomeUser:'欢迎，',
  errors:{
  'auth/email-already-in-use':'该电子邮件已被注册，请直接登录。','auth/invalid-email':'电子邮件格式不正确。',
  'auth/weak-password':'密码强度不足，请使用至少 8 个字符。','auth/user-not-found':'找不到该账号，请检查邮箱或先注册。',
@@ -498,11 +501,11 @@
  }, generic:'发生错误，请稍后再试。'
  },
  'en': {
- htmlLang:'en', title:'LogVita — Sign in',
- brandMark:'LogVita', h1:'Keep every <em>medical record</em><br>safe and accessible',
+ htmlLang:'en', title:'HealthKeep — Sign in',
+ brandMark:'HealthKeep', h1:'Keep every <em>medical record</em><br>safe and accessible',
  brandDesc:'Store test reports, medication records, and medical images securely in one place. Access them whenever you need them.',
  trust:'Encrypted storage. Accessible only by you and authorized healthcare professionals.',
- welcome:'Welcome back', start:'Get started', signInTitle:'Sign in to your health records', signUpTitle:'Create your LogVita account',
+ welcome:'Welcome back', start:'Get started', signInTitle:'Sign in to your health records', signUpTitle:'Create your HealthKeep account',
  signIn:'Sign in', signUp:'Sign up', google:'Continue with Google', orEmail:'or use email',
  name:'Name', namePh:'Enter your name', email:'Email', emailPh:'you@example.com',
  password:'Password', passwordPh:'At least 8 characters', create:'Create account', noAccount:"Don't have an account?", hasAccount:'Already have an account?',
@@ -518,11 +521,11 @@
  }, generic:'Something went wrong. Please try again later.'
  },
  'ja': {
- htmlLang:'ja', title:'LogVita — ログイン',
- brandMark:'LogVita', h1:'すべての<em>診療記録</em>を<br>安全に保管',
+ htmlLang:'ja', title:'HealthKeep — ログイン',
+ brandMark:'HealthKeep', h1:'すべての<em>診療記録</em>を<br>安全に保管',
  brandDesc:'検査結果、処方箋、画像データを一箇所で安全に管理。転院時も病歴の説明がスムーズに。',
  trust:'暗号化保管。あなたと許可された医療従事者のみが閲覧可能。',
- welcome:'おかえりなさい', start:'はじめる', signInTitle:'健康記録にログイン', signUpTitle:'LogVitaアカウントの作成',
+ welcome:'おかえりなさい', start:'はじめる', signInTitle:'健康記録にログイン', signUpTitle:'HealthKeepアカウントの作成',
  signIn:'ログイン', signUp:'新規登録', google:'Google で継続', orEmail:'またはメールアドレスで',
  name:'お名前', namePh:'お名前を入力してください', email:'メールアドレス', emailPh:'you@example.com',
  password:'パスワード', passwordPh:'8文字以上', create:'アカウント作成', noAccount:'アカウントをお持ちでないですか？', hasAccount:'すでにアカウントをお持ちですか？',
@@ -538,11 +541,11 @@
  }, generic:'エラーが発生しました。時間をおいて再試行してください。'
  },
  'ko': {
- htmlLang:'ko', title:'LogVita — 로그인',
- brandMark:'LogVita', h1:'모든 <em>진료 기록</em>을<br>안전하게 보관하세요',
+ htmlLang:'ko', title:'HealthKeep — 로그인',
+ brandMark:'HealthKeep', h1:'모든 <em>진료 기록</em>을<br>안전하게 보관하세요',
  brandDesc:'검사 결과, 처방 기록, 영상 자료를 한곳에 안전하게 저장하고 언제든지 쉽게 확인하세요.',
  trust:'암호화 저장. 본인 및 승인된 의료진만 접근 가능합니다.',
- welcome:'환영합니다', start:'시작하기', signInTitle:'건강 기록 로그인', signUpTitle:'LogVita 계정 생성',
+ welcome:'환영합니다', start:'시작하기', signInTitle:'건강 기록 로그인', signUpTitle:'HealthKeep 계정 생성',
  signIn:'로그인', signUp:'회원가입', google:'Google로 계속하기', orEmail:'또는 이메일 사용',
  name:'이름', namePh:'이름을 입력하세요', email:'이메일', emailPh:'you@example.com',
  password:'비밀번호', passwordPh:'최소 8자 이상', create:'계정 생성', noAccount:'계정이 없으신가요?', hasAccount:'이미 계정이 있으신가요?',
@@ -559,7 +562,7 @@
  }
  };
 
- let currentLanguage = localStorage.getItem('logvita-language') || navigator.language;
+ let currentLanguage = localStorage.getItem('healthkeep-language') || navigator.language;
  if (!translations[currentLanguage]) {
  const langPrefix = currentLanguage.split('-')[0];
  if (langPrefix === 'zh') currentLanguage = currentLanguage.includes('CN') ? 'zh-CN' : 'zh-TW';
@@ -593,7 +596,7 @@
  function applyLanguage(lang){
  const t = translations[lang] || translations['zh-TW'];
  currentLanguage = lang;
- localStorage.setItem('logvita-language', lang);
+ localStorage.setItem('healthkeep-language', lang);
  document.documentElement.lang = t.htmlLang;
  document.title = t.title;
  
@@ -698,6 +701,19 @@
  setLoading(true);
  const t = translations[currentLanguage] || translations['zh-TW'];
  try {
+ // 執行 reCAPTCHA v3 驗證，取得 Token
+ const recaptchaToken = await new Promise((resolve, reject) => {
+   if (typeof grecaptcha === 'undefined') {
+     reject(new Error('reCAPTCHA SDK 未載入'));
+     return;
+   }
+   grecaptcha.ready(() => {
+     grecaptcha.execute('6LdmRI0tAAAAADVz24cBddUISehgAZqtO9r2Qmp4', { action: mode })
+       .then(resolve)
+       .catch(reject);
+   });
+ });
+
  if(mode === 'signup'){
  const cred = await createUserWithEmailAndPassword(auth, email, password);
  await updateProfile(cred.user, { displayName: name });
@@ -718,3 +734,4 @@
 
 </body>
 </html>
+吧
