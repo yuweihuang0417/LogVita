@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;600&family=Noto+Serif+TC:wght@400;600&display=swap" rel="stylesheet">
 
-<!-- Google reCAPTCHA v3 SDK (請替換 YOUR_RECAPTCHA_SITE_KEY) -->
+<!-- Google reCAPTCHA v3 SDK -->
 <script src="https://www.google.com/recaptcha/api.js?render=6LdmRI0tAAAAADVz24cBddUISehgAZqtO9r2Qmp4"></script>
 
 <style>
@@ -493,7 +493,7 @@
 <!-- 服務條款 小方格 -->
 <div class="modal-overlay" id="tos-modal">
   <div class="modal-box">
-    <button class="modal-close" onclick="closeModal('tos-modal')">&times;</button>
+    <button class="modal-close" onclick="window.closeModal('tos-modal')">&times;</button>
     <h3>服務條款（Terms of Service）</h3>
     <div class="modal-content"></div>
   </div>
@@ -502,7 +502,7 @@
 <!-- 隱私政策 小方格 -->
 <div class="modal-overlay" id="privacy-modal">
   <div class="modal-box">
-    <button class="modal-close" onclick="closeModal('privacy-modal')">&times;</button>
+    <button class="modal-close" onclick="window.closeModal('privacy-modal')">&times;</button>
     <h3>隱私政策（Privacy Policy）</h3>
     <div class="modal-content"></div>
   </div>
@@ -521,7 +521,7 @@
  updateProfile
  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
- /* 引入外部條款 JS 檔案（請確保檔名與路徑對應） */
+ /* 匯入外部多語言條款模組 */
  import { legalTranslations } from './legal-content.js';
 
  const firebaseConfig = {
@@ -555,7 +555,7 @@
  const googleBtn = document.getElementById('google-btn');
  const languageSelect = document.getElementById('language-select');
 
- /* 小方格 Modal 控制邏輯 */
+ /* 將彈窗控制函式明確綁定至 window 物件，避免內聯 onclick 找不到全域函式 */
  window.openModal = function(id) {
    document.getElementById(id)?.classList.add('show');
  }
@@ -564,8 +564,8 @@
  }
 
  function bindModalEvents() {
-   document.getElementById('open-tos-btn')?.addEventListener('click', () => openModal('tos-modal'));
-   document.getElementById('open-privacy-btn')?.addEventListener('click', () => openModal('privacy-modal'));
+   document.getElementById('open-tos-btn')?.addEventListener('click', () => window.openModal('tos-modal'));
+   document.getElementById('open-privacy-btn')?.addEventListener('click', () => window.openModal('privacy-modal'));
  }
 
  document.querySelectorAll('.modal-overlay').forEach(overlay => {
@@ -581,7 +581,7 @@
  htmlLang:'zh-Hant-TW', title:'健康庫 HealthKeep — 登入',
  brandMark:'健康庫 HealthKeep', h1:'把每一次<em>就診紀錄</em><br>好好留下來',
  brandDesc:'檢驗報告、用藥紀錄、影像資料，統一安全存放。就醫時隨手調閱，換醫院、換科別都不用再重新說明一次病史。',
- trust:'資料採使用者硬碟儲存，僅本人與您授權的人員可讀取',
+ trust:'資料採加密儲存，僅本人與您授權的醫療人員可讀取',
  welcome:'歡迎回來', start:'開始使用', signInTitle:'登入您的健康紀錄', signUpTitle:'建立您的健康紀錄帳號',
  signIn:'登入', signUp:'註冊', google:'使用 Google 繼續', orEmail:'或使用電子郵件',
  name:'姓名', namePh:'請輸入您的姓名', email:'電子郵件', emailPh:'you@example.com',
@@ -712,7 +712,7 @@
 
  function applyLanguage(lang){
  const t = translations[lang] || translations['zh-TW'];
- const legal = legalTranslations[lang] || legalTranslations['zh-TW'];
+ const legal = (typeof legalTranslations !== 'undefined') ? (legalTranslations[lang] || legalTranslations['zh-TW']) : null;
 
  currentLanguage = lang;
  localStorage.setItem('healthkeep-language', lang);
@@ -738,17 +738,19 @@
  document.querySelector('#password-field .err').textContent = t.errPassword;
  document.querySelector('.legal').innerHTML = `${t.terms}<br>${t.privacy}`;
  
- /* 動態更新 Modal (讀取自 legal-content.js) */
- const tosModal = document.getElementById('tos-modal');
- if (tosModal && legal) {
-   tosModal.querySelector('h3').textContent = legal.tosTitle;
-   tosModal.querySelector('.modal-content').innerHTML = legal.tosContent;
- }
+ /* 渲染條款 Modal 內容 */
+ if (legal) {
+   const tosModal = document.getElementById('tos-modal');
+   if (tosModal) {
+     tosModal.querySelector('h3').textContent = legal.tosTitle;
+     tosModal.querySelector('.modal-content').innerHTML = legal.tosContent;
+   }
 
- const privacyModal = document.getElementById('privacy-modal');
- if (privacyModal && legal) {
-   privacyModal.querySelector('h3').textContent = legal.privacyTitle;
-   privacyModal.querySelector('.modal-content').innerHTML = legal.privacyContent;
+   const privacyModal = document.getElementById('privacy-modal');
+   if (privacyModal) {
+     privacyModal.querySelector('h3').textContent = legal.privacyTitle;
+     privacyModal.querySelector('.modal-content').innerHTML = legal.privacyContent;
+   }
  }
 
  bindModalEvents();
