@@ -115,8 +115,16 @@
   .btn-ghost{
     background:#fff; border:1px solid var(--line); color:#5c6b68;
     padding:9px 16px; border-radius:10px; font-family:inherit; font-size:13.5px; font-weight:700; cursor:pointer;
+    transition: all 0.2s ease;
   }
-  .btn-ghost:hover{ border-color:#b9c7c3; }
+  .btn-ghost:hover:not(:disabled){ border-color:#b9c7c3; }
+  .btn-ghost:disabled{
+    background-color: #f0f0f0 !important;
+    border-color: #e0e0e0 !important;
+    color: #a0a0a0 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+  }
   .btn-primary{
     background:var(--navy); color:#fff; border:none;
     padding:11px 20px; border-radius:10px;
@@ -147,8 +155,9 @@
   .switch input:checked + .track + .thumb{ transform:translateX(18px); }
 
   /* AUTH LIST */
-  .auth-item{ display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid var(--line); }
+  .auth-item{ display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid var(--line); transition: opacity 0.2s ease; }
   .auth-item:last-child{ border-bottom:none; padding-bottom:0; }
+  .auth-item.disabled-item { opacity: 0.45; filter: grayscale(100%); }
   .auth-avatar{
     width:40px; height:40px; border-radius:50%; background:#eef4f2; color:var(--teal);
     display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0;
@@ -411,16 +420,16 @@
       </div>
 
       <div class="card">
-        <h2>登入方式</h2>
-        <div class="card-sub">目前使用的登入方式與雲端連結</div>
-        <div class="auth-item">
+        <h2>登入方式與雲端儲存</h2>
+        <div class="card-sub">請選擇並使用其中一種雲端硬碟備份與儲存您的健康資料</div>
+        <div class="auth-item" id="item-google">
           <div class="auth-avatar" style="background:#e8f0fe; color:#4285F4;">G</div>
           <div class="auth-main">
             <div class="name">Google 帳號</div>
             <div class="meta" id="google-auth-email">載入中...</div>
           </div>
         </div>
-        <div class="auth-item">
+        <div class="auth-item" id="item-dropbox">
           <div class="auth-avatar" style="background:#e3f2fd; color:#0061fe; font-weight:bold;">Db</div>
           <div class="auth-main">
             <div class="name">Dropbox 雲端硬碟</div>
@@ -626,6 +635,29 @@
     });
   });
 
+  // 互斥控制：避免重複連結兩者
+  function updateStorageConnectionUI(activeProvider) {
+    const itemGoogle = document.getElementById('item-google');
+    const itemDropbox = document.getElementById('item-dropbox');
+    const btnDropbox = document.getElementById('connect-dropbox-btn');
+
+    if (activeProvider === 'dropbox') {
+      // 連結 Dropbox 時：啟用 Dropbox、反黑停用 Google
+      itemDropbox.classList.remove('disabled-item');
+      btnDropbox.disabled = false;
+      btnDropbox.textContent = '已連結';
+
+      itemGoogle.classList.add('disabled-item');
+    } else if (activeProvider === 'google') {
+      // 連結 Google 時：啟用 Google、反黑停用 Dropbox
+      itemGoogle.classList.remove('disabled-item');
+
+      itemDropbox.classList.add('disabled-item');
+      btnDropbox.disabled = true;
+      btnDropbox.textContent = '已停用（已使用Google）';
+    }
+  }
+
   // 3. Auth 狀態變更監聽與跨裝置 Token 同步
   onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -659,8 +691,11 @@
       if (dropboxToken) {
         sessionStorage.setItem('dropbox_access_token', dropboxToken);
         document.getElementById('dropbox-status').textContent = '已連結';
+        updateStorageConnectionUI('dropbox');
         await loadFromDropbox();
       } else {
+        // 預設採用 Google Drive
+        updateStorageConnectionUI('google');
         await loadFromDrive();
       }
     } else {
