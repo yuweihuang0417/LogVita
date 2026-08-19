@@ -254,6 +254,7 @@
  cursor: pointer;
  padding: 0;
  text-decoration: underline;
+ display: inline-block;
  }
 
  .submit-btn{
@@ -597,7 +598,6 @@
 
  let mode = 'signin';
 
- /* 四語系法律條款內容數據 */
  const legalTranslations = {
   'zh-TW': {
     tosTitle: '服務條款（Terms of Service）',
@@ -1163,8 +1163,6 @@
  return t.errors[code] || t.generic;
  }
 
- applyLanguage(currentLanguage);
-
  forgotBtn?.addEventListener('click', async () => {
  clearErrors();
  const email = document.getElementById('email').value.trim();
@@ -1188,6 +1186,8 @@
  setLoading(false);
  }
  });
+
+ applyLanguage(currentLanguage);
 
  googleBtn.addEventListener('click', async () => {
  setLoading(true);
