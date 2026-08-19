@@ -275,6 +275,12 @@
  color:#9aa8a5;
  text-align:center;
  }
+ .legal a{
+ color:var(--navy);
+ font-weight:600;
+ text-decoration:underline;
+ cursor:pointer;
+ }
 
  .toast{
  position:fixed;
@@ -321,6 +327,57 @@
  }
  .language-switcher select:hover{background-color:rgba(255,255,255,.14);}
  .language-switcher select option{color:var(--ink);background:#fff;}
+
+ /* MODAL (點擊跳出小方格) */
+ .modal-overlay{
+ position:fixed;
+ inset:0;
+ background:rgba(10,32,33,0.6);
+ backdrop-filter:blur(3px);
+ display:none;
+ align-items:center;
+ justify-content:center;
+ z-index:100;
+ padding:20px;
+ }
+ .modal-overlay.show{ display:flex; }
+ .modal-box{
+ background:#fff;
+ width:100%;
+ max-width:480px;
+ border-radius:var(--radius);
+ padding:28px;
+ position:relative;
+ box-shadow:0 20px 40px rgba(0,0,0,0.2);
+ animation: popIn .2s ease-out;
+ }
+ @keyframes popIn{
+ from{ opacity:0; transform:scale(0.95); }
+ to{ opacity:1; transform:scale(1); }
+ }
+ .modal-close{
+ position:absolute;
+ top:16px;
+ right:18px;
+ background:none;
+ border:none;
+ font-size:22px;
+ color:#7c8c8a;
+ cursor:pointer;
+ line-height:1;
+ }
+ .modal-box h3{
+ margin:0 0 12px;
+ font-family:"Noto Serif TC", "Noto Serif SC", serif;
+ color:var(--navy);
+ }
+ .modal-box div{
+ font-size:14px;
+ line-height:1.6;
+ color:#4c5a57;
+ max-height:300px;
+ overflow-y:auto;
+ }
 
  @media (max-width: 860px){
  .stage{ flex-direction:column; }
@@ -407,9 +464,22 @@
  <button type="button" id="foot-switch">建立帳號</button>
  </p>
 
- <p class="legal">註冊即表示您同意我們的服務條款與隱私權政策，<br>您的健康資料受《個人資料保護法》規範保護。</p>
+ <p class="legal">註冊即表示您同意我們的<a id="open-modal-btn">服務條款與隱私權政策</a>，<br>您的健康資料受《個人資料保護法》規範保護。</p>
  </div>
  </div>
+</div>
+
+<!-- 跳出的小方格 -->
+<div class="modal-overlay" id="info-modal">
+  <div class="modal-box">
+    <button class="modal-close" id="close-modal-btn">&times;</button>
+    <h3 id="modal-title">服務條款與隱私權政策</h3>
+    <div id="modal-content">
+      <p>歡迎使用健康庫 HealthKeep！</p>
+      <p>1. <strong>資料保護：</strong> 您的健康資料均採用高規格加密技術儲存，僅供您本人及您授權之醫療人員調閱。</p>
+      <p>2. <strong>隱私承諾：</strong> 我們嚴格遵守《個人資料保護法》，未經許可絕不將您的個人資料洩漏或提供給第三方。</p>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"><span class="dot"></span><span id="toast-text"></span></div>
@@ -457,6 +527,17 @@
  const googleBtn = document.getElementById('google-btn');
  const languageSelect = document.getElementById('language-select');
 
+ /* 小方格控制 */
+ const modal = document.getElementById('info-modal');
+ const openModalBtn = document.getElementById('open-modal-btn');
+ const closeModalBtn = document.getElementById('close-modal-btn');
+
+ openModalBtn.addEventListener('click', () => modal.classList.add('show'));
+ closeModalBtn.addEventListener('click', () => modal.classList.remove('show'));
+ modal.addEventListener('click', (e) => {
+   if (e.target === modal) modal.classList.remove('show');
+ });
+
  let mode = 'signin';
 
  const translations = {
@@ -469,7 +550,7 @@
  signIn:'登入', signUp:'註冊', google:'使用 Google 繼續', orEmail:'或使用電子郵件',
  name:'姓名', namePh:'請輸入您的姓名', email:'電子郵件', emailPh:'you@example.com',
  password:'密碼', passwordPh:'至少 8 個字元', create:'建立帳號', noAccount:'還沒有帳號？', hasAccount:'已經有帳號了？',
- createAccount:'建立帳號', terms:'註冊即表示您同意我們的服務條款與隱私權政策，', privacy:'您的健康資料受《個人資料保護法》規範保護。',
+ createAccount:'建立帳號', terms:'註冊即表示您同意我們的<a id="open-modal-btn">服務條款與隱私權政策</a>，', privacy:'您的健康資料受《個人資料保護法》規範保護。',
  errName:'請輸入姓名。', errEmail:'請輸入有效的電子郵件地址。', errPassword:'密碼至少需要 8 個字元。',
  successSignup:'帳號建立成功，歡迎加入健康庫', successSignin:'登入成功', welcomeUser:'歡迎，',
  errors:{
@@ -489,7 +570,7 @@
  signIn:'登录', signUp:'注册', google:'使用 Google 继续', orEmail:'或使用电子邮件',
  name:'姓名', namePh:'请输入您的姓名', email:'电子邮件', emailPh:'you@example.com',
  password:'密码', passwordPh:'至少 8 个字符', create:'创建账号', noAccount:'还没有账号？', hasAccount:'已经有账号了？',
- createAccount:'创建账号', terms:'注册即表示您同意我们的服务条款与隐私政策，', privacy:'您的健康数据受个人信息保护法律法规保护。',
+ createAccount:'创建账号', terms:'注册即表示您同意我们的<a id="open-modal-btn">服务条款与隐私政策</a>，', privacy:'您的健康数据受个人信息保护法律法规保护。',
  errName:'请输入姓名。', errEmail:'请输入有效的电子邮件地址。', errPassword:'密码至少需要 8 个字符。',
  successSignup:'账号创建成功，欢迎加入健康库', successSignin:'登录成功', welcomeUser:'欢迎，',
  errors:{
@@ -509,7 +590,7 @@
  signIn:'Sign in', signUp:'Sign up', google:'Continue with Google', orEmail:'or use email',
  name:'Name', namePh:'Enter your name', email:'Email', emailPh:'you@example.com',
  password:'Password', passwordPh:'At least 8 characters', create:'Create account', noAccount:"Don't have an account?", hasAccount:'Already have an account?',
- createAccount:'Create account', terms:'By signing up, you agree to our Terms of Service and Privacy Policy.', privacy:'Your health data is protected under data privacy laws.',
+ createAccount:'Create account', terms:'By signing up, you agree to our <a id="open-modal-btn">Terms of Service and Privacy Policy</a>.', privacy:'Your health data is protected under data privacy laws.',
  errName:'Please enter your name.', errEmail:'Please enter a valid email address.', errPassword:'Password must be at least 8 characters.',
  successSignup:'Account created successfully.', successSignin:'Signed in successfully', welcomeUser:'Welcome, ',
  errors:{
@@ -529,7 +610,7 @@
  signIn:'ログイン', signUp:'新規登録', google:'Google で継続', orEmail:'またはメールアドレスで',
  name:'お名前', namePh:'お名前を入力してください', email:'メールアドレス', emailPh:'you@example.com',
  password:'パスワード', passwordPh:'8文字以上', create:'アカウント作成', noAccount:'アカウントをお持ちでないですか？', hasAccount:'すでにアカウントをお持ちですか？',
- createAccount:'アカウント作成', terms:'登録することで、利用規約とプライバシーポリシーに同意したことになります。', privacy:'個人情報保護法に基づき安全に保護されます。',
+ createAccount:'アカウント作成', terms:'登録することで、<a id="open-modal-btn">利用規約とプライバシーポリシー</a>に同意したことになります。', privacy:'個人情報保護法に基づき安全に保護されます。',
  errName:'お名前を入力してください。', errEmail:'有効なメールアドレスを入力してください。', errPassword:'パスワードは8文字以上である必要があります。',
  successSignup:'アカウントが作成されました。', successSignin:'ログインしました', welcomeUser:'ようこそ、',
  errors:{
@@ -549,7 +630,7 @@
  signIn:'로그인', signUp:'회원가입', google:'Google로 계속하기', orEmail:'또는 이메일 사용',
  name:'이름', namePh:'이름을 입력하세요', email:'이메일', emailPh:'you@example.com',
  password:'비밀번호', passwordPh:'최소 8자 이상', create:'계정 생성', noAccount:'계정이 없으신가요?', hasAccount:'이미 계정이 있으신가요?',
- createAccount:'계정 생성', terms:'가입하시면 서비스 약관 및 개인정보 처리방침에 동의하게 됩니다.', privacy:'개인정보 보호법에 따라 안전하게 보호됩니다.',
+ createAccount:'계정 생성', terms:'가입하시면 <a id="open-modal-btn">서비스 약관 및 개인정보 처리방침</a>에 동의하게 됩니다.', privacy:'개인정보 보호법에 따라 안전하게 보호됩니다.',
  errName:'이름을 입력해 주세요.', errEmail:'올바른 이메일 주소를 입력해 주세요.', errPassword:'비밀번호는 최소 8자 이상이어야 합니다.',
  successSignup:'계정이 성공적으로 생성되었습니다.', successSignin:'로그인 성공', welcomeUser:'환영합니다, ',
  errors:{
@@ -618,6 +699,9 @@
  document.querySelector('#email-field .err').textContent = t.errEmail;
  document.querySelector('#password-field .err').textContent = t.errPassword;
  document.querySelector('.legal').innerHTML = `${t.terms}<br>${t.privacy}`;
+ 
+ // 重新綁定跳出小方格按鈕事件（因 innerHTML 重新渲染）
+ document.getElementById('open-modal-btn')?.addEventListener('click', () => modal.classList.add('show'));
  
  languageSelect.value = lang;
  setMode(mode);
@@ -734,4 +818,3 @@
 
 </body>
 </html>
-吧
