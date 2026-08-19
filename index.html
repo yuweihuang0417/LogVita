@@ -238,7 +238,8 @@
  .forgot-wrap{
  display:flex;
  justify-content:flex-end;
- margin-top:6px;
+ margin-top:-8px;
+ margin-bottom:4px;
  }
  .forgot-btn{
  background:none;
@@ -493,9 +494,9 @@
  <label for="password">密碼</label>
  <input type="password" id="password" placeholder="至少 8 個字元" autocomplete="current-password">
  <small class="err">密碼至少需要 8 個字元。</small>
- <div class="forgot-wrap">
- <button type="button" class="forgot-btn" id="forgot-password-btn">忘記密碼？</button>
  </div>
+ <div class="forgot-wrap" id="forgot-wrap">
+ <button type="button" class="forgot-btn" id="forgot-password-btn">忘記密碼？</button>
  </div>
  <button type="submit" class="submit-btn" id="submit-btn">登入</button>
  </form>
@@ -570,6 +571,7 @@
  const passwordInput = document.getElementById('password');
  const googleBtn = document.getElementById('google-btn');
  const languageSelect = document.getElementById('language-select');
+ const forgotWrap = document.getElementById('forgot-wrap');
  const forgotPasswordBtn = document.getElementById('forgot-password-btn');
 
  window.openModal = function(id) {
@@ -967,7 +969,7 @@
  signIn:'登录', signUp:'注册', google:'使用 Google 继续', orEmail:'或使用电子邮件',
  name:'姓名', namePh:'请输入您的姓名', email:'电子邮件', emailPh:'you@example.com',
  password:'密码', passwordPh:'至少 8 个字符', create:'创建账号', noAccount:'还没有账号？', hasAccount:'已经有账号了？',
- createAccount:'创建账号', terms:'注册即表示您同意我们的<a id="open-tos-btn">服务条款</a>与<a id="open-privacy-btn">隐私政策</a>，', privacy:'您的健康数据受个人信息保护法律法规保护。',
+ createAccount:'创建账号', terms:'注册即表示您同意我们的<a id="open-tos-btn">服务条款</a>与<a id="open-privacy-pdf">隐私政策</a>，', privacy:'您的健康数据受个人信息保护法律法规保护。',
  errName:'请输入姓名。', errEmail:'请输入有效的电子邮件地址。', errPassword:'密码至少需要 8 个字符。',
  forgotPassword:'忘记密码？', enterEmailPrompt:'请先输入您的电子邮件地址。', resetSentToast:'密码重置邮件已发送，请检查您的电子邮箱！',
  successSignup:'账号创建成功，欢迎加入健康库', successSignin:'登录成功', welcomeUser:'欢迎，',
@@ -1066,7 +1068,7 @@
  tabSignin.setAttribute('aria-selected', String(!isSignup));
  tabSignup.setAttribute('aria-selected', String(isSignup));
  nameField.style.display = isSignup ? 'block' : 'none';
- forgotPasswordBtn.style.display = isSignup ? 'none' : 'inline-block';
+ forgotWrap.style.display = isSignup ? 'none' : 'flex';
  heading.textContent = isSignup ? t.signUpTitle : t.signInTitle;
  eyebrow.textContent = isSignup ? t.start : t.welcome;
  submitBtn.textContent = isSignup ? t.create : t.signIn;
