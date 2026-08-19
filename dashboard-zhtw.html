@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LogVita — 帳號設定</title>
+<title>健康庫 LogVita — 帳號設定</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -224,7 +224,7 @@
 
 <div class="app">
   <aside class="sidebar">
-    <div class="brand-mark"><span class="dot"></span> LogVita</div>
+    <div class="brand-mark"><span class="dot"></span> 健康庫 LogVita</div>
     <nav class="nav">
       <div class="section-label">帳號設定</div>
       <button data-panel="profile" class="active">
@@ -596,7 +596,7 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  const FILE_NAME = 'healthkeep_config.json';
+  const FILE_NAME = 'logvita_config.json';
   const DROPBOX_APP_KEY = '9g6nfv9vs6jdbk2'; // 請保持替換為您的 Dropbox App Key
 
   // 1. 真實裝置與國家判斷
