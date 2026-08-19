@@ -1165,7 +1165,8 @@
  return t.errors[code] || t.generic;
  }
 
- document.getElementById('forgot-password-btn')?.addEventListener('click', async () => {
+ document.addEventListener('click', async (e) => {
+ if (e.target && e.target.id === 'forgot-password-btn') {
  clearErrors();
  const email = document.getElementById('email').value.trim();
  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -1186,6 +1187,7 @@
  showToast(translateAuthError(err.code));
  } finally {
  setLoading(false);
+ }
  }
  });
 
