@@ -576,7 +576,6 @@
  const passwordInput = document.getElementById('password');
  const googleBtn = document.getElementById('google-btn');
  const languageSelect = document.getElementById('language-select');
- const forgotBtn = document.getElementById('forgot-password-btn');
 
  window.openModal = function(id) {
    document.getElementById(id)?.classList.add('show');
@@ -1072,6 +1071,7 @@
  tabSignup.setAttribute('aria-selected', String(isSignup));
  nameField.style.display = isSignup ? 'block' : 'none';
 
+ const forgotBtn = document.getElementById('forgot-password-btn');
  if (forgotBtn) {
    forgotBtn.style.display = isSignup ? 'none' : 'inline-block';
  }
@@ -1109,6 +1109,7 @@
  document.querySelector('label[for="password"]').textContent = t.password;
  passwordInput.placeholder = t.passwordPh;
 
+ const forgotBtn = document.getElementById('forgot-password-btn');
  if (forgotBtn) forgotBtn.textContent = t.forgotPassword;
 
  document.querySelector('#name-field .err').textContent = t.errName;
@@ -1153,6 +1154,7 @@
  }
 
  function setLoading(isLoading){
+ const forgotBtn = document.getElementById('forgot-password-btn');
  submitBtn.disabled = isLoading;
  googleBtn.disabled = isLoading;
  if (forgotBtn) forgotBtn.disabled = isLoading;
@@ -1163,7 +1165,7 @@
  return t.errors[code] || t.generic;
  }
 
- forgotBtn?.addEventListener('click', async () => {
+ document.getElementById('forgot-password-btn')?.addEventListener('click', async () => {
  clearErrors();
  const email = document.getElementById('email').value.trim();
  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
