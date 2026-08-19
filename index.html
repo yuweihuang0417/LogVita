@@ -235,6 +235,23 @@
  .field.invalid input{ border-color:var(--error); }
  .field.invalid small.err{ display:block; }
 
+ .forgot-wrap{
+ display:flex;
+ justify-content:flex-end;
+ margin-top:6px;
+ }
+ .forgot-btn{
+ background:none;
+ border:none;
+ font-family:inherit;
+ font-size:12.5px;
+ font-weight:600;
+ color:var(--navy);
+ cursor:pointer;
+ padding:0;
+ text-decoration:underline;
+ }
+
  .submit-btn{
  margin-top:6px;
  width:100%;
@@ -476,6 +493,9 @@
  <label for="password">密碼</label>
  <input type="password" id="password" placeholder="至少 8 個字元" autocomplete="current-password">
  <small class="err">密碼至少需要 8 個字元。</small>
+ <div class="forgot-wrap">
+ <button type="button" class="forgot-btn" id="forgot-password-btn">忘記密碼？</button>
+ </div>
  </div>
  <button type="submit" class="submit-btn" id="submit-btn">登入</button>
  </form>
@@ -518,6 +538,7 @@
  signInWithPopup,
  createUserWithEmailAndPassword,
  signInWithEmailAndPassword,
+ sendPasswordResetEmail,
  updateProfile
  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
@@ -549,6 +570,7 @@
  const passwordInput = document.getElementById('password');
  const googleBtn = document.getElementById('google-btn');
  const languageSelect = document.getElementById('language-select');
+ const forgotPasswordBtn = document.getElementById('forgot-password-btn');
 
  window.openModal = function(id) {
    document.getElementById(id)?.classList.add('show');
@@ -926,6 +948,7 @@
  password:'密碼', passwordPh:'至少 8 個字元', create:'建立帳號', noAccount:'還沒有帳號？', hasAccount:'已經有帳號了？',
  createAccount:'建立帳號', terms:'註冊即表示您同意我們的<a id="open-tos-btn">服務條款</a>與<a id="open-privacy-btn">隱私政策</a>，', privacy:'您的健康資料受《個人資料保護法》規範保護。',
  errName:'請輸入姓名。', errEmail:'請輸入有效的電子郵件地址。', errPassword:'密碼至少需要 8 個字元。',
+ forgotPassword:'忘記密碼？', enterEmailPrompt:'請先輸入您的電子郵件地址。', resetSentToast:'密碼重設信件已寄出，請檢查您的電子信箱！',
  successSignup:'帳號建立成功，歡迎加入健康庫', successSignin:'登入成功', welcomeUser:'歡迎，',
  errors:{
  'auth/email-already-in-use':'這個電子郵件已經註冊過了，請直接登入。','auth/invalid-email':'電子郵件格式不正確。',
@@ -946,6 +969,7 @@
  password:'密码', passwordPh:'至少 8 个字符', create:'创建账号', noAccount:'还没有账号？', hasAccount:'已经有账号了？',
  createAccount:'创建账号', terms:'注册即表示您同意我们的<a id="open-tos-btn">服务条款</a>与<a id="open-privacy-btn">隐私政策</a>，', privacy:'您的健康数据受个人信息保护法律法规保护。',
  errName:'请输入姓名。', errEmail:'请输入有效的电子邮件地址。', errPassword:'密码至少需要 8 个字符。',
+ forgotPassword:'忘记密码？', enterEmailPrompt:'请先输入您的电子邮件地址。', resetSentToast:'密码重置邮件已发送，请检查您的电子邮箱！',
  successSignup:'账号创建成功，欢迎加入健康库', successSignin:'登录成功', welcomeUser:'欢迎，',
  errors:{
  'auth/email-already-in-use':'该电子邮件已被注册，请直接登录。','auth/invalid-email':'电子邮件格式不正确。',
@@ -966,6 +990,7 @@
  password:'Password', passwordPh:'At least 8 characters', create:'Create account', noAccount:"Don't have an account?", hasAccount:'Already have an account?',
  createAccount:'Create account', terms:'By signing up, you agree to our <a id="open-tos-btn">Terms of Service</a> and <a id="open-privacy-btn">Privacy Policy</a>.', privacy:'Your health data is protected under data privacy laws.',
  errName:'Please enter your name.', errEmail:'Please enter a valid email address.', errPassword:'Password must be at least 8 characters.',
+ forgotPassword:'Forgot password?', enterEmailPrompt:'Please enter your email address first.', resetSentToast:'Password reset email sent! Check your inbox.',
  successSignup:'Account created successfully.', successSignin:'Signed in successfully', welcomeUser:'Welcome, ',
  errors:{
  'auth/email-already-in-use':'This email is already registered. Please sign in.','auth/invalid-email':'Please enter a valid email address.',
@@ -986,6 +1011,7 @@
  password:'パスワード', passwordPh:'8文字以上', create:'アカウント作成', noAccount:'アカウントをお持ちでないですか？', hasAccount:'すでにアカウントをお持ちですか？',
  createAccount:'アカウント作成', terms:'登録することで、<a id="open-tos-btn">利用規約</a>と<a id="open-privacy-btn">プライバシーポリシー</a>に同意したことになります。', privacy:'個人情報保護法に基づき安全に保護されます。',
  errName:'お名前を入力してください。', errEmail:'有効なメールアドレスを入力してください。', errPassword:'パスワードは8文字以上である必要があります。',
+ forgotPassword:'パスワードをお忘れですか？', enterEmailPrompt:'最初にメールアドレスを入力してください。', resetSentToast:'パスワード再設定メールを送信しました。',
  successSignup:'アカウントが作成されました。', successSignin:'ログインしました', welcomeUser:'ようこそ、',
  errors:{
  'auth/email-already-in-use':'このメールアドレスは既に登録されています。','auth/invalid-email':'無効なメールアドレス形式です。',
@@ -1006,6 +1032,7 @@
  password:'비밀번호', passwordPh:'최소 8자 이상', create:'계정 생성', noAccount:'계정이 없으신가요?', hasAccount:'이미 계정이 있으신가요?',
  createAccount:'계정 생성', terms:'가입하시면 <a id="open-tos-btn">서비스 약관</a> 및 <a id="open-privacy-btn">개인정보 처리방침</a>에 동의하게 됩니다.', privacy:'개인정보 보호법에 따라 안전하게 보호됩니다.',
  errName:'이름을 입력해 주세요.', errEmail:'올바른 이메일 주소를 입력해 주세요.', errPassword:'비밀번호는 최소 8자 이상이어야 합니다.',
+ forgotPassword:'비밀번호를 잊으셨나요?', enterEmailPrompt:'먼저 이메일을 입력해 주세요.', resetSentToast:'비밀번호 재설정 이메일이 발송되었습니다.',
  successSignup:'계정이 성공적으로 생성되었습니다.', successSignin:'로그인 성공', welcomeUser:'환영합니다, ',
  errors:{
  'auth/email-already-in-use':'이미 가입된 이메일입니다.','auth/invalid-email':'올바르지 않은 이메일 형식입니다.',
@@ -1039,6 +1066,7 @@
  tabSignin.setAttribute('aria-selected', String(!isSignup));
  tabSignup.setAttribute('aria-selected', String(isSignup));
  nameField.style.display = isSignup ? 'block' : 'none';
+ forgotPasswordBtn.style.display = isSignup ? 'none' : 'inline-block';
  heading.textContent = isSignup ? t.signUpTitle : t.signInTitle;
  eyebrow.textContent = isSignup ? t.start : t.welcome;
  submitBtn.textContent = isSignup ? t.create : t.signIn;
@@ -1071,6 +1099,7 @@
  document.getElementById('email').placeholder = t.emailPh;
  document.querySelector('label[for="password"]').textContent = t.password;
  passwordInput.placeholder = t.passwordPh;
+ forgotPasswordBtn.textContent = t.forgotPassword;
  document.querySelector('#name-field .err').textContent = t.errName;
  document.querySelector('#email-field .err').textContent = t.errEmail;
  document.querySelector('#password-field .err').textContent = t.errPassword;
@@ -1115,6 +1144,7 @@
  function setLoading(isLoading){
  submitBtn.disabled = isLoading;
  googleBtn.disabled = isLoading;
+ forgotPasswordBtn.disabled = isLoading;
  }
 
  function translateAuthError(code){
@@ -1123,6 +1153,30 @@
  }
 
  applyLanguage(currentLanguage);
+
+ forgotPasswordBtn.addEventListener('click', async () => {
+ clearErrors();
+ const email = document.getElementById('email').value.trim();
+ const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+ const t = translations[currentLanguage] || translations['zh-TW'];
+
+ if(!emailOk){
+ document.getElementById('email-field').classList.add('invalid');
+ showToast(t.enterEmailPrompt);
+ return;
+ }
+
+ setLoading(true);
+ try {
+ await sendPasswordResetEmail(auth, email);
+ showToast(t.resetSentToast);
+ } catch (err) {
+ console.error(err);
+ showToast(translateAuthError(err.code));
+ } finally {
+ setLoading(false);
+ }
+ });
 
  googleBtn.addEventListener('click', async () => {
  setLoading(true);
