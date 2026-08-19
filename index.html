@@ -499,8 +499,8 @@
  <label for="password">密碼</label>
  <button type="button" class="forgot-btn-inline" id="forgot-password-btn">忘記密碼？</button>
  </div>
- <input type="password" id="password" placeholder="至少 8 個字元" autocomplete="current-password">
- <small class="err">密碼至少需要 8 個字元。</small>
+ <input type="password" id="password" placeholder="至少 6 個字元" autocomplete="current-password">
+ <small class="err">密碼至少需要 6 個字元。</small>
  </div>
 
  <button type="submit" class="submit-btn" id="submit-btn">登入</button>
@@ -1261,7 +1261,7 @@
  }
 
  const password = document.getElementById('password').value;
- if(password.length < 8){
+ if(password.length < 6){
  document.getElementById('password-field').classList.add('invalid');
  valid = false;
  }
