@@ -55,6 +55,17 @@
  background:radial-gradient(circle at 82% 12%, rgba(121,226,196,0.12), transparent 55%);
  pointer-events:none;
  }
+
+ /* 頂部容器：用於將標題與語言選擇器並排置中 */
+ .brand-top-row{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ z-index:1;
+ width:100%;
+ margin-bottom:24px;
+ }
+
  .brand-mark{
  display:flex;
  align-items:center;
@@ -62,11 +73,12 @@
  font-family:"Noto Serif TC", "Noto Serif SC", serif;
  font-size:20px;
  letter-spacing:0.02em;
- z-index:1;
+ line-height:1;
  }
  .brand-mark .dot{
  width:9px;height:9px;border-radius:50%;background:var(--mint);
  box-shadow:0 0 12px rgba(121,226,196,0.7);
+ flex-shrink:0;
  }
  .brand-copy{ z-index:1; max-width:420px; }
  .brand-copy h1{
@@ -327,10 +339,8 @@
 
  /* LANGUAGE SELECTOR */
  .language-switcher{
- position:absolute;
- top:28px;
- right:28px;
- z-index:5;
+ display:flex;
+ align-items:center;
  }
  .language-switcher select{
  appearance:none;
@@ -346,6 +356,7 @@
  background-position:calc(100% - 16px) 50%,calc(100% - 11px) 50%;
  background-size:5px 5px,5px 5px;
  background-repeat:no-repeat;
+ line-height:1;
  }
  .language-switcher select:hover{background-color:rgba(255,255,255,.14);}
  .language-switcher select option{color:var(--ink);background:#fff;}
@@ -434,6 +445,8 @@
 
 <div class="stage">
  <div class="brand">
+ <div class="brand-top-row">
+ <div class="brand-mark"><span class="dot"></span> 健康庫 HealthKeep</div>
  <div class="language-switcher" aria-label="Language selector">
  <select id="language-select">
  <option value="zh-TW">繁體中文</option>
@@ -443,7 +456,7 @@
  <option value="ko">한국어</option>
  </select>
  </div>
- <div class="brand-mark"><span class="dot"></span> 健康庫 HealthKeep</div>
+ </div>
  <div class="brand-copy">
  <h1>把每一次<em>就診紀錄</em><br>好好留下來</h1>
  <p>檢驗報告、用藥紀錄、影像資料，統一安全存放。就醫時隨手調閱，換醫院、換科別都不用再重新說明一次病史。</p>
