@@ -235,22 +235,25 @@
  .field.invalid input{ border-color:var(--error); }
  .field.invalid small.err{ display:block; }
 
- .forgot-wrap{
- display:flex;
- justify-content:flex-end;
- margin-top:-8px;
- margin-bottom:4px;
+ .forgot-action-row{
+ display:block;
+ text-align:right;
+ margin-top:-6px;
+ margin-bottom:-2px;
+ }
+ .forgot-action-row[hidden]{
+ display:none !important;
  }
  .forgot-btn{
- background:none;
- border:none;
+ background:none !important;
+ border:none !important;
  font-family:inherit;
- font-size:12.5px;
- font-weight:600;
- color:var(--navy);
- cursor:pointer;
- padding:0;
- text-decoration:underline;
+ font-size:12.5px !important;
+ font-weight:600 !important;
+ color:var(--navy) !important;
+ cursor:pointer !important;
+ padding:0 !important;
+ text-decoration:underline !important;
  }
 
  .submit-btn{
@@ -495,9 +498,11 @@
  <input type="password" id="password" placeholder="至少 8 個字元" autocomplete="current-password">
  <small class="err">密碼至少需要 8 個字元。</small>
  </div>
- <div class="forgot-wrap" id="forgot-wrap">
+ 
+ <div class="forgot-action-row" id="forgot-wrap">
  <button type="button" class="forgot-btn" id="forgot-password-btn">忘記密碼？</button>
  </div>
+
  <button type="submit" class="submit-btn" id="submit-btn">登入</button>
  </form>
 
@@ -571,8 +576,6 @@
  const passwordInput = document.getElementById('password');
  const googleBtn = document.getElementById('google-btn');
  const languageSelect = document.getElementById('language-select');
- const forgotWrap = document.getElementById('forgot-wrap');
- const forgotPasswordBtn = document.getElementById('forgot-password-btn');
 
  window.openModal = function(id) {
    document.getElementById(id)?.classList.add('show');
@@ -969,7 +972,7 @@
  signIn:'登录', signUp:'注册', google:'使用 Google 继续', orEmail:'或使用电子邮件',
  name:'姓名', namePh:'请输入您的姓名', email:'电子邮件', emailPh:'you@example.com',
  password:'密码', passwordPh:'至少 8 个字符', create:'创建账号', noAccount:'还没有账号？', hasAccount:'已经有账号了？',
- createAccount:'创建账号', terms:'注册即表示您同意我们的<a id="open-tos-btn">服务条款</a>与<a id="open-privacy-pdf">隐私政策</a>，', privacy:'您的健康数据受个人信息保护法律法规保护。',
+ createAccount:'创建账号', terms:'注册即表示您同意我们的<a id="open-tos-btn">服务条款</a>与<a id="open-privacy-btn">隐私政策</a>，', privacy:'您的健康数据受个人信息保护法律法规保护。',
  errName:'请输入姓名。', errEmail:'请输入有效的电子邮件地址。', errPassword:'密码至少需要 8 个字符。',
  forgotPassword:'忘记密码？', enterEmailPrompt:'请先输入您的电子邮件地址。', resetSentToast:'密码重置邮件已发送，请检查您的电子邮箱！',
  successSignup:'账号创建成功，欢迎加入健康库', successSignin:'登录成功', welcomeUser:'欢迎，',
@@ -1032,7 +1035,7 @@
  signIn:'로그인', signUp:'회원가입', google:'Google로 계속하기', orEmail:'또는 이메일 사용',
  name:'이름', namePh:'이름을 입력하세요', email:'이메일', emailPh:'you@example.com',
  password:'비밀번호', passwordPh:'최소 8자 이상', create:'계정 생성', noAccount:'계정이 없으신가요?', hasAccount:'이미 계정이 있으신가요?',
- createAccount:'계정 생성', terms:'가입하시면 <a id="open-tos-btn">서비스 약관</a> 및 <a id="open-privacy-btn">개인정보 처리방침</a>에 동의하게 됩니다.', privacy:'개인정보 보호법에 따라 안전하게 보호됩니다.',
+ createAccount:'계정 생성', terms:'가입하시면 <a id="open-tos-btn">서비스 약관</a> 및 <a id="open-privacy-방침">개인정보 처리방침</a>에 동의하게 됩니다.', privacy:'개인정보 보호법에 따라 안전하게 보호됩니다.',
  errName:'이름을 입력해 주세요.', errEmail:'올바른 이메일 주소를 입력해 주세요.', errPassword:'비밀번호는 최소 8자 이상이어야 합니다.',
  forgotPassword:'비밀번호를 잊으셨나요?', enterEmailPrompt:'먼저 이메일을 입력해 주세요.', resetSentToast:'비밀번호 재설정 이메일이 발송되었습니다.',
  successSignup:'계정이 성공적으로 생성되었습니다.', successSignin:'로그인 성공', welcomeUser:'환영합니다, ',
@@ -1068,7 +1071,16 @@
  tabSignin.setAttribute('aria-selected', String(!isSignup));
  tabSignup.setAttribute('aria-selected', String(isSignup));
  nameField.style.display = isSignup ? 'block' : 'none';
- forgotWrap.style.display = isSignup ? 'none' : 'flex';
+
+ const forgotWrap = document.getElementById('forgot-wrap');
+ if (forgotWrap) {
+   if (isSignup) {
+     forgotWrap.setAttribute('hidden', '');
+   } else {
+     forgotWrap.removeAttribute('hidden');
+   }
+ }
+
  heading.textContent = isSignup ? t.signUpTitle : t.signInTitle;
  eyebrow.textContent = isSignup ? t.start : t.welcome;
  submitBtn.textContent = isSignup ? t.create : t.signIn;
@@ -1101,7 +1113,10 @@
  document.getElementById('email').placeholder = t.emailPh;
  document.querySelector('label[for="password"]').textContent = t.password;
  passwordInput.placeholder = t.passwordPh;
- forgotPasswordBtn.textContent = t.forgotPassword;
+
+ const forgotBtn = document.getElementById('forgot-password-btn');
+ if (forgotBtn) forgotBtn.textContent = t.forgotPassword;
+
  document.querySelector('#name-field .err').textContent = t.errName;
  document.querySelector('#email-field .err').textContent = t.errEmail;
  document.querySelector('#password-field .err').textContent = t.errPassword;
@@ -1146,7 +1161,8 @@
  function setLoading(isLoading){
  submitBtn.disabled = isLoading;
  googleBtn.disabled = isLoading;
- forgotPasswordBtn.disabled = isLoading;
+ const forgotBtn = document.getElementById('forgot-password-btn');
+ if (forgotBtn) forgotBtn.disabled = isLoading;
  }
 
  function translateAuthError(code){
@@ -1156,7 +1172,7 @@
 
  applyLanguage(currentLanguage);
 
- forgotPasswordBtn.addEventListener('click', async () => {
+ document.getElementById('forgot-password-btn')?.addEventListener('click', async () => {
  clearErrors();
  const email = document.getElementById('email').value.trim();
  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
