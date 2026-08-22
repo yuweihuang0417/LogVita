@@ -51,18 +51,20 @@
   }
 
   .nav{ display:flex; flex-direction:column; gap:2px; flex:1; }
-  .nav button{
+  .nav button, .nav a{
     display:flex; align-items:center; gap:12px;
     width:100%; border:none; background:transparent;
     padding:11px 12px; border-radius:10px;
     font-family:inherit; font-size:14.5px; font-weight:500;
     color:#c7d6d3; text-align:left; cursor:pointer;
     transition:background .15s ease, color .15s ease;
+    text-decoration:none; box-sizing:border-box;
   }
-  .nav button svg{ flex-shrink:0; opacity:.85; }
-  .nav button:hover{ background:rgba(255,255,255,.06); color:#fff; }
-  .nav button.active{ background:rgba(121,226,196,.14); color:var(--mint); font-weight:700; }
+  .nav button svg, .nav a svg{ flex-shrink:0; opacity:.85; }
+  .nav button:hover, .nav a:hover{ background:rgba(255,255,255,.06); color:#fff; }
+  .nav button.active, .nav a.active{ background:rgba(121,226,196,.14); color:var(--mint); font-weight:700; }
   .nav .section-label{ font-size:11px; letter-spacing:.08em; color:#6f8683; padding:18px 12px 6px; }
+  .nav .nav-divider{ height:1px; background:rgba(255,255,255,.08); margin:10px 4px; }
 
   .sidebar-foot{
     border-top:1px solid rgba(255,255,255,.08); padding-top:14px;
@@ -226,6 +228,11 @@
   <aside class="sidebar">
     <div class="brand-mark"><span class="dot"></span> 健康庫 LogVita</div>
     <nav class="nav">
+      <a href="index.html">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-5h2v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V10"/></svg>
+        首頁
+      </a>
+      <div class="nav-divider"></div>
       <div class="section-label">帳號設定</div>
       <button data-panel="profile" class="active">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
