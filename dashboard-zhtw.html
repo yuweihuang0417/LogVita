@@ -185,6 +185,75 @@
 
   .danger-zone{ border-color:#f0c6c4; }
 
+  /* HOME / OVERVIEW PANEL */
+  .stat-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin-bottom:18px; }
+  .stat-card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px 20px;
+  }
+  .stat-card .stat-label{ font-size:12.5px; color:#8b9895; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+  .stat-card .stat-value{ font-family:"Noto Serif TC",serif; font-size:26px; font-weight:600; color:var(--navy); }
+  .stat-card .stat-note{ font-size:12px; color:#a4b1ae; margin-top:4px; }
+
+  .allergy-banner{
+    display:flex; align-items:flex-start; gap:12px;
+    background:#fdf6ea; border:1px solid #f1dfb8; border-radius:var(--radius);
+    padding:16px 18px; margin-bottom:18px;
+  }
+  .allergy-banner svg{ color:var(--amber); flex-shrink:0; margin-top:1px; }
+  .allergy-banner .a-title{ font-size:13.5px; font-weight:700; color:#8a6a1f; margin-bottom:2px; }
+  .allergy-banner .a-desc{ font-size:12.5px; color:#9a8248; }
+
+  .filter-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
+  .chip{
+    border:1px solid var(--line); background:#fff; color:#5c6b68;
+    padding:7px 14px; border-radius:999px; font-size:13px; font-weight:600; cursor:pointer;
+  }
+  .chip.active{ background:var(--navy); border-color:var(--navy); color:#fff; }
+
+  .record-item{ display:flex; align-items:flex-start; gap:14px; padding:16px 0; border-bottom:1px solid var(--line); }
+  .record-item:last-child{ border-bottom:none; padding-bottom:0; }
+  .record-icon{
+    width:40px; height:40px; border-radius:12px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    background:#eef4f2; color:var(--teal);
+  }
+  .record-icon.lab{ background:#eef1fb; color:#5b6fd6; }
+  .record-icon.med{ background:#fdf0ee; color:#e0715a; }
+  .record-icon.img{ background:#f1eefb; color:#8a6fd6; }
+  .record-icon.visit{ background:#eef4f2; color:var(--teal); }
+  .record-main{ flex:1; min-width:0; }
+  .record-main .r-top{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .record-main .r-title{ font-size:14.5px; font-weight:700; }
+  .record-tag{
+    font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px;
+    background:#eef4f2; color:#5c6b68; white-space:nowrap;
+  }
+  .record-main .r-meta{ font-size:12.5px; color:#8b9895; margin-top:3px; }
+  .record-main .r-note{ font-size:13px; color:#5c6b68; margin-top:6px; line-height:1.6; }
+  .record-actions{ flex-shrink:0; }
+  .btn-danger-text{
+    background:none; border:none; color:#b9c2c0; cursor:pointer; padding:6px; border-radius:8px;
+  }
+  .btn-danger-text:hover{ color:var(--error); background:#fdf1f0; }
+
+  .empty-state{ text-align:center; padding:40px 20px; color:#9fb0ac; }
+  .empty-state .e-icon{ margin-bottom:10px; opacity:.7; }
+  .empty-state .e-title{ font-size:14.5px; font-weight:700; color:#5c6b68; margin-bottom:4px; }
+  .empty-state .e-desc{ font-size:13px; }
+
+  .type-picker{ display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin-bottom:16px; }
+  .type-opt{
+    border:1px solid var(--line); border-radius:10px; padding:10px 6px; text-align:center;
+    cursor:pointer; font-size:12px; font-weight:600; color:#5c6b68; background:#fff;
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+  }
+  .type-opt svg{ opacity:.75; }
+  .type-opt.active{ border-color:var(--teal); background:#eef8f5; color:var(--teal); }
+  .type-opt.active svg{ opacity:1; }
+
+  .page-head.with-action{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+
   /* MODAL */
   .modal-backdrop{
     position:fixed; inset:0; background:rgba(15,42,43,.45);
@@ -219,6 +288,8 @@
     .sidebar{ position:static; height:auto; padding:16px; }
     .row{ grid-template-columns:1fr; }
     .main{ padding:24px 18px 50px; max-width:none; }
+    .stat-grid{ grid-template-columns:1fr; }
+    .type-picker{ grid-template-columns:repeat(2, 1fr); }
   }
 </style>
 </head>
@@ -228,13 +299,14 @@
   <aside class="sidebar">
     <div class="brand-mark"><span class="dot"></span> 健康庫 LogVita</div>
     <nav class="nav">
-      <a href="index.html">
+      <div class="section-label">總覽</div>
+      <button data-panel="home" class="active">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-5h2v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V10"/></svg>
         首頁
-      </a>
+      </button>
       <div class="nav-divider"></div>
       <div class="section-label">帳號設定</div>
-      <button data-panel="profile" class="active">
+      <button data-panel="profile">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         個人檔案
       </button>
@@ -266,8 +338,80 @@
 
   <main class="main">
 
+    <!-- 首頁 / 總覽 -->
+    <section class="panel active" id="panel-home">
+      <div class="page-head with-action">
+        <div>
+          <h1>總覽</h1>
+          <div class="sub">你的健康紀錄一目了然，隨時新增最新的就診與檢驗資訊</div>
+        </div>
+        <button type="button" class="btn-primary" id="add-record-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          新增醫療紀錄
+        </button>
+      </div>
+
+      <div class="allergy-banner" id="allergy-banner" style="display:none;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div>
+          <div class="a-title">過敏史提醒</div>
+          <div class="a-desc" id="allergy-text">—</div>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            健康紀錄總數
+          </div>
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-note">筆紀錄</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            最近一次更新
+          </div>
+          <div class="stat-value" id="stat-recent" style="font-size:18px;">—</div>
+          <div class="stat-note" id="stat-recent-type">尚無紀錄</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            已授權查看人數
+          </div>
+          <div class="stat-value" id="stat-access">2</div>
+          <div class="stat-note">位家人 / 醫療人員</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>醫療紀錄</h2>
+        <div class="card-sub">依類型篩選，快速找到你需要的紀錄</div>
+
+        <div class="filter-row" id="filter-row">
+          <button type="button" class="chip active" data-filter="all">全部</button>
+          <button type="button" class="chip" data-filter="lab">檢驗報告</button>
+          <button type="button" class="chip" data-filter="med">用藥紀錄</button>
+          <button type="button" class="chip" data-filter="img">影像資料</button>
+          <button type="button" class="chip" data-filter="visit">就診紀錄</button>
+        </div>
+
+        <div id="record-list"></div>
+
+        <div class="empty-state" id="empty-state" style="display:none;">
+          <div class="e-icon">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          </div>
+          <div class="e-title">還沒有醫療紀錄</div>
+          <div class="e-desc">點選「新增醫療紀錄」開始建立你的健康資料庫</div>
+        </div>
+      </div>
+    </section>
+
     <!-- 個人檔案 -->
-    <section class="panel active" id="panel-profile">
+    <section class="panel" id="panel-profile">
       <div class="page-head">
         <h1>個人檔案</h1>
         <div class="sub">這些資訊會安全儲存於您的個人 Google Drive 或 Dropbox</div>
@@ -495,6 +639,68 @@
   </main>
 </div>
 
+<!-- 新增醫療紀錄 MODAL -->
+<div class="modal-backdrop" id="record-backdrop">
+  <div class="modal">
+    <button class="close-x" id="record-close" aria-label="關閉">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <h3>新增醫療紀錄</h3>
+    <div class="card-sub" style="margin-bottom:20px;">紀錄會安全儲存於你的個人 Google Drive 或 Dropbox</div>
+
+    <form id="record-form">
+      <div class="field">
+        <label>紀錄類型</label>
+        <div class="type-picker" id="type-picker">
+          <div class="type-opt active" data-type="lab">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2v6L4 20a1 1 0 0 0 .9 1.5h14.2A1 1 0 0 0 20 20l-5-12V2"/><line x1="9" y1="2" x2="15" y2="2"/></svg>
+            檢驗報告
+          </div>
+          <div class="type-opt" data-type="med">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M12 8v8"/></svg>
+            用藥紀錄
+          </div>
+          <div class="type-opt" data-type="img">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            影像資料
+          </div>
+          <div class="type-opt" data-type="visit">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            就診紀錄
+          </div>
+        </div>
+        <input type="hidden" id="r-type" value="lab">
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="r-title">標題 / 機構名稱</label>
+          <input type="text" id="r-title" placeholder="例如：血液常規檢查、萬芳醫院內科" required>
+        </div>
+        <div class="field">
+          <label for="r-date">日期</label>
+          <input type="date" id="r-date" required>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="r-doctor">醫師 / 科別（選填）</label>
+        <input type="text" id="r-doctor" placeholder="例如：陳醫師 — 家庭醫學科">
+      </div>
+
+      <div class="field">
+        <label for="r-note">備註內容</label>
+        <textarea id="r-note" placeholder="例如：空腹血糖 92 mg/dL，數值正常"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" id="record-cancel">取消</button>
+        <button type="submit" class="btn-primary" style="justify-content:center;">儲存紀錄</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- 新增授權 MODAL -->
 <div class="modal-backdrop" id="access-backdrop">
   <div class="modal">
@@ -602,6 +808,17 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
+
+  const TYPE_LABEL = { lab: '檢驗報告', med: '用藥紀錄', img: '影像資料', visit: '就診紀錄' };
+  const TYPE_ICON = {
+    lab: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2v6L4 20a1 1 0 0 0 .9 1.5h14.2A1 1 0 0 0 20 20l-5-12V2"/><line x1="9" y1="2" x2="15" y2="2"/></svg>',
+    med: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M12 8v8"/></svg>',
+    img: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>',
+    visit: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'
+  };
+
+  let currentConfig = {};
+  let activeFilter = 'all';
 
   const FILE_NAME = 'logvita_config.json';
   const DROPBOX_APP_KEY = '9g6nfv9vs6jdbk2'; // 請保持替換為您的 Dropbox App Key
@@ -725,6 +942,8 @@
         document.getElementById('google-auth-email').textContent = '未連結';
         document.getElementById('dropbox-status').textContent = '未連結';
         updateStorageConnectionUI(null);
+        renderOverview();
+        renderRecordList();
       }
     } else {
       window.location.href = 'index.html';
@@ -802,7 +1021,7 @@
     if (!token) return;
 
     const fileId = await findDriveFileId();
-    if (!fileId) return;
+    if (!fileId) { renderOverview(); renderRecordList(); return; }
 
     try {
       const res = await fetch(
@@ -913,13 +1132,21 @@
         const config = await res.json();
         applyConfigToForm(config);
         showToast('已成功從 Dropbox 載入您的資料');
+      } else {
+        renderOverview();
+        renderRecordList();
       }
     } catch (err) {
       console.error('Dropbox 載入失敗:', err);
+      renderOverview();
+      renderRecordList();
     }
   }
 
   function applyConfigToForm(config) {
+    currentConfig = config || {};
+    currentConfig.records = currentConfig.records || [];
+
     if (config.name) document.getElementById('p-name').value = config.name;
     if (config.birth) document.getElementById('p-birth').value = config.birth;
     if (config.gender) document.getElementById('p-gender').value = config.gender;
@@ -937,14 +1164,164 @@
       document.getElementById('p-notify-email').checked = config.privacy.notifyEmail ?? true;
       document.getElementById('p-notify-sms').checked = config.privacy.notifySms ?? false;
     }
+
+    renderOverview();
+    renderRecordList();
   }
+
+  // ---- 首頁 / 總覽渲染 ----
+  function formatDate(d){
+    if (!d) return '—';
+    try {
+      const dt = new Date(d);
+      return `${dt.getFullYear()}/${String(dt.getMonth()+1).padStart(2,'0')}/${String(dt.getDate()).padStart(2,'0')}`;
+    } catch { return d; }
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  function renderOverview() {
+    const records = currentConfig.records || [];
+    document.getElementById('stat-total').textContent = records.length;
+
+    if (records.length > 0) {
+      const sorted = [...records].sort((a,b) => new Date(b.date) - new Date(a.date));
+      document.getElementById('stat-recent').textContent = formatDate(sorted[0].date);
+      document.getElementById('stat-recent-type').textContent = TYPE_LABEL[sorted[0].type] || '—';
+    } else {
+      document.getElementById('stat-recent').textContent = '—';
+      document.getElementById('stat-recent-type').textContent = '尚無紀錄';
+    }
+
+    const allergyBanner = document.getElementById('allergy-banner');
+    if (currentConfig.allergy && currentConfig.allergy.trim()) {
+      allergyBanner.style.display = 'flex';
+      document.getElementById('allergy-text').textContent = currentConfig.allergy;
+    } else {
+      allergyBanner.style.display = 'none';
+    }
+  }
+
+  function renderRecordList() {
+    const records = currentConfig.records || [];
+    const filtered = activeFilter === 'all' ? records : records.filter(r => r.type === activeFilter);
+    const sorted = [...filtered].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+    const list = document.getElementById('record-list');
+    const empty = document.getElementById('empty-state');
+    if (!list || !empty) return;
+
+    if (sorted.length === 0) {
+      list.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+
+    list.innerHTML = sorted.map(r => `
+      <div class="record-item" data-id="${r.id}">
+        <div class="record-icon ${r.type}">${TYPE_ICON[r.type] || TYPE_ICON.visit}</div>
+        <div class="record-main">
+          <div class="r-top">
+            <span class="r-title">${escapeHtml(r.title)}</span>
+            <span class="record-tag">${TYPE_LABEL[r.type] || '紀錄'}</span>
+          </div>
+          <div class="r-meta">${formatDate(r.date)}${r.doctor ? ' · ' + escapeHtml(r.doctor) : ''}</div>
+          ${r.note ? `<div class="r-note">${escapeHtml(r.note)}</div>` : ''}
+        </div>
+        <div class="record-actions">
+          <button type="button" class="btn-danger-text delete-record-btn" title="刪除" aria-label="刪除">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    list.querySelectorAll('.delete-record-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const item = e.currentTarget.closest('.record-item');
+        const id = item.dataset.id;
+        currentConfig.records = (currentConfig.records || []).filter(r => r.id !== id);
+        renderOverview();
+        renderRecordList();
+        const driveSuccess = await saveToDrive(currentConfig);
+        const dropboxSuccess = await saveToDropbox(currentConfig);
+        showToast((driveSuccess || dropboxSuccess) ? '已刪除紀錄並同步至雲端' : '已刪除紀錄（請先連結雲端硬碟）');
+      });
+    });
+  }
+
+  document.getElementById('filter-row').addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    document.querySelectorAll('#filter-row .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    activeFilter = chip.dataset.filter;
+    renderRecordList();
+  });
+
+  const recordBackdrop = document.getElementById('record-backdrop');
+  const recordForm = document.getElementById('record-form');
+
+  function openRecordModal() {
+    recordForm.reset();
+    document.getElementById('r-date').value = new Date().toISOString().slice(0,10);
+    document.querySelectorAll('.type-opt').forEach(o => o.classList.remove('active'));
+    document.querySelector('.type-opt[data-type="lab"]').classList.add('active');
+    document.getElementById('r-type').value = 'lab';
+    recordBackdrop.classList.add('show');
+  }
+  function closeRecordModal(){ recordBackdrop.classList.remove('show'); }
+
+  document.getElementById('add-record-btn').addEventListener('click', openRecordModal);
+  document.getElementById('record-close').addEventListener('click', closeRecordModal);
+  document.getElementById('record-cancel').addEventListener('click', closeRecordModal);
+
+  document.getElementById('type-picker').addEventListener('click', (e) => {
+    const opt = e.target.closest('.type-opt');
+    if (!opt) return;
+    document.querySelectorAll('.type-opt').forEach(o => o.classList.remove('active'));
+    opt.classList.add('active');
+    document.getElementById('r-type').value = opt.dataset.type;
+  });
+
+  recordForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newRecord = {
+      id: 'rec_' + Date.now() + '_' + Math.random().toString(36).slice(2,8),
+      type: document.getElementById('r-type').value,
+      title: document.getElementById('r-title').value.trim(),
+      date: document.getElementById('r-date').value,
+      doctor: document.getElementById('r-doctor').value.trim(),
+      note: document.getElementById('r-note').value.trim(),
+      createdAt: new Date().toISOString()
+    };
+    if (!newRecord.title || !newRecord.date) return;
+
+    currentConfig.records = currentConfig.records || [];
+    currentConfig.records.unshift(newRecord);
+    currentConfig.updatedAt = new Date().toISOString();
+
+    renderOverview();
+    renderRecordList();
+    closeRecordModal();
+
+    const driveSuccess = await saveToDrive(currentConfig);
+    const dropboxSuccess = await saveToDropbox(currentConfig);
+    showToast((driveSuccess || dropboxSuccess) ? '已新增紀錄並同步至雲端硬碟' : '已新增紀錄（請先連結 Google Drive 或 Dropbox 以同步）');
+  });
 
   // 7. 表單提交與事件觸發
   document.getElementById('connect-dropbox-btn').addEventListener('click', connectDropbox);
 
   document.getElementById('profile-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const payload = {
+    currentConfig = {
+      ...currentConfig,
       name: document.getElementById('p-name').value,
       birth: document.getElementById('p-birth').value,
       gender: document.getElementById('p-gender').value,
@@ -961,11 +1338,14 @@
         notifyEmail: document.getElementById('p-notify-email').checked,
         notifySms: document.getElementById('p-notify-sms').checked,
       },
+      records: currentConfig.records || [],
       updatedAt: new Date().toISOString()
     };
 
-    const driveSuccess = await saveToDrive(payload);
-    const dropboxSuccess = await saveToDropbox(payload);
+    const driveSuccess = await saveToDrive(currentConfig);
+    const dropboxSuccess = await saveToDropbox(currentConfig);
+
+    renderOverview();
 
     if (driveSuccess || dropboxSuccess) {
       showToast('已同步儲存至您的雲端硬碟');
