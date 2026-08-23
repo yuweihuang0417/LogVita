@@ -252,6 +252,39 @@
   .type-opt.active{ border-color:var(--teal); background:#eef8f5; color:var(--teal); }
   .type-opt.active svg{ opacity:1; }
 
+  /* PHOTO UPLOAD */
+  .photo-upload{ border:1.5px dashed var(--line); border-radius:12px; overflow:hidden; }
+  .photo-upload-empty{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+    padding:28px 16px; color:#9fb0ac; font-size:13px; cursor:pointer; text-align:center;
+    transition:background .15s ease, border-color .15s ease;
+  }
+  .photo-upload-empty:hover{ background:#f6faf8; color:var(--teal); }
+  .photo-preview-wrap{ position:relative; line-height:0; }
+  .photo-preview-wrap img{ width:100%; max-height:220px; object-fit:cover; display:block; }
+  .photo-remove-btn{
+    position:absolute; top:10px; right:10px; width:28px; height:28px; border-radius:50%;
+    background:rgba(15,42,43,.65); color:#fff; border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .photo-remove-btn:hover{ background:rgba(15,42,43,.85); }
+
+  .record-thumb{
+    width:40px; height:40px; border-radius:10px; object-fit:cover; flex-shrink:0; cursor:pointer;
+    border:1px solid var(--line);
+  }
+  .record-thumb-slot{ width:40px; height:40px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+  .thumb-loading{
+    width:40px; height:40px; border-radius:10px; background:#eef4f2;
+    background-image:linear-gradient(90deg, #eef4f2 0%, #f6faf8 50%, #eef4f2 100%);
+    background-size:200% 100%; animation:thumb-shimmer 1.2s ease-in-out infinite; display:block;
+  }
+  @keyframes thumb-shimmer{ 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+  .lightbox-inner{ position:relative; max-width:90vw; max-height:90vh; }
+  .lightbox-inner img{ max-width:90vw; max-height:90vh; border-radius:12px; display:block; }
+  #lightbox-backdrop{ background:rgba(10,32,33,.85); }
+  #lightbox-backdrop .close-x{ top:-6px; right:-6px; background:rgba(0,0,0,.4); border-radius:50%; padding:6px; }
+
   .page-head.with-action{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
 
   /* MODAL */
@@ -371,7 +404,7 @@
         <div class="stat-card">
           <div class="stat-label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            最近一次更新
+            最新紀錄
           </div>
           <div class="stat-value" id="stat-recent" style="font-size:18px;">—</div>
           <div class="stat-note" id="stat-recent-type">尚無紀錄</div>
@@ -693,11 +726,38 @@
         <textarea id="r-note" placeholder="例如：空腹血糖 92 mg/dL，數值正常"></textarea>
       </div>
 
+      <div class="field">
+        <label for="r-photo">附加照片（選填）</label>
+        <div class="photo-upload" id="photo-upload-zone">
+          <input type="file" id="r-photo" accept="image/*" style="display:none;">
+          <div class="photo-upload-empty" id="photo-upload-empty">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            <span>點擊上傳報告或處方照片</span>
+          </div>
+          <div class="photo-preview-wrap" id="photo-preview-wrap" style="display:none;">
+            <img id="photo-preview-img" alt="預覽照片">
+            <button type="button" class="photo-remove-btn" id="photo-remove-btn" aria-label="移除照片">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div class="modal-actions">
         <button type="button" class="btn-ghost" id="record-cancel">取消</button>
         <button type="submit" class="btn-primary" style="justify-content:center;">儲存紀錄</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- 照片放大檢視 MODAL -->
+<div class="modal-backdrop" id="lightbox-backdrop">
+  <div class="lightbox-inner">
+    <button class="close-x" id="lightbox-close" aria-label="關閉" style="color:#fff;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <img id="lightbox-img" alt="紀錄照片">
   </div>
 </div>
 
@@ -819,6 +879,7 @@
 
   let currentConfig = {};
   let activeFilter = 'all';
+  const photoUrlCache = new Map();
 
   const FILE_NAME = 'logvita_config.json';
   const DROPBOX_APP_KEY = '9g6nfv9vs6jdbk2'; // 請保持替換為您的 Dropbox App Key
@@ -1143,6 +1204,124 @@
     }
   }
 
+  // ---- 照片檔案工具組（上傳為獨立雲端檔案，JSON 中僅存參照） ----
+  function getFileExtension(file) {
+    const parts = (file.name || '').split('.');
+    return parts.length > 1 ? parts.pop().toLowerCase() : 'jpg';
+  }
+
+  async function uploadPhotoFile(file, recordId) {
+    const dropboxToken = sessionStorage.getItem('dropbox_access_token');
+    if (dropboxToken) {
+      const path = `/logvita_photos/${recordId}.${getFileExtension(file)}`;
+      try {
+        const res = await fetch('https://content.dropboxapi.com/2/files/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${dropboxToken}`,
+            'Dropbox-API-Arg': JSON.stringify({ path, mode: 'overwrite', autorename: false, mute: true }),
+            'Content-Type': 'application/octet-stream'
+          },
+          body: file
+        });
+        if (res.ok) return { photoProvider: 'dropbox', photoRef: path };
+      } catch (err) {
+        console.error('Dropbox 照片上傳失敗:', err);
+      }
+      return null;
+    }
+
+    const driveToken = getAccessToken();
+    if (driveToken) {
+      const metadata = { name: `logvita_photo_${recordId}`, mimeType: file.type || 'image/jpeg' };
+      const formData = new FormData();
+      formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+      formData.append('file', file);
+      try {
+        const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${driveToken}` },
+          body: formData
+        });
+        if (res.ok) {
+          const data = await res.json();
+          return { photoProvider: 'drive', photoRef: data.id };
+        }
+      } catch (err) {
+        console.error('Drive 照片上傳失敗:', err);
+      }
+      return null;
+    }
+
+    return null;
+  }
+
+  async function fetchPhotoBlobUrl(record) {
+    if (!record.photoProvider || !record.photoRef) return null;
+    if (photoUrlCache.has(record.id)) return photoUrlCache.get(record.id);
+
+    try {
+      let blob = null;
+      if (record.photoProvider === 'drive') {
+        const token = getAccessToken();
+        if (!token) return null;
+        const res = await fetch(`https://www.googleapis.com/drive/v3/files/${record.photoRef}?alt=media`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) blob = await res.blob();
+      } else if (record.photoProvider === 'dropbox') {
+        const token = sessionStorage.getItem('dropbox_access_token');
+        if (!token) return null;
+        const res = await fetch('https://content.dropboxapi.com/2/files/download', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Dropbox-API-Arg': JSON.stringify({ path: record.photoRef })
+          }
+        });
+        if (res.ok) blob = await res.blob();
+      }
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        photoUrlCache.set(record.id, url);
+        return url;
+      }
+    } catch (err) {
+      console.error('照片載入失敗:', err);
+    }
+    return null;
+  }
+
+  async function deletePhotoFile(record) {
+    try {
+      if (record.photoProvider === 'drive') {
+        const token = getAccessToken();
+        if (!token) return;
+        await fetch(`https://www.googleapis.com/drive/v3/files/${record.photoRef}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } else if (record.photoProvider === 'dropbox') {
+        const token = sessionStorage.getItem('dropbox_access_token');
+        if (!token) return;
+        await fetch('https://api.dropboxapi.com/2/files/delete_v2', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ path: record.photoRef })
+        });
+      }
+    } catch (err) {
+      console.error('刪除照片檔案失敗:', err);
+    }
+    if (photoUrlCache.has(record.id)) {
+      URL.revokeObjectURL(photoUrlCache.get(record.id));
+      photoUrlCache.delete(record.id);
+    }
+  }
+
   function applyConfigToForm(config) {
     currentConfig = config || {};
     currentConfig.records = currentConfig.records || [];
@@ -1233,6 +1412,7 @@
           <div class="r-meta">${formatDate(r.date)}${r.doctor ? ' · ' + escapeHtml(r.doctor) : ''}</div>
           ${r.note ? `<div class="r-note">${escapeHtml(r.note)}</div>` : ''}
         </div>
+        ${r.photoProvider ? `<div class="record-thumb-slot" data-photo-id="${r.id}"><span class="thumb-loading"></span></div>` : ''}
         <div class="record-actions">
           <button type="button" class="btn-danger-text delete-record-btn" title="刪除" aria-label="刪除">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
@@ -1241,13 +1421,28 @@
       </div>
     `).join('');
 
+    // 非同步載入每一筆紀錄的雲端照片縮圖
+    sorted.filter(r => r.photoProvider).forEach(async (r) => {
+      const url = await fetchPhotoBlobUrl(r);
+      const slot = list.querySelector(`.record-thumb-slot[data-photo-id="${r.id}"]`);
+      if (!slot) return;
+      if (url) {
+        slot.innerHTML = `<img src="${url}" class="record-thumb view-photo-btn" alt="紀錄照片">`;
+        slot.querySelector('img').addEventListener('click', () => openLightbox(url));
+      } else {
+        slot.innerHTML = '';
+      }
+    });
+
     list.querySelectorAll('.delete-record-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const item = e.currentTarget.closest('.record-item');
         const id = item.dataset.id;
+        const record = (currentConfig.records || []).find(r => r.id === id);
         currentConfig.records = (currentConfig.records || []).filter(r => r.id !== id);
         renderOverview();
         renderRecordList();
+        if (record && record.photoProvider) deletePhotoFile(record);
         const driveSuccess = await saveToDrive(currentConfig);
         const dropboxSuccess = await saveToDropbox(currentConfig);
         showToast((driveSuccess || dropboxSuccess) ? '已刪除紀錄並同步至雲端' : '已刪除紀錄（請先連結雲端硬碟）');
@@ -1264,11 +1459,64 @@
     renderRecordList();
   });
 
+  // ---- 照片放大檢視 ----
+  const lightboxBackdrop = document.getElementById('lightbox-backdrop');
+  function openLightbox(src){
+    document.getElementById('lightbox-img').src = src;
+    lightboxBackdrop.classList.add('show');
+  }
+  function closeLightbox(){ lightboxBackdrop.classList.remove('show'); }
+  document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+  lightboxBackdrop.addEventListener('click', (e) => {
+    if (e.target === lightboxBackdrop) closeLightbox();
+  });
+
   const recordBackdrop = document.getElementById('record-backdrop');
   const recordForm = document.getElementById('record-form');
+  const photoInput = document.getElementById('r-photo');
+  const photoUploadEmpty = document.getElementById('photo-upload-empty');
+  const photoPreviewWrap = document.getElementById('photo-preview-wrap');
+  const photoPreviewImg = document.getElementById('photo-preview-img');
+  let selectedPhotoFile = null;
+  let selectedPhotoPreviewUrl = null;
+
+  function resetPhotoField(){
+    selectedPhotoFile = null;
+    if (selectedPhotoPreviewUrl) { URL.revokeObjectURL(selectedPhotoPreviewUrl); selectedPhotoPreviewUrl = null; }
+    photoInput.value = '';
+    photoPreviewImg.src = '';
+    photoPreviewWrap.style.display = 'none';
+    photoUploadEmpty.style.display = 'flex';
+  }
+
+  photoUploadEmpty.addEventListener('click', () => photoInput.click());
+
+  photoInput.addEventListener('change', () => {
+    const file = photoInput.files && photoInput.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showToast('請上傳圖片格式的檔案');
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('照片檔案請小於 8MB');
+      return;
+    }
+    selectedPhotoFile = file;
+    selectedPhotoPreviewUrl = URL.createObjectURL(file);
+    photoPreviewImg.src = selectedPhotoPreviewUrl;
+    photoPreviewWrap.style.display = 'block';
+    photoUploadEmpty.style.display = 'none';
+  });
+
+  document.getElementById('photo-remove-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    resetPhotoField();
+  });
 
   function openRecordModal() {
     recordForm.reset();
+    resetPhotoField();
     document.getElementById('r-date').value = new Date().toISOString().slice(0,10);
     document.querySelectorAll('.type-opt').forEach(o => o.classList.remove('active'));
     document.querySelector('.type-opt[data-type="lab"]').classList.add('active');
@@ -1291,6 +1539,7 @@
 
   recordForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const submitBtn = recordForm.querySelector('button[type="submit"]');
     const newRecord = {
       id: 'rec_' + Date.now() + '_' + Math.random().toString(36).slice(2,8),
       type: document.getElementById('r-type').value,
@@ -1301,6 +1550,23 @@
       createdAt: new Date().toISOString()
     };
     if (!newRecord.title || !newRecord.date) return;
+
+    const photoToUpload = selectedPhotoFile;
+    const originalBtnText = submitBtn.textContent;
+
+    if (photoToUpload) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = '照片上傳中...';
+      const uploadResult = await uploadPhotoFile(photoToUpload, newRecord.id);
+      if (uploadResult) {
+        newRecord.photoProvider = uploadResult.photoProvider;
+        newRecord.photoRef = uploadResult.photoRef;
+      } else {
+        showToast('照片上傳失敗，紀錄仍會保留文字內容');
+      }
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalBtnText;
+    }
 
     currentConfig.records = currentConfig.records || [];
     currentConfig.records.unshift(newRecord);
