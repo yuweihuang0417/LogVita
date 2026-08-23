@@ -110,6 +110,14 @@
   .field input, .field select, .field textarea{
     width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--line);
     font-family:inherit; font-size:14px; color:var(--ink); background:#fff;
+    line-height:1.4; box-sizing:border-box;
+  }
+  .field input[type="date"]{
+    -webkit-appearance:none; appearance:none;
+    min-height:42px;
+  }
+  .field input[type="date"]::-webkit-date-and-time-value{
+    text-align:left;
   }
   .field textarea{ resize:vertical; min-height:64px; }
   .avatar-row{ display:flex; align-items:center; gap:16px; margin-bottom:20px; }
