@@ -882,6 +882,7 @@
   const photoUrlCache = new Map();
 
   const FILE_NAME = 'logvita_config.json';
+  const APP_FOLDER_NAME = '健康庫 LogVita';
   const DROPBOX_APP_KEY = '9g6nfv9vs6jdbk2'; // 請保持替換為您的 Dropbox App Key
 
   // 1. 真實裝置與國家判斷
@@ -1060,13 +1061,53 @@
     return sessionStorage.getItem('drive_access_token');
   }
 
+  let driveFolderIdCache = null;
+
+  async function getOrCreateDriveFolderId() {
+    const token = getAccessToken();
+    if (!token) return null;
+    if (driveFolderIdCache) return driveFolderIdCache;
+
+    try {
+      const q = encodeURIComponent(
+        `name='${APP_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`
+      );
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.files && data.files.length > 0) {
+        driveFolderIdCache = data.files[0].id;
+        return driveFolderIdCache;
+      }
+
+      const createRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: APP_FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' })
+      });
+      const created = await createRes.json();
+      driveFolderIdCache = created.id || null;
+      return driveFolderIdCache;
+    } catch (err) {
+      console.error('建立/取得 Drive 資料夾失敗:', err);
+      return null;
+    }
+  }
+
   async function findDriveFileId() {
     const token = getAccessToken();
     if (!token) return null;
 
+    const folderId = await getOrCreateDriveFolderId();
+    if (!folderId) return null;
+
     try {
+      const q = encodeURIComponent(
+        `name='${FILE_NAME}' and trashed=false and '${folderId}' in parents`
+      );
       const res = await fetch(
-        `https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}' and trashed=false`,
+        `https://www.googleapis.com/drive/v3/files?q=${q}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await res.json();
@@ -1102,8 +1143,10 @@
     const token = getAccessToken();
     if (!token) return false;
 
+    const folderId = await getOrCreateDriveFolderId();
     const fileId = await findDriveFileId();
     const metadata = { name: FILE_NAME, mimeType: 'application/json' };
+    if (!fileId && folderId) metadata.parents = [folderId];
     const file = new Blob([JSON.stringify(dataPayload)], { type: 'application/json' });
 
     const formData = new FormData();
@@ -1156,7 +1199,7 @@
         headers: {
           'Authorization': `Bearer ${token}`,
           'Dropbox-API-Arg': JSON.stringify({
-            path: `/${FILE_NAME}`,
+            path: `/${APP_FOLDER_NAME}/${FILE_NAME}`,
             mode: 'overwrite',
             autorename: false,
             mute: false
@@ -1185,7 +1228,7 @@
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Dropbox-API-Arg': JSON.stringify({ path: `/${FILE_NAME}` })
+          'Dropbox-API-Arg': JSON.stringify({ path: `/${APP_FOLDER_NAME}/${FILE_NAME}` })
         }
       });
 
@@ -1213,7 +1256,7 @@
   async function uploadPhotoFile(file, recordId) {
     const dropboxToken = sessionStorage.getItem('dropbox_access_token');
     if (dropboxToken) {
-      const path = `/logvita_photos/${recordId}.${getFileExtension(file)}`;
+      const path = `/${APP_FOLDER_NAME}/photos/${recordId}.${getFileExtension(file)}`;
       try {
         const res = await fetch('https://content.dropboxapi.com/2/files/upload', {
           method: 'POST',
@@ -1233,7 +1276,9 @@
 
     const driveToken = getAccessToken();
     if (driveToken) {
+      const folderId = await getOrCreateDriveFolderId();
       const metadata = { name: `logvita_photo_${recordId}`, mimeType: file.type || 'image/jpeg' };
+      if (folderId) metadata.parents = [folderId];
       const formData = new FormData();
       formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
       formData.append('file', file);
