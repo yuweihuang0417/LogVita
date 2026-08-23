@@ -481,7 +481,9 @@
         <div class="avatar-row">
           <div class="avatar-lg" id="avatar-lg-text">用</div>
           <div>
+            <input type="file" id="avatar-file-input" accept="image/*" style="display:none;">
             <button type="button" class="btn-ghost" id="change-avatar">更換照片</button>
+            <button type="button" class="btn-danger-text" id="remove-avatar" style="display:none; margin-left:6px; font-size:12.5px; font-weight:600; text-decoration:underline; padding:9px 6px;">移除照片</button>
           </div>
         </div>
         <form id="profile-form">
@@ -913,6 +915,9 @@
   let currentConfig = {};
   let activeFilter = 'all';
   const photoUrlCache = new Map();
+  let currentDisplayName = '使用者';
+  let currentInitial = '使';
+  let currentGooglePhotoURL = '';
 
   const FILE_NAME = 'logvita_config.json';
   const APP_FOLDER_NAME = '健康庫 LogVita';
@@ -995,26 +1000,14 @@
   // 3. Auth 狀態變更監聽與跨裝置 Token 同步
   onAuthStateChanged(auth, async (user) => {
     if (user) {
-      const displayName = user.displayName || '使用者';
-      const initial = displayName.charAt(0).toUpperCase();
-      const photoURL = user.photoURL || '';
+      currentDisplayName = user.displayName || '使用者';
+      currentInitial = currentDisplayName.charAt(0).toUpperCase();
+      currentGooglePhotoURL = user.photoURL || '';
+      refreshAvatarDisplay();
 
-      function renderAvatar(el) {
-        if (!el) return;
-        if (photoURL) {
-          el.innerHTML = `<img src="${photoURL}" alt="${escapeHtml(displayName)}" referrerpolicy="no-referrer">`;
-          const img = el.querySelector('img');
-          img.addEventListener('error', () => { el.textContent = initial; }, { once: true });
-        } else {
-          el.textContent = initial;
-        }
-      }
-      renderAvatar(document.getElementById('user-initial'));
-      renderAvatar(document.getElementById('avatar-lg-text'));
-
-      document.getElementById('user-name').textContent = displayName;
+      document.getElementById('user-name').textContent = currentDisplayName;
       document.getElementById('user-email').textContent = user.email || '';
-      document.getElementById('p-name').value = displayName;
+      document.getElementById('p-name').value = currentDisplayName;
 
       // 即時填入真實裝置資訊
       document.getElementById('current-device-info').textContent = detectDeviceType();
@@ -1436,6 +1429,35 @@
 
     renderOverview();
     renderRecordList();
+    refreshAvatarDisplay();
+  }
+
+  // ---- 頭像顯示（自訂上傳頭像優先，其次 Google 頭像，最後為姓名字首） ----
+  function setAvatarElement(el, url) {
+    if (!el) return;
+    if (url) {
+      el.innerHTML = `<img src="${url}" alt="${escapeHtml(currentDisplayName)}" referrerpolicy="no-referrer">`;
+      const img = el.querySelector('img');
+      img.addEventListener('error', () => { el.textContent = currentInitial; }, { once: true });
+    } else {
+      el.textContent = currentInitial;
+    }
+  }
+
+  async function refreshAvatarDisplay() {
+    let url = '';
+    if (currentConfig.avatarProvider && currentConfig.avatarRef) {
+      url = await fetchPhotoBlobUrl({ id: 'avatar', photoProvider: currentConfig.avatarProvider, photoRef: currentConfig.avatarRef }) || '';
+    }
+    if (!url) url = currentGooglePhotoURL;
+
+    setAvatarElement(document.getElementById('user-initial'), url);
+    setAvatarElement(document.getElementById('avatar-lg-text'), url);
+
+    const removeBtn = document.getElementById('remove-avatar');
+    if (removeBtn) {
+      removeBtn.style.display = (currentConfig.avatarProvider && currentConfig.avatarRef) ? 'inline-flex' : 'none';
+    }
   }
 
   // ---- 首頁 / 總覽渲染 ----
@@ -1673,6 +1695,68 @@
 
   // 7. 表單提交與事件觸發
   document.getElementById('connect-dropbox-btn').addEventListener('click', connectDropbox);
+
+  // ---- 更換 / 移除大頭貼照片 ----
+  const avatarFileInput = document.getElementById('avatar-file-input');
+  const changeAvatarBtn = document.getElementById('change-avatar');
+  const removeAvatarBtn = document.getElementById('remove-avatar');
+
+  changeAvatarBtn.addEventListener('click', () => avatarFileInput.click());
+
+  avatarFileInput.addEventListener('change', async () => {
+    const file = avatarFileInput.files && avatarFileInput.files[0];
+    avatarFileInput.value = '';
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast('請上傳圖片格式的檔案');
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('照片檔案請小於 8MB');
+      return;
+    }
+
+    const originalText = changeAvatarBtn.textContent;
+    changeAvatarBtn.disabled = true;
+    changeAvatarBtn.textContent = '上傳中...';
+
+    const uploadResult = await uploadPhotoFile(file, 'avatar');
+
+    changeAvatarBtn.disabled = false;
+    changeAvatarBtn.textContent = originalText;
+
+    if (!uploadResult) {
+      showToast('請先連結 Google Drive 或 Dropbox 以上傳照片');
+      return;
+    }
+
+    photoUrlCache.delete('avatar');
+    currentConfig.avatarProvider = uploadResult.photoProvider;
+    currentConfig.avatarRef = uploadResult.photoRef;
+    currentConfig.updatedAt = new Date().toISOString();
+
+    await refreshAvatarDisplay();
+
+    const driveSuccess = await saveToDrive(currentConfig);
+    const dropboxSuccess = await saveToDropbox(currentConfig);
+    showToast((driveSuccess || dropboxSuccess) ? '大頭貼已更新並同步至雲端' : '大頭貼已更新（尚未連結雲端硬碟，暫存於本次瀏覽）');
+  });
+
+  removeAvatarBtn.addEventListener('click', async () => {
+    if (currentConfig.avatarProvider && currentConfig.avatarRef) {
+      deletePhotoFile({ id: 'avatar', photoProvider: currentConfig.avatarProvider, photoRef: currentConfig.avatarRef });
+    }
+    delete currentConfig.avatarProvider;
+    delete currentConfig.avatarRef;
+    currentConfig.updatedAt = new Date().toISOString();
+
+    await refreshAvatarDisplay();
+
+    const driveSuccess = await saveToDrive(currentConfig);
+    const dropboxSuccess = await saveToDropbox(currentConfig);
+    showToast((driveSuccess || dropboxSuccess) ? '已移除自訂大頭貼，改回預設頭像' : '已移除自訂大頭貼');
+  });
 
   document.getElementById('profile-form').addEventListener('submit', async (e) => {
     e.preventDefault();
