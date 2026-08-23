@@ -252,6 +252,12 @@
     background:none; border:none; color:#b9c2c0; cursor:pointer; padding:6px; border-radius:8px;
   }
   .btn-danger-text:hover{ color:var(--error); background:#fdf1f0; }
+  .link-remove{
+    background:none; border:none; cursor:pointer;
+    color:#8b6a68; font-family:inherit; font-size:13px; font-weight:600;
+    text-decoration:underline; padding:9px 6px; border-radius:8px;
+  }
+  .link-remove:hover{ color:var(--error); background:#fdf1f0; }
 
   .empty-state{ text-align:center; padding:40px 20px; color:#9fb0ac; }
   .empty-state .e-icon{ margin-bottom:10px; opacity:.7; }
@@ -483,7 +489,7 @@
           <div>
             <input type="file" id="avatar-file-input" accept="image/*" style="display:none;">
             <button type="button" class="btn-ghost" id="change-avatar">更換照片</button>
-            <button type="button" class="btn-danger-text" id="remove-avatar" style="display:none; margin-left:6px; font-size:12.5px; font-weight:600; text-decoration:underline; padding:9px 6px;">移除照片</button>
+            <button type="button" class="link-remove" id="remove-avatar" style="display:none; margin-left:6px;">移除照片</button>
           </div>
         </div>
         <form id="profile-form">
