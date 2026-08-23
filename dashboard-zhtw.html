@@ -38,6 +38,7 @@
     position:sticky;
     top:0;
     height:100vh;
+    overflow-y:auto;
   }
   .brand-mark{
     display:flex; align-items:center; gap:10px;
@@ -317,12 +318,15 @@
   .toast .dot{ width:8px;height:8px;border-radius:50%;background:var(--mint); }
 
   @media (max-width: 860px){
-    .app{ flex-direction:column; }
-    .sidebar{ position:static; height:auto; padding:16px; }
     .row{ grid-template-columns:1fr; }
-    .main{ padding:24px 18px 50px; max-width:none; }
     .stat-grid{ grid-template-columns:1fr; }
     .type-picker{ grid-template-columns:repeat(2, 1fr); }
+  }
+
+  @media (max-width: 600px){
+    .app{ flex-direction:column; }
+    .sidebar{ position:static; height:auto; max-height:none; padding:16px; overflow-y:visible; }
+    .main{ padding:24px 18px 50px; max-width:none; }
   }
 </style>
 </head>
