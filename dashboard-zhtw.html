@@ -328,8 +328,8 @@
     background-size:200% 100%; animation:thumb-shimmer 1.2s ease-in-out infinite; display:block;
   }
   @keyframes thumb-shimmer{ 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
-  .lightbox-inner{ position:relative; max-width:90vw; max-height:90vh; }
-  .lightbox-inner img{ max-width:90vw; max-height:90vh; border-radius:12px; display:block; }
+  .lightbox-inner{ position:relative; max-width:min(90vw, 640px); max-height:min(90vh, 640px); }
+  .lightbox-inner img{ max-width:min(90vw, 640px); max-height:min(90vh, 640px); width:auto; height:auto; border-radius:12px; display:block; }
   #lightbox-backdrop{ background:rgba(10,32,33,.85); z-index:70; }
   #lightbox-backdrop .close-x{ top:-6px; right:-6px; background:rgba(0,0,0,.4); border-radius:50%; padding:6px; }
 
