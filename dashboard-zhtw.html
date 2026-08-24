@@ -1253,6 +1253,10 @@
     }
   }
 
+  // ---- 雲端連線逾時偵測 ----
+  let driveTokenExpired = false;
+  let dropboxTokenExpired = false;
+
   async function loadFromDrive() {
     const token = getAccessToken();
     if (!token) return;
@@ -1265,6 +1269,13 @@
         `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      if (res.status === 401) {
+        console.warn('Google Drive 存取權杖已逾時');
+        sessionStorage.removeItem('drive_access_token');
+        driveTokenExpired = true;
+        await checkCloudSessionExpiry();
+        return;
+      }
       const config = await res.json();
 
       applyConfigToForm(config);
@@ -1302,6 +1313,13 @@
         headers: { Authorization: `Bearer ${token}` },
         body: formData
       });
+
+      if (res.status === 401) {
+        console.warn('Google Drive 存取權杖已逾時');
+        sessionStorage.removeItem('drive_access_token');
+        driveTokenExpired = true;
+        return false;
+      }
 
       return res.ok;
     } catch (err) {
@@ -1344,6 +1362,13 @@
         body: JSON.stringify(dataPayload)
       });
 
+      if (res.status === 401) {
+        console.warn('Dropbox 存取權杖已逾時');
+        sessionStorage.removeItem('dropbox_access_token');
+        dropboxTokenExpired = true;
+        return false;
+      }
+
       return res.ok;
     } catch (err) {
       console.error('Dropbox 上傳失敗:', err);
@@ -1367,6 +1392,14 @@
         }
       });
 
+      if (res.status === 401) {
+        console.warn('Dropbox 存取權杖已逾時');
+        sessionStorage.removeItem('dropbox_access_token');
+        dropboxTokenExpired = true;
+        await checkCloudSessionExpiry();
+        return;
+      }
+
       if (res.ok) {
         const config = await res.json();
         applyConfigToForm(config);
@@ -1382,6 +1415,29 @@
       renderRecordList();
       renderAccessList();
     }
+  }
+
+  // 儲存資料到雲端（Drive + Dropbox 雙重備援），並在偵測到權杖逾時時確保後續流程正確處理
+  async function syncConfigToCloud(config) {
+    const driveSuccess = await saveToDrive(config);
+    const dropboxSuccess = await saveToDropbox(config);
+    await checkCloudSessionExpiry();
+    return { driveSuccess, dropboxSuccess };
+  }
+
+  // 偵測到雲端權杖逾時時的處理：因為 Google Drive 與 Dropbox 是互斥的（同一時間只能連結其中一種），
+  // 一旦目前連結的那個雲端硬碟權杖逾時，代表資料已經無法再同步，為避免使用者誤以為資料仍持續備份，
+  // 強制登出並要求重新登入、重新連結雲端硬碟
+  async function checkCloudSessionExpiry() {
+    if (!driveTokenExpired && !dropboxTokenExpired) return;
+
+    driveTokenExpired = false;
+    dropboxTokenExpired = false;
+    showToast('雲端連線已逾時，為確保資料安全同步，即將登出請重新登入');
+    setTimeout(async () => {
+      try { await signOut(auth); } catch (err) { console.error('登出失敗:', err); }
+      window.location.href = 'index.html';
+    }, 1800);
   }
 
   // ---- 照片檔案工具組（上傳為獨立雲端檔案，JSON 中僅存參照） ----
@@ -1668,8 +1724,7 @@
         renderAccessList();
         renderOverview();
         if (grant) await deleteShareDoc(grant);
-        const driveSuccess = await saveToDrive(currentConfig);
-        const dropboxSuccess = await saveToDropbox(currentConfig);
+        const { driveSuccess, dropboxSuccess } = await syncConfigToCloud(currentConfig);
         showToast((driveSuccess || dropboxSuccess) ? '已撤銷授權並同步至雲端' : '已撤銷授權');
       });
     });
@@ -1864,8 +1919,7 @@
         renderOverview();
         renderRecordList();
         if (record && record.photoProvider) deletePhotoFile(record);
-        const driveSuccess = await saveToDrive(currentConfig);
-        const dropboxSuccess = await saveToDropbox(currentConfig);
+        const { driveSuccess, dropboxSuccess } = await syncConfigToCloud(currentConfig);
         syncAllActiveShares();
         showToast((driveSuccess || dropboxSuccess) ? '已刪除紀錄並同步至雲端' : '已刪除紀錄（請先連結雲端硬碟）');
       });
@@ -1932,8 +1986,7 @@
       renderRecordList();
       closeRecordDetailModal();
       if (record.photoProvider) deletePhotoFile(record);
-      const driveSuccess = await saveToDrive(currentConfig);
-      const dropboxSuccess = await saveToDropbox(currentConfig);
+      const { driveSuccess, dropboxSuccess } = await syncConfigToCloud(currentConfig);
       syncAllActiveShares();
       showToast((driveSuccess || dropboxSuccess) ? '已刪除紀錄並同步至雲端' : '已刪除紀錄（請先連結雲端硬碟）');
     });
@@ -2058,8 +2111,7 @@
     renderRecordList();
     closeRecordModal();
 
-    const driveSuccess = await saveToDrive(currentConfig);
-    const dropboxSuccess = await saveToDropbox(currentConfig);
+    const { driveSuccess, dropboxSuccess } = await syncConfigToCloud(currentConfig);
     syncAllActiveShares();
     showToast((driveSuccess || dropboxSuccess) ? '已新增紀錄並同步至雲端硬碟' : '已新增紀錄（請先連結 Google Drive 或 Dropbox 以同步）');
   });
@@ -2109,8 +2161,7 @@
 
     await refreshAvatarDisplay();
 
-    const driveSuccess = await saveToDrive(currentConfig);
-    const dropboxSuccess = await saveToDropbox(currentConfig);
+    const { driveSuccess, dropboxSuccess } = await syncConfigToCloud(currentConfig);
     showToast((driveSuccess || dropboxSuccess) ? '大頭貼已更新並同步至雲端' : '大頭貼已更新（尚未連結雲端硬碟，暫存於本次瀏覽）');
   });
 
@@ -2124,8 +2175,7 @@
 
     await refreshAvatarDisplay();
 
-    const driveSuccess = await saveToDrive(currentConfig);
-    const dropboxSuccess = await saveToDropbox(currentConfig);
+    const { driveSuccess, dropboxSuccess } = await syncConfigToCloud(currentConfig);
     showToast((driveSuccess || dropboxSuccess) ? '已移除自訂大頭貼，改回預設頭像' : '已移除自訂大頭貼');
   });
 
@@ -2153,8 +2203,7 @@
       updatedAt: new Date().toISOString()
     };
 
-    const driveSuccess = await saveToDrive(currentConfig);
-    const dropboxSuccess = await saveToDropbox(currentConfig);
+    const { driveSuccess, dropboxSuccess } = await syncConfigToCloud(currentConfig);
 
     renderOverview();
 
@@ -2266,8 +2315,7 @@
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
 
-    const driveSuccess = await saveToDrive(currentConfig);
-    const dropboxSuccess = await saveToDropbox(currentConfig);
+    const { driveSuccess, dropboxSuccess } = await syncConfigToCloud(currentConfig);
 
     if (!EMAILJS_ENABLED) {
       showToast('已新增授權（尚未設定寄信服務，對方需自行登入查看）');
