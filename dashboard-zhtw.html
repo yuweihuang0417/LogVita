@@ -834,7 +834,7 @@
 
 <!-- 新增授權 MODAL -->
 <div class="modal-backdrop" id="access-backdrop">
-  <div class="modal">
+  <div class="modal modal-wide">
     <button class="close-x" id="access-close" aria-label="關閉">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
@@ -842,73 +842,80 @@
     <div class="card-sub" style="margin-bottom:20px;">邀請家人或醫療人員查看你的健康紀錄，對方會收到一封邀請信</div>
 
     <form id="access-form">
-      <div class="field">
-        <label for="a-type">授權對象</label>
-        <select id="a-type">
-          <option value="family">家人</option>
-          <option value="doctor">醫療人員</option>
-          <option value="other">其他</option>
-        </select>
-      </div>
+      <div class="record-form-grid">
+        <div class="record-form-col">
+          <div class="row">
+            <div class="field">
+              <label for="a-type">授權對象</label>
+              <select id="a-type">
+                <option value="family">家人</option>
+                <option value="doctor">醫療人員</option>
+                <option value="other">其他</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="a-name">稱呼（選填）</label>
+              <input type="text" id="a-name" placeholder="例如：陳醫師、林小美">
+            </div>
+          </div>
 
-      <div class="field">
-        <label for="a-email">電子郵件</label>
-        <input type="email" id="a-email" placeholder="對方的電子郵件地址" required>
-      </div>
+          <div class="field">
+            <label for="a-email">電子郵件</label>
+            <input type="email" id="a-email" placeholder="對方的電子郵件地址" required>
+          </div>
 
-      <div class="field">
-        <label for="a-name">稱呼（選填）</label>
-        <input type="text" id="a-name" placeholder="例如：陳醫師、林小美">
-      </div>
-
-      <div class="field">
-        <label for="a-scope">存取範圍</label>
-        <select id="a-scope">
-          <option value="full">完整病歷</option>
-          <option value="summary">僅摘要</option>
-          <option value="lab">僅檢驗報告</option>
-          <option value="custom">自訂項目</option>
-        </select>
-      </div>
-
-      <div class="field" id="a-scope-custom" style="display:none;">
-        <label>可查看的紀錄類型</label>
-        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;">
-          <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink);">
-            <input type="checkbox" id="a-type-lab" value="lab" checked> 檢驗報告
-          </label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink);">
-            <input type="checkbox" id="a-type-med" value="med"> 用藥紀錄
-          </label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink);">
-            <input type="checkbox" id="a-type-img" value="img"> 影像資料
-          </label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink);">
-            <input type="checkbox" id="a-type-visit" value="visit"> 就診紀錄
-          </label>
+          <div class="row">
+            <div class="field">
+              <label for="a-expiry">授權期限</label>
+              <select id="a-expiry">
+                <option value="permanent">永久，直到我撤銷</option>
+                <option value="30">30 天</option>
+                <option value="90">90 天</option>
+                <option value="365">1 年</option>
+                <option value="custom">自訂日期</option>
+              </select>
+            </div>
+            <div class="field" id="a-expiry-date-field" style="display:none;">
+              <label for="a-expiry-date">到期日</label>
+              <input type="date" id="a-expiry-date">
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div class="row">
-        <div class="field">
-          <label for="a-expiry">授權期限</label>
-          <select id="a-expiry">
-            <option value="permanent">永久，直到我撤銷</option>
-            <option value="30">30 天</option>
-            <option value="90">90 天</option>
-            <option value="365">1 年</option>
-            <option value="custom">自訂日期</option>
-          </select>
-        </div>
-        <div class="field" id="a-expiry-date-field" style="display:none;">
-          <label for="a-expiry-date">到期日</label>
-          <input type="date" id="a-expiry-date">
-        </div>
-      </div>
+        <div class="record-form-col">
+          <div class="field">
+            <label for="a-scope">存取範圍</label>
+            <select id="a-scope">
+              <option value="full">完整病歷</option>
+              <option value="summary">僅摘要</option>
+              <option value="lab">僅檢驗報告</option>
+              <option value="custom">自訂項目</option>
+            </select>
+          </div>
 
-      <div class="field">
-        <label for="a-note">邀請訊息（選填）</label>
-        <textarea id="a-note" placeholder="會附在邀請信裡，例如：這是我這次回診要用的資料"></textarea>
+          <div class="field" id="a-scope-custom" style="display:none;">
+            <label>可查看的紀錄類型</label>
+            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;">
+              <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink);">
+                <input type="checkbox" id="a-type-lab" value="lab" checked> 檢驗報告
+              </label>
+              <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink);">
+                <input type="checkbox" id="a-type-med" value="med"> 用藥紀錄
+              </label>
+              <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink);">
+                <input type="checkbox" id="a-type-img" value="img"> 影像資料
+              </label>
+              <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink);">
+                <input type="checkbox" id="a-type-visit" value="visit"> 就診紀錄
+              </label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="a-note">邀請訊息（選填）</label>
+            <textarea id="a-note" placeholder="會附在邀請信裡，例如：這是我這次回診要用的資料"></textarea>
+          </div>
+        </div>
       </div>
 
       <div class="modal-actions">
