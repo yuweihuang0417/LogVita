@@ -379,6 +379,7 @@
     .main{ padding:24px 18px 50px; max-width:none; }
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -938,6 +939,38 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
+
+  // ---- EmailJS 設定（請至 emailjs.com 註冊後填入你自己的金鑰）----
+  const EMAILJS_PUBLIC_KEY = 'YOUR_EMAILJS_PUBLIC_KEY';   // Account → General → Public Key
+  const EMAILJS_SERVICE_ID = 'YOUR_EMAILJS_SERVICE_ID';   // Email Services 裡建立的服務 ID
+  const EMAILJS_TEMPLATE_ID = 'YOUR_EMAILJS_TEMPLATE_ID'; // Email Templates 裡建立的樣板 ID
+  const EMAILJS_ENABLED = !EMAILJS_PUBLIC_KEY.startsWith('YOUR_');
+
+  if (EMAILJS_ENABLED && window.emailjs) {
+    window.emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+  }
+
+  async function sendAccessInviteEmail(grant) {
+    if (!EMAILJS_ENABLED || !window.emailjs) {
+      console.warn('EmailJS 尚未設定金鑰，略過寄信（授權本身仍會正常建立）');
+      return false;
+    }
+    try {
+      await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+        to_email: grant.email,
+        to_name: grant.name || grant.email,
+        from_name: currentDisplayName,
+        app_name: '健康庫 LogVita',
+        scope_label: SCOPE_LABEL[grant.scope] || '自訂項目',
+        expiry_text: grant.expiryDate ? `授權至 ${grant.expiryDate}` : '永久授權，直到對方撤銷',
+        note: grant.note || '（無附加訊息）'
+      });
+      return true;
+    } catch (err) {
+      console.error('EmailJS 寄信失敗:', err);
+      return false;
+    }
+  }
 
   const TYPE_LABEL = { lab: '檢驗報告', med: '用藥紀錄', img: '影像資料', visit: '就診紀錄' };
   const TYPE_ICON = {
@@ -2127,12 +2160,20 @@
     submitBtn.disabled = true;
     submitBtn.textContent = '同步中...';
     await upsertShareDoc(grant);
+    const emailSent = await sendAccessInviteEmail(grant);
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
 
     const driveSuccess = await saveToDrive(currentConfig);
     const dropboxSuccess = await saveToDropbox(currentConfig);
-    showToast((driveSuccess || dropboxSuccess) ? '已新增授權，對方登入後即可查看' : '已新增授權（請先連結雲端硬碟以同步個人檔案）');
+
+    if (!EMAILJS_ENABLED) {
+      showToast('已新增授權（尚未設定寄信服務，對方需自行登入查看）');
+    } else if (emailSent) {
+      showToast('已新增授權並寄出邀請信');
+    } else {
+      showToast('已新增授權，但邀請信寄送失敗，請確認 EmailJS 設定');
+    }
   });
 </script>
 
