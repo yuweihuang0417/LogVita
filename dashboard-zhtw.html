@@ -1822,11 +1822,12 @@
           <div class="record-icon ${r.type}">${TYPE_ICON[r.type] || TYPE_ICON.visit}</div>
           <div class="record-main">
             <div class="r-top">
-              <span class="r-title">${escapeHtml(r.title)}${r.photoProvider ? '　📎' : ''}</span>
+              <span class="r-title">${escapeHtml(r.title)}</span>
               <span class="record-tag">${TYPE_LABEL[r.type] || '紀錄'}</span>
             </div>
             <div class="r-meta">${formatDate(r.date)}${r.doctor ? ' · ' + escapeHtml(r.doctor) : ''}</div>
           </div>
+          ${r.photoProvider ? `<div class="record-thumb-slot" data-photo-id="${r.id}"><span class="thumb-loading"></span></div>` : ''}
           <svg class="record-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg>
           <div class="record-actions">
             <button type="button" class="btn-danger-text delete-record-btn" title="刪除" aria-label="刪除">
@@ -1836,6 +1837,14 @@
         </div>
       </div>
     `).join('');
+
+    // 非同步載入每一筆紀錄的縮圖預覽
+    sorted.filter(r => r.photoProvider).forEach(async (r) => {
+      const url = await fetchPhotoBlobUrl(r);
+      const slot = list.querySelector(`.record-thumb-slot[data-photo-id="${r.id}"]`);
+      if (!slot) return;
+      slot.innerHTML = url ? `<img src="${url}" class="record-thumb" alt="紀錄照片">` : '';
+    });
 
     list.querySelectorAll('.record-item-head').forEach(head => {
       head.addEventListener('click', () => {
