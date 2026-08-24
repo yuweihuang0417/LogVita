@@ -248,8 +248,12 @@
   }
   .chip.active{ background:var(--navy); border-color:var(--navy); color:#fff; }
 
-  .record-item{ display:flex; align-items:flex-start; gap:14px; padding:16px 0; border-bottom:1px solid var(--line); }
-  .record-item:last-child{ border-bottom:none; padding-bottom:0; }
+  .record-item{ border-bottom:1px solid var(--line); }
+  .record-item:last-child{ border-bottom:none; }
+  .record-item-head{ display:flex; align-items:center; gap:14px; padding:16px 0; cursor:pointer; }
+  .record-item-head:hover .r-title{ color:var(--teal); }
+  .record-chevron{ transition:transform .15s ease; color:#9fb0ac; flex-shrink:0; }
+  .record-item.open .record-chevron{ transform:rotate(180deg); }
   .record-icon{
     width:40px; height:40px; border-radius:12px; flex-shrink:0;
     display:flex; align-items:center; justify-content:center;
@@ -261,13 +265,17 @@
   .record-icon.visit{ background:#eef4f2; color:var(--teal); }
   .record-main{ flex:1; min-width:0; }
   .record-main .r-top{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-  .record-main .r-title{ font-size:14.5px; font-weight:700; }
+  .record-main .r-title{ font-size:14.5px; font-weight:700; transition:color .15s ease; }
   .record-tag{
     font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px;
     background:#eef4f2; color:#5c6b68; white-space:nowrap;
   }
   .record-main .r-meta{ font-size:12.5px; color:#8b9895; margin-top:3px; }
-  .record-main .r-note{ font-size:13px; color:#5c6b68; margin-top:6px; line-height:1.6; }
+  .record-detail{ display:none; padding:0 0 18px 54px; }
+  .record-item.open .record-detail{ display:block; }
+  .record-detail .r-note-full{ font-size:13.5px; color:#4c5a57; line-height:1.7; white-space:pre-wrap; }
+  .record-detail-photo{ margin-top:14px; max-width:280px; border-radius:12px; overflow:hidden; cursor:pointer; border:1px solid var(--line); display:block; }
+  .record-detail-photo img{ width:100%; max-height:180px; object-fit:cover; display:block; }
   .record-actions{ flex-shrink:0; }
   .btn-danger-text{
     background:none; border:none; color:#b9c2c0; cursor:pointer; padding:6px; border-radius:8px;
@@ -1802,39 +1810,51 @@
 
     list.innerHTML = sorted.map(r => `
       <div class="record-item" data-id="${r.id}">
-        <div class="record-icon ${r.type}">${TYPE_ICON[r.type] || TYPE_ICON.visit}</div>
-        <div class="record-main">
-          <div class="r-top">
-            <span class="r-title">${escapeHtml(r.title)}</span>
-            <span class="record-tag">${TYPE_LABEL[r.type] || '紀錄'}</span>
+        <div class="record-item-head">
+          <div class="record-icon ${r.type}">${TYPE_ICON[r.type] || TYPE_ICON.visit}</div>
+          <div class="record-main">
+            <div class="r-top">
+              <span class="r-title">${escapeHtml(r.title)}${r.photoProvider ? '　📎' : ''}</span>
+              <span class="record-tag">${TYPE_LABEL[r.type] || '紀錄'}</span>
+            </div>
+            <div class="r-meta">${formatDate(r.date)}${r.doctor ? ' · ' + escapeHtml(r.doctor) : ''}</div>
           </div>
-          <div class="r-meta">${formatDate(r.date)}${r.doctor ? ' · ' + escapeHtml(r.doctor) : ''}</div>
-          ${r.note ? `<div class="r-note">${escapeHtml(r.note)}</div>` : ''}
+          <svg class="record-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <div class="record-actions">
+            <button type="button" class="btn-danger-text delete-record-btn" title="刪除" aria-label="刪除">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+            </button>
+          </div>
         </div>
-        ${r.photoProvider ? `<div class="record-thumb-slot" data-photo-id="${r.id}"><span class="thumb-loading"></span></div>` : ''}
-        <div class="record-actions">
-          <button type="button" class="btn-danger-text delete-record-btn" title="刪除" aria-label="刪除">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-          </button>
+        <div class="record-detail">
+          ${r.note ? `<div class="r-note-full">${escapeHtml(r.note)}</div>` : `<div class="r-note-full" style="color:#9fb0ac;">（無備註內容）</div>`}
+          ${r.photoProvider ? `<div class="record-detail-photo-slot" data-photo-id="${r.id}"><span class="thumb-loading" style="width:100%; height:120px; border-radius:12px;"></span></div>` : ''}
         </div>
       </div>
     `).join('');
 
-    // 非同步載入每一筆紀錄的雲端照片縮圖
+    // 非同步載入每一筆紀錄的雲端照片（展開後可見的大圖）
     sorted.filter(r => r.photoProvider).forEach(async (r) => {
       const url = await fetchPhotoBlobUrl(r);
-      const slot = list.querySelector(`.record-thumb-slot[data-photo-id="${r.id}"]`);
+      const slot = list.querySelector(`.record-detail-photo-slot[data-photo-id="${r.id}"]`);
       if (!slot) return;
       if (url) {
-        slot.innerHTML = `<img src="${url}" class="record-thumb view-photo-btn" alt="紀錄照片">`;
-        slot.querySelector('img').addEventListener('click', () => openLightbox(url));
+        slot.innerHTML = `<div class="record-detail-photo"><img src="${url}" alt="紀錄照片"></div>`;
+        slot.querySelector('.record-detail-photo').addEventListener('click', () => openLightbox(url));
       } else {
         slot.innerHTML = '';
       }
     });
 
+    list.querySelectorAll('.record-item-head').forEach(head => {
+      head.addEventListener('click', () => {
+        head.closest('.record-item').classList.toggle('open');
+      });
+    });
+
     list.querySelectorAll('.delete-record-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
         const item = e.currentTarget.closest('.record-item');
         const id = item.dataset.id;
         const record = (currentConfig.records || []).find(r => r.id === id);
