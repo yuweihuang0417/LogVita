@@ -252,8 +252,7 @@
   .record-item:last-child{ border-bottom:none; }
   .record-item-head{ display:flex; align-items:center; gap:14px; padding:16px 0; cursor:pointer; }
   .record-item-head:hover .r-title{ color:var(--teal); }
-  .record-chevron{ transition:transform .15s ease; color:#9fb0ac; flex-shrink:0; }
-  .record-item.open .record-chevron{ transform:rotate(180deg); }
+  .record-chevron{ color:#c3cdca; flex-shrink:0; }
   .record-icon{
     width:40px; height:40px; border-radius:12px; flex-shrink:0;
     display:flex; align-items:center; justify-content:center;
@@ -271,11 +270,9 @@
     background:#eef4f2; color:#5c6b68; white-space:nowrap;
   }
   .record-main .r-meta{ font-size:12.5px; color:#8b9895; margin-top:3px; }
-  .record-detail{ display:none; padding:0 0 18px 54px; }
-  .record-item.open .record-detail{ display:block; }
-  .record-detail .r-note-full{ font-size:13.5px; color:#4c5a57; line-height:1.7; white-space:pre-wrap; }
-  .record-detail-photo{ margin-top:14px; max-width:280px; border-radius:12px; overflow:hidden; cursor:pointer; border:1px solid var(--line); display:block; }
-  .record-detail-photo img{ width:100%; max-height:180px; object-fit:cover; display:block; }
+  .r-note-full{ font-size:13.5px; color:#4c5a57; line-height:1.7; white-space:pre-wrap; }
+  .record-detail-photo{ margin-top:14px; border-radius:12px; overflow:hidden; cursor:pointer; border:1px solid var(--line); display:block; }
+  .record-detail-photo img{ width:100%; max-height:220px; object-fit:cover; display:block; }
   .record-actions{ flex-shrink:0; }
   .btn-danger-text{
     background:none; border:none; color:#b9c2c0; cursor:pointer; padding:6px; border-radius:8px;
@@ -837,6 +834,16 @@
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
     <img id="lightbox-img" alt="紀錄照片">
+  </div>
+</div>
+
+<!-- 醫療紀錄詳情 MODAL -->
+<div class="modal-backdrop" id="record-detail-backdrop">
+  <div class="modal">
+    <button class="close-x" id="record-detail-close" aria-label="關閉">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div id="record-detail-content"></div>
   </div>
 </div>
 
@@ -1819,36 +1826,21 @@
             </div>
             <div class="r-meta">${formatDate(r.date)}${r.doctor ? ' · ' + escapeHtml(r.doctor) : ''}</div>
           </div>
-          <svg class="record-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <svg class="record-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg>
           <div class="record-actions">
             <button type="button" class="btn-danger-text delete-record-btn" title="刪除" aria-label="刪除">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
             </button>
           </div>
         </div>
-        <div class="record-detail">
-          ${r.note ? `<div class="r-note-full">${escapeHtml(r.note)}</div>` : `<div class="r-note-full" style="color:#9fb0ac;">（無備註內容）</div>`}
-          ${r.photoProvider ? `<div class="record-detail-photo-slot" data-photo-id="${r.id}"><span class="thumb-loading" style="width:100%; height:120px; border-radius:12px;"></span></div>` : ''}
-        </div>
       </div>
     `).join('');
 
-    // 非同步載入每一筆紀錄的雲端照片（展開後可見的大圖）
-    sorted.filter(r => r.photoProvider).forEach(async (r) => {
-      const url = await fetchPhotoBlobUrl(r);
-      const slot = list.querySelector(`.record-detail-photo-slot[data-photo-id="${r.id}"]`);
-      if (!slot) return;
-      if (url) {
-        slot.innerHTML = `<div class="record-detail-photo"><img src="${url}" alt="紀錄照片"></div>`;
-        slot.querySelector('.record-detail-photo').addEventListener('click', () => openLightbox(url));
-      } else {
-        slot.innerHTML = '';
-      }
-    });
-
     list.querySelectorAll('.record-item-head').forEach(head => {
       head.addEventListener('click', () => {
-        head.closest('.record-item').classList.toggle('open');
+        const id = head.closest('.record-item').dataset.id;
+        const record = (currentConfig.records || []).find(r => r.id === id);
+        if (record) openRecordDetailModal(record);
       });
     });
 
@@ -1890,6 +1882,63 @@
   lightboxBackdrop.addEventListener('click', (e) => {
     if (e.target === lightboxBackdrop) closeLightbox();
   });
+
+  // ---- 醫療紀錄詳情小視窗 ----
+  const recordDetailBackdrop = document.getElementById('record-detail-backdrop');
+  function closeRecordDetailModal(){ recordDetailBackdrop.classList.remove('show'); }
+  document.getElementById('record-detail-close').addEventListener('click', closeRecordDetailModal);
+  recordDetailBackdrop.addEventListener('click', (e) => {
+    if (e.target === recordDetailBackdrop) closeRecordDetailModal();
+  });
+
+  async function openRecordDetailModal(record) {
+    const content = document.getElementById('record-detail-content');
+    content.innerHTML = `
+      <div style="display:flex; align-items:center; gap:14px; margin-bottom:20px;">
+        <div class="record-icon ${record.type}" style="width:48px; height:48px; border-radius:14px;">${TYPE_ICON[record.type] || TYPE_ICON.visit}</div>
+        <div>
+          <h3 style="margin:0 0 6px;">${escapeHtml(record.title)}</h3>
+          <span class="record-tag">${TYPE_LABEL[record.type] || '紀錄'}</span>
+        </div>
+      </div>
+      <div class="shared-profile-grid" style="margin-bottom:18px;">
+        <div><div class="sp-label">日期</div><div class="sp-value">${formatDate(record.date)}</div></div>
+        <div><div class="sp-label">醫師 / 科別</div><div class="sp-value">${escapeHtml(record.doctor || '未提供')}</div></div>
+      </div>
+      <div class="sp-label" style="margin-bottom:6px;">備註內容</div>
+      ${record.note ? `<div class="r-note-full">${escapeHtml(record.note)}</div>` : `<div class="r-note-full" style="color:#9fb0ac;">（無備註內容）</div>`}
+      <div id="record-detail-photo-slot">${record.photoProvider ? `<span class="thumb-loading" style="display:block; width:100%; height:160px; border-radius:12px; margin-top:14px;"></span>` : ''}</div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" id="record-detail-delete">刪除紀錄</button>
+        <button type="button" class="btn-primary" id="record-detail-done" style="justify-content:center;">關閉</button>
+      </div>
+    `;
+
+    document.getElementById('record-detail-done').addEventListener('click', closeRecordDetailModal);
+    document.getElementById('record-detail-delete').addEventListener('click', async () => {
+      currentConfig.records = (currentConfig.records || []).filter(r => r.id !== record.id);
+      renderOverview();
+      renderRecordList();
+      closeRecordDetailModal();
+      if (record.photoProvider) deletePhotoFile(record);
+      const driveSuccess = await saveToDrive(currentConfig);
+      const dropboxSuccess = await saveToDropbox(currentConfig);
+      syncAllActiveShares();
+      showToast((driveSuccess || dropboxSuccess) ? '已刪除紀錄並同步至雲端' : '已刪除紀錄（請先連結雲端硬碟）');
+    });
+
+    recordDetailBackdrop.classList.add('show');
+
+    if (record.photoProvider) {
+      const url = await fetchPhotoBlobUrl(record);
+      const slot = document.getElementById('record-detail-photo-slot');
+      if (!slot) return;
+      slot.innerHTML = url
+        ? `<div class="record-detail-photo"><img src="${url}" alt="紀錄照片"></div>`
+        : '';
+      if (url) slot.querySelector('.record-detail-photo').addEventListener('click', () => openLightbox(url));
+    }
+  }
 
   const recordBackdrop = document.getElementById('record-backdrop');
   const recordForm = document.getElementById('record-form');
