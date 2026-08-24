@@ -1886,8 +1886,9 @@
   function openLightbox(src){
     document.getElementById('lightbox-img').src = src;
     lightboxBackdrop.classList.add('show');
+    lockBodyScroll();
   }
-  function closeLightbox(){ lightboxBackdrop.classList.remove('show'); }
+  function closeLightbox(){ lightboxBackdrop.classList.remove('show'); unlockBodyScroll(); }
   document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
   lightboxBackdrop.addEventListener('click', (e) => {
     if (e.target === lightboxBackdrop) closeLightbox();
@@ -1895,7 +1896,7 @@
 
   // ---- 醫療紀錄詳情小視窗 ----
   const recordDetailBackdrop = document.getElementById('record-detail-backdrop');
-  function closeRecordDetailModal(){ recordDetailBackdrop.classList.remove('show'); }
+  function closeRecordDetailModal(){ recordDetailBackdrop.classList.remove('show'); unlockBodyScroll(); }
   document.getElementById('record-detail-close').addEventListener('click', closeRecordDetailModal);
   recordDetailBackdrop.addEventListener('click', (e) => {
     if (e.target === recordDetailBackdrop) closeRecordDetailModal();
@@ -1938,6 +1939,7 @@
     });
 
     recordDetailBackdrop.classList.add('show');
+    lockBodyScroll();
 
     if (record.photoProvider) {
       const url = await fetchPhotoBlobUrl(record);
@@ -2001,8 +2003,9 @@
     document.querySelector('.type-opt[data-type="lab"]').classList.add('active');
     document.getElementById('r-type').value = 'lab';
     recordBackdrop.classList.add('show');
+    lockBodyScroll();
   }
-  function closeRecordModal(){ recordBackdrop.classList.remove('show'); }
+  function closeRecordModal(){ recordBackdrop.classList.remove('show'); unlockBodyScroll(); }
 
   document.getElementById('add-record-btn').addEventListener('click', openRecordModal);
   document.getElementById('record-close').addEventListener('click', closeRecordModal);
@@ -2180,6 +2183,17 @@
     setTimeout(()=> toast.classList.remove('show'), 2600);
   }
 
+  // ---- 背景捲動鎖定（開啟小視窗時，避免後方頁面跟著捲動）----
+  let openModalCount = 0;
+  function lockBodyScroll(){
+    openModalCount++;
+    if (openModalCount === 1) document.body.style.overflow = 'hidden';
+  }
+  function unlockBodyScroll(){
+    openModalCount = Math.max(0, openModalCount - 1);
+    if (openModalCount === 0) document.body.style.overflow = '';
+  }
+
   // 模態框操作
   const accessBackdrop = document.getElementById('access-backdrop');
   const accessForm = document.getElementById('access-form');
@@ -2189,10 +2203,12 @@
     document.getElementById('a-scope-custom').style.display = 'none';
     document.getElementById('a-expiry-date-field').style.display = 'none';
     accessBackdrop.classList.add('show');
+    lockBodyScroll();
   }
+  function closeAccessModal(){ accessBackdrop.classList.remove('show'); unlockBodyScroll(); }
   document.getElementById('add-access-btn').addEventListener('click', openAccessModal);
-  document.getElementById('access-close').addEventListener('click', () => accessBackdrop.classList.remove('show'));
-  document.getElementById('access-cancel').addEventListener('click', () => accessBackdrop.classList.remove('show'));
+  document.getElementById('access-close').addEventListener('click', closeAccessModal);
+  document.getElementById('access-cancel').addEventListener('click', closeAccessModal);
 
   document.getElementById('a-scope').addEventListener('change', (e) => {
     document.getElementById('a-scope-custom').style.display = (e.target.value === 'custom') ? 'block' : 'none';
@@ -2240,7 +2256,7 @@
 
     renderAccessList();
     renderOverview();
-    accessBackdrop.classList.remove('show');
+    closeAccessModal();
 
     const originalText = submitBtn.textContent;
     submitBtn.disabled = true;
