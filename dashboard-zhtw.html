@@ -995,6 +995,17 @@
     }
   }
 
+  // 逾時保護：避免網路異常或請求卡住時，畫面看起來像凍結一樣沒有反應
+  function withTimeout(promise, ms, fallbackValue){
+    return Promise.race([
+      promise,
+      new Promise(resolve => setTimeout(() => {
+        console.warn(`操作超過 ${ms}ms 未回應，改用預設值繼續執行`);
+        resolve(fallbackValue);
+      }, ms))
+    ]);
+  }
+
   const TYPE_LABEL = { lab: '檢驗報告', med: '用藥紀錄', img: '影像資料', visit: '就診紀錄' };
   const TYPE_ICON = {
     lab: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2v6L4 20a1 1 0 0 0 .9 1.5h14.2A1 1 0 0 0 20 20l-5-12V2"/><line x1="9" y1="2" x2="15" y2="2"/></svg>',
@@ -1109,37 +1120,46 @@
       document.getElementById('current-device-info').textContent = detectDeviceType();
       document.getElementById('current-loc-info').textContent = `${detectCountry()} · 最後活動：剛剛`;
 
-      // 檢查網頁網址是否剛好為 Dropbox OAuth 回傳畫面
-      const hash = window.location.hash.substring(1);
-      const params = new URLSearchParams(hash);
-      const urlToken = params.get('access_token');
+      try {
+        // 檢查網頁網址是否剛好為 Dropbox OAuth 回傳畫面
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
+        const urlToken = params.get('access_token');
 
-      if (urlToken) {
-        await saveDropboxTokenToFirestore(user.uid, urlToken);
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
+        if (urlToken) {
+          await withTimeout(saveDropboxTokenToFirestore(user.uid, urlToken), 8000, null);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
 
-      // 判斷雲端硬碟連結狀態
-      const dropboxToken = await getDropboxTokenFromFirestore(user.uid);
-      const driveToken = getAccessToken();
+        // 判斷雲端硬碟連結狀態（Firestore 查詢加上逾時保護，避免網路異常時卡住整個登入流程）
+        const dropboxToken = await withTimeout(getDropboxTokenFromFirestore(user.uid), 8000, null);
+        const driveToken = getAccessToken();
 
-      if (dropboxToken) {
-        sessionStorage.setItem('dropbox_access_token', dropboxToken);
-        document.getElementById('dropbox-status').textContent = '已連結';
-        document.getElementById('google-auth-email').textContent = '未連結';
-        updateStorageConnectionUI('dropbox');
-        showLoadingToast('正在從 Dropbox 載入資料...');
-        await loadFromDropbox();
-      } else if (driveToken) {
-        document.getElementById('google-auth-email').textContent = `${user.email} · 已連結`;
-        document.getElementById('dropbox-status').textContent = '未連結';
-        updateStorageConnectionUI('google');
-        showLoadingToast('正在從 Google Drive 載入資料...');
-        await loadFromDrive();
-      } else {
-        document.getElementById('google-auth-email').textContent = '未連結';
-        document.getElementById('dropbox-status').textContent = '未連結';
-        updateStorageConnectionUI(null);
+        if (dropboxToken) {
+          sessionStorage.setItem('dropbox_access_token', dropboxToken);
+          document.getElementById('dropbox-status').textContent = '已連結';
+          document.getElementById('google-auth-email').textContent = '未連結';
+          updateStorageConnectionUI('dropbox');
+          showLoadingToast('正在從 Dropbox 載入資料...');
+          await withTimeout(loadFromDropbox(), 15000, null);
+        } else if (driveToken) {
+          document.getElementById('google-auth-email').textContent = `${user.email} · 已連結`;
+          document.getElementById('dropbox-status').textContent = '未連結';
+          updateStorageConnectionUI('google');
+          showLoadingToast('正在從 Google Drive 載入資料...');
+          await withTimeout(loadFromDrive(), 15000, null);
+        } else {
+          document.getElementById('google-auth-email').textContent = '未連結';
+          document.getElementById('dropbox-status').textContent = '未連結';
+          updateStorageConnectionUI(null);
+        }
+      } catch (err) {
+        console.error('登入初始化流程發生非預期錯誤:', err);
+        showToast('載入雲端資料時發生問題，請重新整理再試一次');
+      } finally {
+        // 無論上面流程是否順利完成，都確保畫面一定會渲染出來、載入提示一定會關閉，
+        // 避免因網路異常或未預期錯誤讓整個頁面看起來像卡死一樣沒有反應
+        hideLoadingToast();
         renderOverview();
         renderRecordList();
         renderAccessList();
