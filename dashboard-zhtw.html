@@ -1128,11 +1128,13 @@
         document.getElementById('dropbox-status').textContent = '已連結';
         document.getElementById('google-auth-email').textContent = '未連結';
         updateStorageConnectionUI('dropbox');
+        showLoadingToast('正在從 Dropbox 載入資料...');
         await loadFromDropbox();
       } else if (driveToken) {
         document.getElementById('google-auth-email').textContent = `${user.email} · 已連結`;
         document.getElementById('dropbox-status').textContent = '未連結';
         updateStorageConnectionUI('google');
+        showLoadingToast('正在從 Google Drive 載入資料...');
         await loadFromDrive();
       } else {
         document.getElementById('google-auth-email').textContent = '未連結';
@@ -1158,7 +1160,7 @@
         sessionStorage.setItem('drive_access_token', credential.accessToken);
         document.getElementById('google-auth-email').textContent = `${result.user.email} · 已連結`;
         updateStorageConnectionUI('google');
-        showToast('已成功授權連結 Google Drive');
+        showLoadingToast('正在從 Google Drive 載入資料...');
         await loadFromDrive();
       }
     } catch (err) {
@@ -1259,10 +1261,10 @@
 
   async function loadFromDrive() {
     const token = getAccessToken();
-    if (!token) return;
+    if (!token) { hideLoadingToast(); return; }
 
     const fileId = await findDriveFileId();
-    if (!fileId) { renderOverview(); renderRecordList(); renderAccessList(); return; }
+    if (!fileId) { renderOverview(); renderRecordList(); renderAccessList(); hideLoadingToast(); return; }
 
     try {
       const res = await fetch(
@@ -1282,6 +1284,7 @@
       showToast('已成功從您的 Google Drive 載入資料');
     } catch (err) {
       console.error('載入 Drive 內容失敗:', err);
+      hideLoadingToast();
     }
   }
 
@@ -1378,10 +1381,10 @@
 
   async function loadFromDropbox() {
     const user = auth.currentUser;
-    if (!user) return;
+    if (!user) { hideLoadingToast(); return; }
 
     const token = await getDropboxTokenFromFirestore(user.uid);
-    if (!token) return;
+    if (!token) { hideLoadingToast(); return; }
 
     try {
       const res = await fetch('https://content.dropboxapi.com/2/files/download', {
@@ -1408,12 +1411,14 @@
         renderOverview();
         renderRecordList();
         renderAccessList();
+        hideLoadingToast();
       }
     } catch (err) {
       console.error('Dropbox 載入失敗:', err);
       renderOverview();
       renderRecordList();
       renderAccessList();
+      hideLoadingToast();
     }
   }
 
@@ -2225,11 +2230,27 @@
   document.getElementById('logout-btn').addEventListener('click', handleLogout);
   document.querySelector('.session-logout-current').addEventListener('click', handleLogout);
 
+  let toastHideTimer = null;
+
   function showToast(text){
     const toast = document.getElementById('toast');
     document.getElementById('toast-text').textContent = text;
     toast.classList.add('show');
-    setTimeout(()=> toast.classList.remove('show'), 2600);
+    if (toastHideTimer) clearTimeout(toastHideTimer);
+    toastHideTimer = setTimeout(()=> toast.classList.remove('show'), 2600);
+  }
+
+  // 載入中提示：不會自動消失，直到被 showToast() 覆蓋或呼叫 hideLoadingToast()
+  function showLoadingToast(text){
+    const toast = document.getElementById('toast');
+    document.getElementById('toast-text').textContent = text;
+    toast.classList.add('show');
+    if (toastHideTimer) { clearTimeout(toastHideTimer); toastHideTimer = null; }
+  }
+  function hideLoadingToast(){
+    const toast = document.getElementById('toast');
+    if (toastHideTimer) return; // 已經有其他 toast 接手顯示，不需處理
+    toast.classList.remove('show');
   }
 
   // ---- 背景捲動鎖定（開啟小視窗時，避免後方頁面跟著捲動）----
