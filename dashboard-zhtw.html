@@ -350,6 +350,7 @@
   .modal-actions{ display:flex; gap:10px; margin-top:22px; }
   .modal .btn-primary{ flex:1; justify-content:center; }
   .modal .btn-ghost{ flex:1; }
+  .modal .btn-danger{ flex:1; justify-content:center; }
 
   /* 較寬螢幕（如平板橫向、桌機）時，新增紀錄視窗改為橫式雙欄，減少捲動 */
   .record-form-grid{ display:block; }
@@ -1909,7 +1910,7 @@
       ${record.note ? `<div class="r-note-full">${escapeHtml(record.note)}</div>` : `<div class="r-note-full" style="color:#9fb0ac;">（無備註內容）</div>`}
       <div id="record-detail-photo-slot">${record.photoProvider ? `<span class="thumb-loading" style="display:block; width:100%; height:160px; border-radius:12px; margin-top:14px;"></span>` : ''}</div>
       <div class="modal-actions">
-        <button type="button" class="btn-ghost" id="record-detail-delete">刪除紀錄</button>
+        <button type="button" class="btn-danger" id="record-detail-delete">刪除紀錄</button>
         <button type="button" class="btn-primary" id="record-detail-done" style="justify-content:center;">關閉</button>
       </div>
     `;
