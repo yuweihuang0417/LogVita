@@ -357,7 +357,7 @@
   .record-form-col + .record-form-col{ margin-top:0; }
   @media (min-width: 720px){
     .modal-wide{ max-width:820px; }
-    .record-form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:0 28px; align-items:start; }
+    .record-form-grid{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:0 28px; align-items:start; }
   }
   .close-x{
     position:absolute; top:20px; right:20px; background:none; border:none;
@@ -911,17 +911,17 @@
 
           <div class="field" id="a-scope-custom" style="display:none;">
             <label>可查看的紀錄類型</label>
-            <div style="display:grid; grid-template-columns:repeat(2, auto); gap:10px 20px; margin-top:4px;">
-              <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink); white-space:nowrap;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; margin-top:4px;">
+              <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink); white-space:nowrap; min-width:0;">
                 <input type="checkbox" id="a-type-lab" value="lab" checked style="flex-shrink:0;"> 檢驗報告
               </label>
-              <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink); white-space:nowrap;">
+              <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink); white-space:nowrap; min-width:0;">
                 <input type="checkbox" id="a-type-med" value="med" style="flex-shrink:0;"> 用藥紀錄
               </label>
-              <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink); white-space:nowrap;">
+              <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink); white-space:nowrap; min-width:0;">
                 <input type="checkbox" id="a-type-img" value="img" style="flex-shrink:0;"> 影像資料
               </label>
-              <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink); white-space:nowrap;">
+              <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink); white-space:nowrap; min-width:0;">
                 <input type="checkbox" id="a-type-visit" value="visit" style="flex-shrink:0;"> 就診紀錄
               </label>
             </div>
