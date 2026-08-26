@@ -1432,22 +1432,10 @@
   }
 
   // 6. Dropbox API 工具組
-  function connectDropbox() {
-    const redirectUri = window.location.origin + window.location.pathname;
-    const authUrl = `https://www.dropbox.com/oauth2/authorize?` +
-      `client_id=${DROPBOX_APP_KEY}&` +
-      `response_type=token&` +
-      `redirect_uri=${encodeURIComponent(redirectUri)}`;
-
-    window.open(authUrl, 'ConnectDropbox', 'width=500,height=600');
-  }
-
-  // 接收「連結 Dropbox」彈出視窗傳回的金鑰，完成連結流程（不需要重新整理主視窗）
-  window.addEventListener('message', async (event) => {
-    if (event.origin !== window.location.origin) return;
-    if (!event.data || event.data.type !== 'dropbox-oauth-success' || !event.data.token) return;
-
-    sessionStorage.setItem('dropbox_access_token', event.data.token);
+  // 完成 Dropbox 連結後的收尾動作（更新畫面、載入資料），供 postMessage 與輪詢備援共用
+  async function finishDropboxConnect(token) {
+    if (sessionStorage.getItem('dropbox_access_token') === token) return; // 已經處理過，避免重複執行
+    sessionStorage.setItem('dropbox_access_token', token);
     document.getElementById('dropbox-status').textContent = '已連結';
     document.getElementById('google-auth-email').textContent = '未連結';
     updateStorageConnectionUI('dropbox');
@@ -1458,6 +1446,45 @@
     renderRecordList();
     renderAccessList();
     showToast('已成功連結 Dropbox');
+  }
+
+  function connectDropbox() {
+    const redirectUri = window.location.origin + window.location.pathname;
+    const authUrl = `https://www.dropbox.com/oauth2/authorize?` +
+      `client_id=${DROPBOX_APP_KEY}&` +
+      `response_type=token&` +
+      `redirect_uri=${encodeURIComponent(redirectUri)}`;
+
+    const popup = window.open(authUrl, 'ConnectDropbox', 'width=500,height=600');
+    if (!popup) {
+      showToast('請允許瀏覽器的彈出視窗權限後再試一次');
+      return;
+    }
+
+    // 備援機制：不依賴 postMessage（部分瀏覽器對跨網域彈出視窗的 window.opener 限制較嚴格），
+    // 改為偵測彈出視窗是否已關閉，關閉後主動向 Firestore 查詢一次是否已連結成功
+    const pollTimer = setInterval(async () => {
+      let closed = false;
+      try { closed = popup.closed; } catch { closed = true; }
+      if (!closed) return;
+
+      clearInterval(pollTimer);
+      const user = auth.currentUser;
+      if (!user) return;
+      const token = await withTimeout(getDropboxTokenFromFirestore(user.uid), 8000, null);
+      if (token) {
+        await finishDropboxConnect(token);
+      } else {
+        console.warn('彈出視窗已關閉，但尚未查到 Dropbox 權杖（可能使用者取消了授權）');
+      }
+    }, 800);
+  }
+
+  // 接收「連結 Dropbox」彈出視窗傳回的金鑰，完成連結流程（不需要重新整理主視窗）
+  window.addEventListener('message', async (event) => {
+    if (event.origin !== window.location.origin) return;
+    if (!event.data || event.data.type !== 'dropbox-oauth-success' || !event.data.token) return;
+    await finishDropboxConnect(event.data.token);
   });
 
   async function saveToDropbox(dataPayload) {
