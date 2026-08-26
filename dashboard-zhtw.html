@@ -385,7 +385,6 @@
     .main{ padding:24px 18px 50px; max-width:none; }
   }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -848,6 +847,18 @@
   </div>
 </div>
 
+<!-- 分享邀請通知 MODAL -->
+<div class="modal-backdrop" id="invite-notify-backdrop">
+  <div class="modal">
+    <button class="close-x" id="invite-notify-close" aria-label="關閉">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <h3>新的分享邀請</h3>
+    <div class="card-sub" style="margin-bottom:18px;">以下使用者想與你分享他們的健康紀錄</div>
+    <div id="invite-notify-list"></div>
+  </div>
+</div>
+
 <!-- 新增授權 MODAL -->
 <div class="modal-backdrop" id="access-backdrop">
   <div class="modal modal-wide">
@@ -855,7 +866,7 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
     <h3>新增授權</h3>
-    <div class="card-sub" style="margin-bottom:20px;">邀請家人或醫療人員查看你的健康紀錄，對方會收到一封邀請信</div>
+    <div class="card-sub" style="margin-bottom:20px;">邀請家人或醫療人員查看你的健康紀錄，對方登入自己帳號時會看到通知彈窗</div>
 
     <form id="access-form">
       <div class="record-form-grid">
@@ -963,37 +974,55 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // ---- EmailJS 設定（請至 emailjs.com 註冊後填入你自己的金鑰）----
-  const EMAILJS_PUBLIC_KEY = 'cionddMZdfNAavd9R';      // Account → General → Public Key
-  const EMAILJS_SERVICE_ID = 'service_logvita';        // Email Services 裡建立的服務 ID
-  const EMAILJS_TEMPLATE_ID = 'template_6wxb5q1';       // Email Templates 裡建立的樣板 ID
-  const EMAILJS_ENABLED = !EMAILJS_PUBLIC_KEY.startsWith('YOUR_');
-
-  if (EMAILJS_ENABLED && window.emailjs) {
-    window.emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
-  }
-
-  async function sendAccessInviteEmail(grant) {
-    if (!EMAILJS_ENABLED || !window.emailjs) {
-      console.warn('EmailJS 尚未設定金鑰，略過寄信（授權本身仍會正常建立）');
-      return false;
-    }
+  // ---- 邀請通知信箱（僅存指標與金鑰，實際健康紀錄內容從不經過 Firestore）----
+  // 對方登入時會查詢這個 collection，看看有沒有人邀請自己；一旦接受，這筆通知就會被刪除
+  async function createInviteRecord(grant) {
     try {
-      await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-        to_email: grant.email,
-        to_name: grant.name || grant.email,
-        from_name: currentDisplayName,
-        app_name: '健康庫 LogVita',
-        scope_label: SCOPE_LABEL[grant.scope] || '自訂項目',
-        expiry_text: grant.expiryDate ? `授權至 ${grant.expiryDate}` : '永久授權，直到對方撤銷',
-        note: grant.note || '（無附加訊息）'
+      await setDoc(doc(db, 'invites', grant.id), {
+        granteeEmail: (grant.email || '').trim().toLowerCase(),
+        ownerName: currentDisplayName,
+        ownerEmail: currentUserEmail,
+        relationship: grant.type,
+        scope: grant.scope,
+        note: grant.note || '',
+        expiryDate: grant.expiryDate || null,
+        provider: grant.shareProvider,
+        ref: grant.shareRef,
+        key: grant.shareKey,
+        grantId: grant.id,
+        createdAt: new Date().toISOString()
       });
       return true;
     } catch (err) {
-      console.error('EmailJS 寄信失敗:', err);
+      console.error('建立邀請通知失敗:', err);
       return false;
     }
   }
+
+  async function loadPendingInvites() {
+    if (!currentUserEmail) return [];
+    try {
+      const q = query(collection(db, 'invites'), where('granteeEmail', '==', currentUserEmail));
+      const snap = await getDocs(q);
+      const invites = [];
+      snap.forEach(d => invites.push({ id: d.id, ...d.data() }));
+      return invites;
+    } catch (err) {
+      console.error('讀取邀請通知失敗:', err);
+      return [];
+    }
+  }
+
+  async function removeInviteRecord(inviteId) {
+    try { await deleteDoc(doc(db, 'invites', inviteId)); }
+    catch (err) { console.error('刪除邀請通知失敗:', err); }
+  }
+
+  // ---- 端到端加密共享：免登入讀取憑證（僅用來抓取「已設為可讀」的加密檔，內容本身仍需金鑰才能解密）----
+  const GOOGLE_DRIVE_API_KEY = 'AIzaSyC9sfJMMlo4-fVtk6u323IwLyFhWL3S2Cc';     // Google Cloud Console → 憑證 → API 金鑰（請設定 HTTP 參照網址限制為你的網域）
+  const DROPBOX_APP_TOKEN = 'sl.u.AGvI8WRoLREtFc5eeuyv3vfycdKrxFlUcru-A-Q7c81BMW4LMS4kx1OqAYn8zzh1YSZCOdCWnMxsD39BxSWUVa9_twzJp6Xoja6oxnotIMPIQUy4IuCmsqjJAgN4k154HFqMRB1XIFbhBYyxfyls3z0C3-v5ggoHRnbqTJkNrauM4NiRJs6JF-uqr-s0xL64RP5Cq4RddUP0EUn_6SHm1IjLh7zZB_c4sJU0vqO0ub2iwp2x0ZOHnrGkHthbgbO-HwL0G18EewBJ02jZDEqj-_RW-VDl890UnuoCsHEg_rV2gSCorGJJB8BprpZCwdEfUDxJFZfu5B870OllaUxwImFXQEs26VY-VvF3RKx7IrWVgijMHM3vtBW6OXsLvljvLbOBcDdoBdZ7BxRRrBR9Oy0ySBZ9Xs93Aa_9YuE7GYcZXqc8bi5j-9PTmab3WbW7kk4e9BshYG5uti-UHZpWN4sGOP9MssWzY0RamJYek5AJLPfSeqiJTprdCbV_tGD3I4G0ABDnnmV6D5dYhhZEzu2qEee_lPlPyPJw6JUAFcFeZVRcjVIG-GLYifQdThBaqRaRop_ItVzV2Pqx_SSi9TYHvw-F4VhHQpaJc8diMCXVoqneAneRS1C3ZX-ANhKp1TmtSmSYHlob0FxhUoIHW6UVPjEBMNbRqr5QSxaengCv-Qs_4LCrw1UUaQf908InmK5gaO_FFMaRDLv0zerExs7YgN0goKDmXceu_d1kdHSInij4LGeUUkWdwtIR4mqU0uF4p6CUOUlF7yqn3NehfG5uOq6by8KvQJcMUPwVjxJa9TbYjfSfNSFon3dE974SlytbO2wnpzC_GH3661-OMi_EtwvQxJ5qe-5BXl3Yx2byWSnS-bz0iPun0InfUig_d7sgzkXkeDKIi5Wgjpr32HpABDwjnZ9plL2Gd0lxf7BqLLtDxNFEyLtZrwumS76MFP5iogAfqxySDrwX0TNqU2MmNzOFxlvY1NlKn64WlruHljzAf2UAkz_42HwznjmZ_Nyas-Ap6DwP8cdPAFKo5b1EXWLluNFX-cKY1ytV0toSxUbZmgzg3S_A1aTYcTWsURvhc3LMKS7p6dc94EcbxbM90j0sNnmsNgJYN1UQYmLmYvdQhr8WU2Cn8KLofw2TAAQrvIcxmLOd5YyaIdtzvjMI2twVh08xoh-DbZloEgRzNmDul0lwSF8H_iW3WiProoCD_iuP6xkWN6Lk-HGNvD8jASvwlDtHcuYwiAMuG0yjkWHevgfSpMw0r-yaHntLPd2ecTh8_n6N7aaAbtCku6s4u7kbK-0Qu1xsXMvGhESbnMhV5jhiAlb_1IKjVqNWofwyFBhXch2EzETQIs1jdEnU0FtZ2RmPaOcWxzaNLO-ZsPm0HWkxqMzcmQ8hO_w2oljQ_umaledzAYaMbsZbF3ShdSqtyiB_gO3fM9yVQt_MYg';    // Dropbox App Console → 你的 App → Generated access token
+  const DRIVE_SHARE_ENABLED = !GOOGLE_DRIVE_API_KEY.startsWith('YOUR_');
+  const DROPBOX_SHARE_ENABLED = !DROPBOX_APP_TOKEN.startsWith('YOUR_');
 
   // 逾時保護：避免網路異常或請求卡住時，畫面看起來像凍結一樣沒有反應
   function withTimeout(promise, ms, fallbackValue){
@@ -1004,6 +1033,47 @@
         resolve(fallbackValue);
       }, ms))
     ]);
+  }
+
+  // ---- 端到端加密（Web Crypto AES-GCM）工具組 ----
+  function bytesToBase64Url(bytes){
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function base64UrlToBytes(b64url){
+    let b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '=';
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+  }
+
+  async function generateAESKey(){
+    const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+    const raw = new Uint8Array(await crypto.subtle.exportKey('raw', key));
+    return { key, base64: bytesToBase64Url(raw) };
+  }
+  async function importAESKey(base64Key){
+    const raw = base64UrlToBytes(base64Key);
+    return crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+  }
+  // 回傳 Uint8Array：前 12 bytes 是隨機 IV，後面接密文
+  async function encryptJSON(obj, key){
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const data = new TextEncoder().encode(JSON.stringify(obj));
+    const cipherBuf = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, data);
+    const combined = new Uint8Array(iv.length + cipherBuf.byteLength);
+    combined.set(iv, 0);
+    combined.set(new Uint8Array(cipherBuf), iv.length);
+    return combined;
+  }
+  async function decryptJSON(bytes, key){
+    const iv = bytes.slice(0, 12);
+    const cipher = bytes.slice(12);
+    const plainBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, cipher);
+    return JSON.parse(new TextDecoder().decode(plainBuf));
   }
 
   const TYPE_LABEL = { lab: '檢驗報告', med: '用藥紀錄', img: '影像資料', visit: '就診紀錄' };
@@ -1163,6 +1233,8 @@
         renderOverview();
         renderRecordList();
         renderAccessList();
+        handleIncomingShareLink();
+        checkPendingInvites();
       }
     } else {
       window.location.href = 'index.html';
@@ -1589,6 +1661,7 @@
     currentConfig = config || {};
     currentConfig.records = currentConfig.records || [];
     currentConfig.accessList = currentConfig.accessList || [];
+    currentConfig.receivedShares = currentConfig.receivedShares || [];
 
     if (config.name) document.getElementById('p-name').value = config.name;
     if (config.birth) document.getElementById('p-birth').value = config.birth;
@@ -1626,16 +1699,9 @@
     }
   }
 
-  // ---- 授權清單（授權管理頁）與跨帳號共享同步 ----
+  // ---- 授權清單（授權管理頁）與端到端加密跨帳號共享 ----
   const SCOPE_LABEL = { full: '完整病歷', summary: '僅摘要', lab: '僅檢驗報告', custom: '自訂項目' };
-
-  function sanitizeEmailKey(email) {
-    return (email || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
-  }
-
-  function shareDocId(ownerUid, granteeEmail) {
-    return `${ownerUid}_${sanitizeEmailKey(granteeEmail)}`;
-  }
+  const APP_BASE_URL = 'https://yuweihuang0417.github.io/emr/dashboard-zhtw.html';
 
   function grantRecordTypes(grant) {
     if (grant.scope === 'full') return ['lab', 'med', 'img', 'visit'];
@@ -1650,8 +1716,7 @@
     catch { return false; }
   }
 
-  async function upsertShareDoc(grant) {
-    if (!currentUserUid || !grant.email) return;
+  function buildShareSnapshot(grant) {
     const types = grantRecordTypes(grant);
     const records = (currentConfig.records || [])
       .filter(r => types.includes(r.type))
@@ -1660,18 +1725,11 @@
         doctor: r.doctor || '', note: r.note || '',
         hasPhoto: !!(r.photoProvider && r.photoRef)
       }));
-
-    const payload = {
-      ownerUid: currentUserUid,
+    return {
       ownerName: currentDisplayName,
-      ownerEmail: currentUserEmail,
-      granteeEmail: (grant.email || '').trim().toLowerCase(),
       relationship: grant.type,
-      displayName: grant.name || '',
       scope: grant.scope,
-      recordTypes: types,
       expiryDate: grant.expiryDate || null,
-      note: grant.note || '',
       profile: {
         name: currentConfig.name || currentDisplayName,
         blood: currentConfig.blood || '',
@@ -1682,27 +1740,153 @@
       records,
       updatedAt: new Date().toISOString()
     };
+  }
 
+  // 將加密後的分享檔上傳/覆蓋到「目前連結的那個雲端硬碟」（Drive 與 Dropbox 互斥，只會有一種）
+  // 並設定成「知道連結的人可讀取」，回傳 { provider, ref } 供之後產生邀請連結、更新、刪除使用
+  async function uploadShareFile(bytes, grant) {
+    const dropboxToken = sessionStorage.getItem('dropbox_access_token');
+    const driveToken = getAccessToken();
+    const fileName = `share_${grant.id}.enc`;
+    const blob = new Blob([bytes], { type: 'application/octet-stream' });
+
+    if (dropboxToken) {
+      const path = `/${APP_FOLDER_NAME}/shares/${fileName}`;
+      try {
+        const uploadRes = await fetch('https://content.dropboxapi.com/2/files/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${dropboxToken}`,
+            'Dropbox-API-Arg': JSON.stringify({ path, mode: 'overwrite', autorename: false, mute: true }),
+            'Content-Type': 'application/octet-stream'
+          },
+          body: blob
+        });
+        if (!uploadRes.ok) return null;
+
+        // 若已建立過分享連結就直接沿用（避免重複建立），否則新建一個
+        if (grant.shareProvider === 'dropbox' && grant.shareRef) {
+          return { provider: 'dropbox', ref: grant.shareRef };
+        }
+        const linkRes = await fetch('https://api.dropboxapi.com/2/sharing/create_shared_link_with_settings', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${dropboxToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path, settings: { requested_visibility: 'public' } })
+        });
+        if (linkRes.ok) {
+          const data = await linkRes.json();
+          return { provider: 'dropbox', ref: data.url };
+        }
+        // 若連結已存在（常見於重複建立），改查詢既有連結
+        const listRes = await fetch('https://api.dropboxapi.com/2/sharing/list_shared_links', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${dropboxToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path, direct_only: true })
+        });
+        if (listRes.ok) {
+          const data = await listRes.json();
+          if (data.links && data.links.length > 0) return { provider: 'dropbox', ref: data.links[0].url };
+        }
+        return null;
+      } catch (err) {
+        console.error('Dropbox 分享檔上傳失敗:', err);
+        return null;
+      }
+    }
+
+    if (driveToken) {
+      try {
+        const folderId = await getOrCreateDriveFolderId();
+        let fileId = (grant.shareProvider === 'drive') ? grant.shareRef : null;
+
+        const metadata = { name: fileName, mimeType: 'application/octet-stream' };
+        if (!fileId && folderId) metadata.parents = [folderId];
+
+        const formData = new FormData();
+        formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+        formData.append('file', blob);
+
+        let url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+        let method = 'POST';
+        if (fileId) {
+          url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`;
+          method = 'PATCH';
+        }
+
+        const uploadRes = await fetch(url, { method, headers: { Authorization: `Bearer ${driveToken}` }, body: formData });
+        if (!uploadRes.ok) return null;
+        const data = await uploadRes.json();
+        fileId = data.id || fileId;
+
+        if (grant.shareProvider !== 'drive' || !grant.shareRef) {
+          await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${driveToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role: 'reader', type: 'anyone' })
+          });
+        }
+        return { provider: 'drive', ref: fileId };
+      } catch (err) {
+        console.error('Drive 分享檔上傳失敗:', err);
+        return null;
+      }
+    }
+
+    return null;
+  }
+
+  async function deleteShareFile(grant) {
+    if (!grant.shareProvider || !grant.shareRef) return;
     try {
-      await setDoc(doc(db, 'shares', shareDocId(currentUserUid, grant.email)), payload);
+      if (grant.shareProvider === 'drive') {
+        const token = getAccessToken();
+        if (!token) return;
+        await fetch(`https://www.googleapis.com/drive/v3/files/${grant.shareRef}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } else if (grant.shareProvider === 'dropbox') {
+        const token = sessionStorage.getItem('dropbox_access_token');
+        if (!token) return;
+        const path = `/${APP_FOLDER_NAME}/shares/share_${grant.id}.enc`;
+        await fetch('https://api.dropboxapi.com/2/files/delete_v2', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path })
+        });
+      }
     } catch (err) {
-      console.error('同步共享資料至 Firestore 失敗:', err);
+      console.error('刪除分享檔失敗:', err);
     }
   }
 
-  async function deleteShareDoc(grant) {
-    if (!currentUserUid || !grant.email) return;
-    try {
-      await deleteDoc(doc(db, 'shares', shareDocId(currentUserUid, grant.email)));
-    } catch (err) {
-      console.error('刪除共享資料失敗:', err);
-    }
+  // 新增/更新一筆授權：加密目前的資料快照、上傳到雲端、回傳可放進邀請信的分享連結
+  async function createOrUpdateShareLink(grant) {
+    const snapshot = buildShareSnapshot(grant);
+    const aesKey = await importAESKey(grant.shareKey);
+    const encryptedBytes = await encryptJSON(snapshot, aesKey);
+    const result = await uploadShareFile(encryptedBytes, grant);
+    if (!result) return null;
+
+    grant.shareProvider = result.provider;
+    grant.shareRef = result.ref;
+
+    const params = new URLSearchParams({
+      share: '1',
+      provider: result.provider,
+      ref: result.ref,
+      key: grant.shareKey,
+      grant: grant.id,
+      owner: currentDisplayName
+    });
+    return `${APP_BASE_URL}#${params.toString()}`;
   }
 
+  // 資料有更動時（新增/刪除紀錄、修改個人檔案），把所有還沒過期的授權重新加密上傳，確保對方看到的是最新資料
   async function syncAllActiveShares() {
-    const grants = (currentConfig.accessList || []).filter(g => !isGrantExpired(g));
+    const grants = (currentConfig.accessList || []).filter(g => !isGrantExpired(g) && g.shareKey);
     for (const grant of grants) {
-      await upsertShareDoc(grant);
+      await createOrUpdateShareLink(grant);
     }
   }
 
@@ -1748,49 +1932,197 @@
         currentConfig.accessList = (currentConfig.accessList || []).filter(g => g.id !== id);
         renderAccessList();
         renderOverview();
-        if (grant) await deleteShareDoc(grant);
+        if (grant) await deleteShareFile(grant);
         const { driveSuccess, dropboxSuccess } = await syncConfigToCloud(currentConfig);
-        showToast((driveSuccess || dropboxSuccess) ? '已撤銷授權並同步至雲端' : '已撤銷授權');
+        showToast((driveSuccess || dropboxSuccess) ? '已撤銷授權，對方將無法再讀取此份加密資料' : '已撤銷授權');
       });
     });
   }
 
-  // ---- 共享給我（讀取他人授權分享的資料）----
+  // ---- 共享給我（讀取他人授權分享的端到端加密資料）----
+  // 免登入抓取「已設為可讀連結」的加密檔內容（內容本身仍是密文，需要金鑰才能解密）
+  async function fetchEncryptedShareBytes(provider, ref) {
+    if (provider === 'drive') {
+      if (!DRIVE_SHARE_ENABLED) { console.warn('尚未設定 Google API 金鑰，無法讀取 Drive 端的共享資料'); return null; }
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files/${ref}?alt=media&key=${GOOGLE_DRIVE_API_KEY}`);
+      if (!res.ok) return null;
+      return new Uint8Array(await res.arrayBuffer());
+    }
+    if (provider === 'dropbox') {
+      if (!DROPBOX_SHARE_ENABLED) { console.warn('尚未設定 Dropbox App 權杖，無法讀取 Dropbox 端的共享資料'); return null; }
+      const res = await fetch('https://content.dropboxapi.com/2/sharing/get_shared_link_file', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${DROPBOX_APP_TOKEN}`,
+          'Dropbox-API-Arg': JSON.stringify({ url: ref })
+        }
+      });
+      if (!res.ok) return null;
+      return new Uint8Array(await res.arrayBuffer());
+    }
+    return null;
+  }
+
+  async function fetchAndDecryptShare(entry) {
+    try {
+      const bytes = await fetchEncryptedShareBytes(entry.provider, entry.ref);
+      if (!bytes) return null;
+      const aesKey = await importAESKey(entry.key);
+      return await decryptJSON(bytes, aesKey);
+    } catch (err) {
+      console.error('解密共享資料失敗:', err);
+      return null;
+    }
+  }
+
+  // 檢查網址 hash 是否為剛點開的邀請連結，是的話解密、加入「共享給我」清單並儲存起來，之後每次造訪都會自動重新抓最新資料
+  async function handleIncomingShareLink() {
+    const hash = window.location.hash.substring(1);
+    if (!hash) return;
+    const params = new URLSearchParams(hash);
+    if (params.get('share') !== '1') return;
+
+    const entry = {
+      grantId: params.get('grant') || ('recv_' + Date.now()),
+      ownerName: params.get('owner') || '未知使用者',
+      provider: params.get('provider'),
+      ref: params.get('ref'),
+      key: params.get('key'),
+      addedAt: new Date().toISOString()
+    };
+    window.history.replaceState({}, document.title, window.location.pathname);
+    if (!entry.provider || !entry.ref || !entry.key) return;
+
+    currentConfig.receivedShares = currentConfig.receivedShares || [];
+    const exists = currentConfig.receivedShares.some(s => s.grantId === entry.grantId);
+    if (!exists) {
+      currentConfig.receivedShares.push(entry);
+      const { driveSuccess, dropboxSuccess } = await syncConfigToCloud(currentConfig);
+      showToast((driveSuccess || dropboxSuccess) ? `已加入 ${entry.ownerName} 的共享資料` : `已加入 ${entry.ownerName} 的共享資料（尚未連結雲端硬碟，暫存於本次瀏覽）`);
+    }
+
+    // 切換到「共享給我」頁面並重新整理清單
+    document.querySelectorAll('.nav button[data-panel]').forEach(b => b.classList.toggle('active', b.dataset.panel === 'shared'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-shared'));
+    loadSharedWithMe();
+  }
+
+  // ---- 登入時檢查邀請通知信箱，跳出小視窗提醒 ----
+  const inviteNotifyBackdrop = document.getElementById('invite-notify-backdrop');
+  function openInviteNotifyModal(){ inviteNotifyBackdrop.classList.add('show'); lockBodyScroll(); }
+  function closeInviteNotifyModal(){ inviteNotifyBackdrop.classList.remove('show'); unlockBodyScroll(); }
+  document.getElementById('invite-notify-close').addEventListener('click', closeInviteNotifyModal);
+  inviteNotifyBackdrop.addEventListener('click', (e) => {
+    if (e.target === inviteNotifyBackdrop) closeInviteNotifyModal();
+  });
+
+  async function checkPendingInvites() {
+    const invites = await withTimeout(loadPendingInvites(), 8000, []);
+    const valid = invites.filter(inv => !isGrantExpired({ expiryDate: inv.expiryDate }));
+    if (valid.length === 0) return;
+    renderInviteModal(valid);
+  }
+
+  function renderInviteModal(invites) {
+    const list = document.getElementById('invite-notify-list');
+
+    list.innerHTML = invites.map(inv => `
+      <div class="auth-item" data-id="${inv.id}" style="align-items:flex-start;">
+        <div class="auth-avatar">${escapeHtml((inv.ownerName || inv.ownerEmail || '?').charAt(0).toUpperCase())}</div>
+        <div class="auth-main">
+          <div class="name">${escapeHtml(inv.ownerName || inv.ownerEmail)}</div>
+          <div class="meta">${escapeHtml(inv.ownerEmail || '')} · ${SCOPE_LABEL[inv.scope] || '自訂項目'}</div>
+          ${inv.note ? `<div style="font-size:12.5px; color:#5c6b68; margin-top:6px; line-height:1.6;">「${escapeHtml(inv.note)}」</div>` : ''}
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px; flex-shrink:0;">
+          <button type="button" class="btn-primary accept-invite-btn" style="padding:7px 14px; font-size:12.5px;">加入</button>
+          <button type="button" class="btn-ghost dismiss-invite-btn" style="padding:7px 14px; font-size:12.5px;">忽略</button>
+        </div>
+      </div>
+    `).join('');
+
+    function removeItemAndMaybeClose(itemEl){
+      itemEl.remove();
+      if (!list.children.length) closeInviteNotifyModal();
+    }
+
+    list.querySelectorAll('.accept-invite-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const item = e.currentTarget.closest('.auth-item');
+        const id = item.dataset.id;
+        const inv = invites.find(i => i.id === id);
+        if (!inv) return;
+
+        currentConfig.receivedShares = currentConfig.receivedShares || [];
+        if (!currentConfig.receivedShares.some(s => s.grantId === inv.grantId)) {
+          currentConfig.receivedShares.push({
+            grantId: inv.grantId,
+            ownerName: inv.ownerName,
+            provider: inv.provider,
+            ref: inv.ref,
+            key: inv.key,
+            addedAt: new Date().toISOString()
+          });
+          await syncConfigToCloud(currentConfig);
+        }
+        await removeInviteRecord(inv.id);
+        showToast(`已加入 ${inv.ownerName} 的共享資料`);
+        removeItemAndMaybeClose(item);
+        loadSharedWithMe();
+      });
+    });
+
+    list.querySelectorAll('.dismiss-invite-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const item = e.currentTarget.closest('.auth-item');
+        const id = item.dataset.id;
+        const inv = invites.find(i => i.id === id);
+        if (inv) await removeInviteRecord(inv.id);
+        removeItemAndMaybeClose(item);
+      });
+    });
+
+    openInviteNotifyModal();
+  }
+
   async function loadSharedWithMe() {
     const list = document.getElementById('shared-list');
     const empty = document.getElementById('shared-empty');
-    if (!list || !empty || !currentUserEmail) return;
+    if (!list || !empty) return;
 
-    list.innerHTML = `<div class="empty-state" style="padding:24px 0;"><div class="e-desc">載入中...</div></div>`;
-    empty.style.display = 'none';
-
-    let shares = [];
-    try {
-      const q = query(collection(db, 'shares'), where('granteeEmail', '==', currentUserEmail));
-      const snap = await getDocs(q);
-      snap.forEach(docSnap => shares.push({ id: docSnap.id, ...docSnap.data() }));
-    } catch (err) {
-      console.error('載入共享資料失敗:', err);
-    }
-
-    shares = shares.filter(s => !isGrantExpired({ expiryDate: s.expiryDate }));
-
-    if (shares.length === 0) {
+    const entries = currentConfig.receivedShares || [];
+    if (entries.length === 0) {
       list.innerHTML = '';
       empty.style.display = 'block';
       return;
     }
 
-    list.innerHTML = shares.map(s => {
-      const initial = (s.ownerName || s.ownerEmail || '?').charAt(0).toUpperCase();
+    list.innerHTML = `<div class="empty-state" style="padding:24px 0;"><div class="e-desc">載入中...</div></div>`;
+    empty.style.display = 'none';
+
+    const results = await Promise.all(entries.map(async (entry) => {
+      const data = await fetchAndDecryptShare(entry);
+      return { entry, data };
+    }));
+
+    const valid = results.filter(r => r.data && !isGrantExpired({ expiryDate: r.data.expiryDate }));
+
+    if (valid.length === 0) {
+      list.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+
+    list.innerHTML = valid.map(({ entry, data: s }) => {
+      const initial = (s.ownerName || entry.ownerName || '?').charAt(0).toUpperCase();
       const metaBits = [s.relationship === 'family' ? '家庭成員' : (s.relationship === 'doctor' ? '醫療人員' : '其他'),
         s.expiryDate ? `授權至 ${formatDate(s.expiryDate)}` : '永久授權'];
       return `
-        <div class="shared-item" data-id="${s.id}">
+        <div class="shared-item" data-id="${entry.grantId}">
           <div class="shared-item-head">
             <div class="auth-avatar">${escapeHtml(initial)}</div>
             <div class="auth-main">
-              <div class="name">${escapeHtml(s.ownerName || s.ownerEmail)}</div>
+              <div class="name">${escapeHtml(s.ownerName || entry.ownerName)}</div>
               <div class="meta">${escapeHtml(metaBits.join(' · '))}</div>
             </div>
             <span class="auth-scope ${s.scope === 'full' ? 'full' : ''}">${SCOPE_LABEL[s.scope] || '自訂項目'}</span>
@@ -1816,6 +2148,7 @@
                 </div>
               `).join('')}
             ` : `<div class="shared-records-title" style="color:#9fb0ac; font-weight:500;">此授權範圍未包含個別醫療紀錄</div>`}
+            <button type="button" class="link-remove remove-shared-btn" style="margin-top:14px;">移除這個共享項目</button>
           </div>
         </div>`;
     }).join('');
@@ -1825,7 +2158,19 @@
         head.closest('.shared-item').classList.toggle('open');
       });
     });
+
+    list.querySelectorAll('.remove-shared-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = e.currentTarget.closest('.shared-item').dataset.id;
+        currentConfig.receivedShares = (currentConfig.receivedShares || []).filter(s => s.grantId !== id);
+        loadSharedWithMe();
+        const { driveSuccess, dropboxSuccess } = await syncConfigToCloud(currentConfig);
+        showToast((driveSuccess || dropboxSuccess) ? '已從清單移除' : '已從清單移除');
+      });
+    });
   }
+
 
   async function refreshAvatarDisplay() {
     let url = '';
@@ -2328,6 +2673,7 @@
       ? ['lab', 'med', 'img', 'visit'].filter(t => document.getElementById(`a-type-${t}`).checked)
       : [];
 
+    const aes = await generateAESKey();
     const grant = {
       id: 'grant_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
       type: document.getElementById('a-type').value,
@@ -2337,33 +2683,40 @@
       recordTypes,
       expiryDate: computeExpiryDate(),
       note: document.getElementById('a-note').value.trim(),
+      shareKey: aes.base64,
       createdAt: new Date().toISOString()
     };
 
-    currentConfig.accessList = currentConfig.accessList || [];
-    currentConfig.accessList.push(grant);
-    currentConfig.updatedAt = new Date().toISOString();
-
-    renderAccessList();
-    renderOverview();
     closeAccessModal();
 
     const originalText = submitBtn.textContent;
     submitBtn.disabled = true;
-    submitBtn.textContent = '同步中...';
-    await upsertShareDoc(grant);
-    const emailSent = await sendAccessInviteEmail(grant);
+    submitBtn.textContent = '加密並上傳中...';
+    const shareUrl = await createOrUpdateShareLink(grant);
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
 
+    if (!shareUrl) {
+      showToast('無法建立加密分享檔，請確認已連結 Google Drive 或 Dropbox');
+      return;
+    }
+
+    currentConfig.accessList = currentConfig.accessList || [];
+    currentConfig.accessList.push(grant);
+    currentConfig.updatedAt = new Date().toISOString();
+    renderAccessList();
+    renderOverview();
+
+    const inviteCreated = await createInviteRecord(grant);
     const { driveSuccess, dropboxSuccess } = await syncConfigToCloud(currentConfig);
 
-    if (!EMAILJS_ENABLED) {
-      showToast('已新增授權（尚未設定寄信服務，對方需自行登入查看）');
-    } else if (emailSent) {
-      showToast('已新增授權並寄出邀請信');
+    const readEnabled = (grant.shareProvider === 'drive') ? DRIVE_SHARE_ENABLED : DROPBOX_SHARE_ENABLED;
+    if (!readEnabled) {
+      showToast('已建立加密授權，但尚未設定讀取憑證，對方暫時無法開啟連結');
+    } else if (inviteCreated) {
+      showToast('已新增授權，對方登入後會看到通知');
     } else {
-      showToast('已新增授權，但邀請信寄送失敗，請確認 EmailJS 設定');
+      showToast('已建立加密授權，但通知建立失敗，請確認 Firestore 規則設定');
     }
   });
 </script>
