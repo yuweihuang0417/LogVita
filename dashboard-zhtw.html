@@ -1097,6 +1097,95 @@
   const APP_FOLDER_NAME = '健康庫 LogVita';
   const DROPBOX_APP_KEY = '9g6nfv9vs6jdbk2'; // 請保持替換為您的 Dropbox App Key
 
+  // ---- Dropbox OAuth 2.0 with PKCE + refresh token ----
+  // 舊版 response_type=token（implicit grant）只會拿到活幾小時、無法更新的 access token，
+  // 過期後只能整個重新跳出彈窗連結。改用 Authorization Code + PKCE + token_access_type=offline，
+  // 可以換到一組長效的 refresh token，之後就能在背景自動換發新的 access token，不必使用者重新登入。
+  function base64UrlEncode(bytes) {
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  function generateCodeVerifier() {
+    const bytes = crypto.getRandomValues(new Uint8Array(64));
+    return base64UrlEncode(bytes);
+  }
+
+  async function generateCodeChallenge(verifier) {
+    const data = new TextEncoder().encode(verifier);
+    const digest = await crypto.subtle.digest('SHA-256', data);
+    return base64UrlEncode(new Uint8Array(digest));
+  }
+
+  // sessionStorage 存放本次 session 用的 access token 與到期時間；Firestore 存放長效的 refresh token
+  let dropboxRefreshPromise = null; // 避免同一時間多個請求同時觸發重複換發
+
+  function getCachedDropboxAccessToken() {
+    const token = sessionStorage.getItem('dropbox_access_token');
+    const expiresAt = parseInt(sessionStorage.getItem('dropbox_token_expires_at') || '0', 10);
+    if (token && Date.now() < expiresAt - 60000) return token; // 提前 60 秒視為即將到期，主動換發
+    return null;
+  }
+
+  function cacheDropboxAccessToken(accessToken, expiresInSeconds) {
+    sessionStorage.setItem('dropbox_access_token', accessToken);
+    sessionStorage.setItem('dropbox_token_expires_at', String(Date.now() + (expiresInSeconds || 14400) * 1000));
+  }
+
+  // 用 refresh token 換一組新的 access token（PKCE 流程換來的 refresh token 不需要 client secret）
+  async function refreshDropboxAccessToken(refreshToken) {
+    try {
+      const res = await fetch('https://api.dropboxapi.com/oauth2/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          grant_type: 'refresh_token',
+          refresh_token: refreshToken,
+          client_id: DROPBOX_APP_KEY
+        })
+      });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        console.error(`[Dropbox] refresh token 換發失敗 (HTTP ${res.status}):`, errText);
+        return null;
+      }
+      const data = await res.json();
+      cacheDropboxAccessToken(data.access_token, data.expires_in);
+      return data.access_token;
+    } catch (err) {
+      console.error('[Dropbox] refresh token 換發時發生例外:', err);
+      return null;
+    }
+  }
+
+  // 所有需要呼叫 Dropbox API 的地方都應該透過這個函式取得目前有效的 access token，
+  // 而不是直接讀 sessionStorage —— 它會自動判斷是否過期並在背景換發新的 token。
+  async function getValidDropboxAccessToken() {
+    const cached = getCachedDropboxAccessToken();
+    if (cached) return cached;
+
+    const user = auth.currentUser;
+    if (!user) return null;
+
+    // 用同一個 in-flight Promise，避免短時間內多個 API 呼叫同時觸發多次換發
+    if (dropboxRefreshPromise) return dropboxRefreshPromise;
+
+    dropboxRefreshPromise = (async () => {
+      const refreshToken = sessionStorage.getItem('dropbox_refresh_token')
+        || await getDropboxRefreshTokenFromFirestore(user.uid);
+      if (!refreshToken) return null;
+      sessionStorage.setItem('dropbox_refresh_token', refreshToken);
+      return await refreshDropboxAccessToken(refreshToken);
+    })();
+
+    try {
+      return await dropboxRefreshPromise;
+    } finally {
+      dropboxRefreshPromise = null;
+    }
+  }
+
   // 1. 真實裝置與國家判斷
   function detectDeviceType() {
     const ua = navigator.userAgent;
@@ -1191,30 +1280,55 @@
       document.getElementById('current-loc-info').textContent = `${detectCountry()} · 最後活動：剛剛`;
 
       try {
-        // 檢查網頁網址是否剛好為 Dropbox OAuth 回傳畫面
-        const hash = window.location.hash.substring(1);
-        const params = new URLSearchParams(hash);
-        const urlToken = params.get('access_token');
+        // 檢查網頁網址是否剛好為 Dropbox OAuth 回傳畫面（Authorization Code + PKCE 流程用 query string 帶 code 回來，不是舊版的 hash）
+        const urlParams = new URLSearchParams(window.location.search);
+        const authCode = urlParams.get('code');
+        const oauthError = urlParams.get('error');
 
-        if (urlToken) {
-          await withTimeout(saveDropboxTokenToFirestore(user.uid, urlToken), 8000, null);
+        if (oauthError) {
+          console.warn('Dropbox 授權被拒絕或取消:', oauthError);
+          window.history.replaceState({}, document.title, window.location.pathname);
+          if (window.opener && window.opener !== window) { window.close(); return; }
+        }
+
+        if (authCode) {
+          const codeVerifier = sessionStorage.getItem('dropbox_pkce_verifier');
+          const redirectUri = window.location.origin + window.location.pathname;
           window.history.replaceState({}, document.title, window.location.pathname);
 
-          // 這個畫面如果是「連結 Dropbox」彈出的子視窗，就把金鑰傳回主視窗後直接關閉自己，
-          // 不需要在子視窗裡也跑一次完整的資料載入流程
-          if (window.opener && window.opener !== window) {
-            window.opener.postMessage({ type: 'dropbox-oauth-success', token: urlToken }, window.location.origin);
-            window.close();
-            return;
+          if (codeVerifier) {
+            const tokens = await exchangeDropboxCodeForTokens(authCode, codeVerifier, redirectUri);
+            sessionStorage.removeItem('dropbox_pkce_verifier');
+
+            if (tokens && tokens.access_token) {
+              if (tokens.refresh_token) {
+                // 只有第一次授權（或使用者在 Dropbox 端撤銷後重新授權）才會拿到 refresh_token，要存進 Firestore 才能跨裝置、跨 session 使用
+                await withTimeout(saveDropboxTokenToFirestore(user.uid, tokens.refresh_token), 8000, null);
+                sessionStorage.setItem('dropbox_refresh_token', tokens.refresh_token);
+              }
+              cacheDropboxAccessToken(tokens.access_token, tokens.expires_in);
+
+              // 這個畫面如果是「連結 Dropbox」彈出的子視窗，就把金鑰傳回主視窗後直接關閉自己，
+              // 不需要在子視窗裡也跑一次完整的資料載入流程
+              if (window.opener && window.opener !== window) {
+                window.opener.postMessage({ type: 'dropbox-oauth-success', token: tokens.access_token, expiresIn: tokens.expires_in }, window.location.origin);
+                window.close();
+                return;
+              }
+            } else {
+              showToast('Dropbox 授權失敗，請重新嘗試連結');
+            }
+          } else {
+            console.error('找不到 PKCE code_verifier，可能是在不同的分頁/裝置完成授權導致的');
           }
         }
 
-        // 判斷雲端硬碟連結狀態（Firestore 查詢加上逾時保護，避免網路異常時卡住整個登入流程）
-        const dropboxToken = await withTimeout(getDropboxTokenFromFirestore(user.uid), 8000, null);
+        // 判斷雲端硬碟連結狀態（getValidDropboxAccessToken 會自動處理：目前 session 是否已有未過期的 access token、
+        // 沒有的話用 Firestore 存的 refresh token 換一組新的 —— 不會像以前一樣直接把舊 token 硬塞進去用）
+        const dropboxToken = await withTimeout(getValidDropboxAccessToken(), 8000, null);
         const driveToken = getAccessToken();
 
         if (dropboxToken) {
-          sessionStorage.setItem('dropbox_access_token', dropboxToken);
           document.getElementById('dropbox-status').textContent = '已連結';
           document.getElementById('google-auth-email').textContent = '未連結';
           updateStorageConnectionUI('dropbox');
@@ -1230,6 +1344,11 @@
           document.getElementById('google-auth-email').textContent = '未連結';
           document.getElementById('dropbox-status').textContent = '未連結';
           updateStorageConnectionUI(null);
+          // 若 Firestore 裡曾經存過 refresh token，但剛剛換發新 access token 失敗，代表使用者可能在 Dropbox 端撤銷了授權
+          const hadRefreshToken = await withTimeout(getDropboxRefreshTokenFromFirestore(user.uid), 8000, null);
+          if (hadRefreshToken) {
+            showToast('Dropbox 連線已失效，請重新點選「連結 Dropbox」授權一次');
+          }
         }
       } catch (err) {
         console.error('登入初始化流程發生非預期錯誤:', err);
@@ -1270,22 +1389,23 @@
   });
 
   // 4. Firestore 工具組
-  async function saveDropboxTokenToFirestore(uid, token) {
+  async function saveDropboxTokenToFirestore(uid, refreshToken) {
     try {
       const userRef = doc(db, 'users', uid);
-      await setDoc(userRef, { dropboxToken: token }, { merge: true });
+      // 只存 refresh token（長效）；access token 只留在 sessionStorage，不必也不該存進資料庫
+      await setDoc(userRef, { dropboxRefreshToken: refreshToken, dropboxToken: null }, { merge: true });
       showToast('已成功跨裝置連結您的 Dropbox');
     } catch (err) {
       console.error("寫入 Firestore 失敗:", err);
     }
   }
 
-  async function getDropboxTokenFromFirestore(uid) {
+  async function getDropboxRefreshTokenFromFirestore(uid) {
     try {
       const userRef = doc(db, 'users', uid);
       const docSnap = await getDoc(userRef);
-      if (docSnap.exists() && docSnap.data().dropboxToken) {
-        return docSnap.data().dropboxToken;
+      if (docSnap.exists() && docSnap.data().dropboxRefreshToken) {
+        return docSnap.data().dropboxRefreshToken;
       }
     } catch (err) {
       console.error("讀取 Firestore 失敗:", err);
@@ -1433,9 +1553,9 @@
 
   // 6. Dropbox API 工具組
   // 完成 Dropbox 連結後的收尾動作（更新畫面、載入資料），供 postMessage 與輪詢備援共用
-  async function finishDropboxConnect(token) {
-    if (sessionStorage.getItem('dropbox_access_token') === token) return; // 已經處理過，避免重複執行
-    sessionStorage.setItem('dropbox_access_token', token);
+  async function finishDropboxConnect(accessToken, expiresIn) {
+    if (sessionStorage.getItem('dropbox_access_token') === accessToken) return; // 已經處理過，避免重複執行
+    cacheDropboxAccessToken(accessToken, expiresIn);
     document.getElementById('dropbox-status').textContent = '已連結';
     document.getElementById('google-auth-email').textContent = '未連結';
     updateStorageConnectionUI('dropbox');
@@ -1450,41 +1570,80 @@
 
   function connectDropbox() {
     const redirectUri = window.location.origin + window.location.pathname;
-    const authUrl = `https://www.dropbox.com/oauth2/authorize?` +
-      `client_id=${DROPBOX_APP_KEY}&` +
-      `response_type=token&` +
-      `redirect_uri=${encodeURIComponent(redirectUri)}`;
+    const codeVerifier = generateCodeVerifier();
+    // code_verifier 存在 sessionStorage：window.open() 開出的同源彈出視窗會複製一份當下的 sessionStorage，
+    // 所以彈出視窗裡也讀得到這個值，用來在換發 token 時證明「我就是發起授權請求的那個人」
+    sessionStorage.setItem('dropbox_pkce_verifier', codeVerifier);
 
-    const popup = window.open(authUrl, 'ConnectDropbox', 'width=500,height=600');
-    if (!popup) {
-      showToast('請允許瀏覽器的彈出視窗權限後再試一次');
-      return;
-    }
+    generateCodeChallenge(codeVerifier).then((codeChallenge) => {
+      const authUrl = `https://www.dropbox.com/oauth2/authorize?` +
+        `client_id=${DROPBOX_APP_KEY}&` +
+        `response_type=code&` +
+        `code_challenge=${codeChallenge}&` +
+        `code_challenge_method=S256&` +
+        `token_access_type=offline&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}`;
 
-    // 備援機制：不依賴 postMessage（部分瀏覽器對跨網域彈出視窗的 window.opener 限制較嚴格），
-    // 改為偵測彈出視窗是否已關閉，關閉後主動向 Firestore 查詢一次是否已連結成功
-    const pollTimer = setInterval(async () => {
-      let closed = false;
-      try { closed = popup.closed; } catch { closed = true; }
-      if (!closed) return;
-
-      clearInterval(pollTimer);
-      const user = auth.currentUser;
-      if (!user) return;
-      const token = await withTimeout(getDropboxTokenFromFirestore(user.uid), 8000, null);
-      if (token) {
-        await finishDropboxConnect(token);
-      } else {
-        console.warn('彈出視窗已關閉，但尚未查到 Dropbox 權杖（可能使用者取消了授權）');
+      const popup = window.open(authUrl, 'ConnectDropbox', 'width=500,height=600');
+      if (!popup) {
+        showToast('請允許瀏覽器的彈出視窗權限後再試一次');
+        return;
       }
-    }, 800);
+
+      // 備援機制：不依賴 postMessage（部分瀏覽器對跨網域彈出視窗的 window.opener 限制較嚴格），
+      // 改為偵測彈出視窗是否已關閉，關閉後主動向 Firestore 查詢一次是否已連結成功
+      const pollTimer = setInterval(async () => {
+        let closed = false;
+        try { closed = popup.closed; } catch { closed = true; }
+        if (!closed) return;
+
+        clearInterval(pollTimer);
+        const user = auth.currentUser;
+        if (!user) return;
+        const refreshToken = await withTimeout(getDropboxRefreshTokenFromFirestore(user.uid), 8000, null);
+        if (refreshToken && !sessionStorage.getItem('dropbox_access_token')) {
+          sessionStorage.setItem('dropbox_refresh_token', refreshToken);
+          const accessToken = await refreshDropboxAccessToken(refreshToken);
+          if (accessToken) await finishDropboxConnect(accessToken);
+        } else if (!refreshToken) {
+          console.warn('彈出視窗已關閉，但尚未查到 Dropbox 權杖（可能使用者取消了授權）');
+        }
+      }, 800);
+    });
   }
+
+  // 用授權碼（authorization code）換一組 access token + refresh token（PKCE 流程不需要 client secret）
+  async function exchangeDropboxCodeForTokens(code, codeVerifier, redirectUri) {
+    try {
+      const res = await fetch('https://api.dropboxapi.com/oauth2/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          code,
+          grant_type: 'authorization_code',
+          client_id: DROPBOX_APP_KEY,
+          redirect_uri: redirectUri,
+          code_verifier: codeVerifier
+        })
+      });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        console.error(`[Dropbox] 授權碼換發 token 失敗 (HTTP ${res.status}):`, errText);
+        return null;
+      }
+      return await res.json(); // { access_token, refresh_token, expires_in, ... }
+    } catch (err) {
+      console.error('[Dropbox] 授權碼換發 token 時發生例外:', err);
+      return null;
+    }
+  }
+
 
   // 接收「連結 Dropbox」彈出視窗傳回的金鑰，完成連結流程（不需要重新整理主視窗）
   window.addEventListener('message', async (event) => {
     if (event.origin !== window.location.origin) return;
     if (!event.data || event.data.type !== 'dropbox-oauth-success' || !event.data.token) return;
-    await finishDropboxConnect(event.data.token);
+    await finishDropboxConnect(event.data.token, event.data.expiresIn);
   });
 
   // HTTP header 只允許 ISO-8859-1 字元，但 APP_FOLDER_NAME 含中文（例如「健康庫 LogVita」），
@@ -1500,11 +1659,11 @@
     const user = auth.currentUser;
     if (!user) return false;
 
-    const token = await getDropboxTokenFromFirestore(user.uid);
+    let token = await getValidDropboxAccessToken();
     if (!token) return false;
 
     try {
-      const res = await fetch('https://content.dropboxapi.com/2/files/upload', {
+      let res = await fetch('https://content.dropboxapi.com/2/files/upload', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -1520,10 +1679,28 @@
       });
 
       if (res.status === 401) {
-        console.warn('Dropbox 存取權杖已逾時');
+        // access token 可能已經失效（例如手動撤銷），清快取後強制重新換發一次再試一次，避免因為快取的舊 token 誤判成整個連線逾時
+        console.warn('Dropbox access token 被拒絕，嘗試強制換發後重試一次');
         sessionStorage.removeItem('dropbox_access_token');
-        dropboxTokenExpired = true;
-        return false;
+        sessionStorage.removeItem('dropbox_token_expires_at');
+        token = await getValidDropboxAccessToken();
+        if (!token) { dropboxTokenExpired = true; return false; }
+
+        res = await fetch('https://content.dropboxapi.com/2/files/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Dropbox-API-Arg': dropboxApiArg({
+              path: `/${APP_FOLDER_NAME}/${FILE_NAME}`,
+              mode: 'overwrite',
+              autorename: false,
+              mute: false
+            }),
+            'Content-Type': 'application/octet-stream'
+          },
+          body: JSON.stringify(dataPayload)
+        });
+        if (res.status === 401) { dropboxTokenExpired = true; return false; }
       }
 
       return res.ok;
@@ -1537,11 +1714,11 @@
     const user = auth.currentUser;
     if (!user) { hideLoadingToast(); return; }
 
-    const token = await getDropboxTokenFromFirestore(user.uid);
+    let token = await getValidDropboxAccessToken();
     if (!token) { hideLoadingToast(); return; }
 
     try {
-      const res = await fetch('https://content.dropboxapi.com/2/files/download', {
+      let res = await fetch('https://content.dropboxapi.com/2/files/download', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -1550,11 +1727,27 @@
       });
 
       if (res.status === 401) {
-        console.warn('Dropbox 存取權杖已逾時');
+        console.warn('Dropbox access token 被拒絕，嘗試強制換發後重試一次');
         sessionStorage.removeItem('dropbox_access_token');
-        dropboxTokenExpired = true;
-        await checkCloudSessionExpiry();
-        return;
+        sessionStorage.removeItem('dropbox_token_expires_at');
+        token = await getValidDropboxAccessToken();
+        if (!token) {
+          dropboxTokenExpired = true;
+          await checkCloudSessionExpiry();
+          return;
+        }
+        res = await fetch('https://content.dropboxapi.com/2/files/download', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Dropbox-API-Arg': dropboxApiArg({ path: `/${APP_FOLDER_NAME}/${FILE_NAME}` })
+          }
+        });
+        if (res.status === 401) {
+          dropboxTokenExpired = true;
+          await checkCloudSessionExpiry();
+          return;
+        }
       }
 
       if (res.ok) {
@@ -1606,7 +1799,7 @@
   }
 
   async function uploadPhotoFile(file, recordId) {
-    const dropboxToken = sessionStorage.getItem('dropbox_access_token');
+    const dropboxToken = await getValidDropboxAccessToken();
     if (dropboxToken) {
       const path = `/${APP_FOLDER_NAME}/photos/${recordId}.${getFileExtension(file)}`;
       try {
@@ -1667,7 +1860,7 @@
         });
         if (res.ok) blob = await res.blob();
       } else if (record.photoProvider === 'dropbox') {
-        const token = sessionStorage.getItem('dropbox_access_token');
+        const token = await getValidDropboxAccessToken();
         if (!token) return null;
         const res = await fetch('https://content.dropboxapi.com/2/files/download', {
           method: 'POST',
@@ -1699,7 +1892,7 @@
           headers: { Authorization: `Bearer ${token}` }
         });
       } else if (record.photoProvider === 'dropbox') {
-        const token = sessionStorage.getItem('dropbox_access_token');
+        const token = await getValidDropboxAccessToken();
         if (!token) return;
         await fetch('https://api.dropboxapi.com/2/files/delete_v2', {
           method: 'POST',
@@ -1807,7 +2000,7 @@
   // 將加密後的分享檔上傳/覆蓋到「目前連結的那個雲端硬碟」（Drive 與 Dropbox 互斥，只會有一種）
   // 並設定成「知道連結的人可讀取」，回傳 { provider, ref } 供之後產生邀請連結、更新、刪除使用
   async function uploadShareFile(bytes, grant) {
-    const dropboxToken = sessionStorage.getItem('dropbox_access_token');
+    const dropboxToken = await getValidDropboxAccessToken();
     const driveToken = getAccessToken();
     const fileName = `share_${grant.id}.enc`;
     const blob = new Blob([bytes], { type: 'application/octet-stream' });
@@ -1927,7 +2120,7 @@
           headers: { Authorization: `Bearer ${token}` }
         });
       } else if (grant.shareProvider === 'dropbox') {
-        const token = sessionStorage.getItem('dropbox_access_token');
+        const token = await getValidDropboxAccessToken();
         if (!token) return;
         const path = `/${APP_FOLDER_NAME}/shares/share_${grant.id}.enc`;
         await fetch('https://api.dropboxapi.com/2/files/delete_v2', {
@@ -2669,6 +2862,9 @@
   async function handleLogout() {
     sessionStorage.removeItem('drive_access_token');
     sessionStorage.removeItem('dropbox_access_token');
+    sessionStorage.removeItem('dropbox_token_expires_at');
+    sessionStorage.removeItem('dropbox_refresh_token');
+    sessionStorage.removeItem('dropbox_pkce_verifier');
     await signOut(auth);
     window.location.href = 'index.html';
   }
