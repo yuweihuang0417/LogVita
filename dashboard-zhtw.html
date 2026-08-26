@@ -1199,6 +1199,14 @@
         if (urlToken) {
           await withTimeout(saveDropboxTokenToFirestore(user.uid, urlToken), 8000, null);
           window.history.replaceState({}, document.title, window.location.pathname);
+
+          // 這個畫面如果是「連結 Dropbox」彈出的子視窗，就把金鑰傳回主視窗後直接關閉自己，
+          // 不需要在子視窗裡也跑一次完整的資料載入流程
+          if (window.opener && window.opener !== window) {
+            window.opener.postMessage({ type: 'dropbox-oauth-success', token: urlToken }, window.location.origin);
+            window.close();
+            return;
+          }
         }
 
         // 判斷雲端硬碟連結狀態（Firestore 查詢加上逾時保護，避免網路異常時卡住整個登入流程）
@@ -1433,6 +1441,24 @@
 
     window.open(authUrl, 'ConnectDropbox', 'width=500,height=600');
   }
+
+  // 接收「連結 Dropbox」彈出視窗傳回的金鑰，完成連結流程（不需要重新整理主視窗）
+  window.addEventListener('message', async (event) => {
+    if (event.origin !== window.location.origin) return;
+    if (!event.data || event.data.type !== 'dropbox-oauth-success' || !event.data.token) return;
+
+    sessionStorage.setItem('dropbox_access_token', event.data.token);
+    document.getElementById('dropbox-status').textContent = '已連結';
+    document.getElementById('google-auth-email').textContent = '未連結';
+    updateStorageConnectionUI('dropbox');
+    showLoadingToast('正在從 Dropbox 載入資料...');
+    await withTimeout(loadFromDropbox(), 15000, null);
+    hideLoadingToast();
+    renderOverview();
+    renderRecordList();
+    renderAccessList();
+    showToast('已成功連結 Dropbox');
+  });
 
   async function saveToDropbox(dataPayload) {
     const user = auth.currentUser;
