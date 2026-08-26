@@ -1487,6 +1487,15 @@
     await finishDropboxConnect(event.data.token);
   });
 
+  // HTTP header 只允許 ISO-8859-1 字元，但 APP_FOLDER_NAME 含中文（例如「健康庫 LogVita」），
+  // 若直接把中文路徑塞進 Dropbox-API-Arg header 會讓 fetch() 直接丟出例外（連請求都送不出去）。
+  // Dropbox API 官方建議做法：JSON.stringify 後，把非 ASCII 字元轉成 \uXXXX escape 再放進 header。
+  function dropboxApiArg(obj) {
+    return JSON.stringify(obj).replace(/[\u007f-\uffff]/g, (c) =>
+      '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4)
+    );
+  }
+
   async function saveToDropbox(dataPayload) {
     const user = auth.currentUser;
     if (!user) return false;
@@ -1499,7 +1508,7 @@
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Dropbox-API-Arg': JSON.stringify({
+          'Dropbox-API-Arg': dropboxApiArg({
             path: `/${APP_FOLDER_NAME}/${FILE_NAME}`,
             mode: 'overwrite',
             autorename: false,
@@ -1536,7 +1545,7 @@
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Dropbox-API-Arg': JSON.stringify({ path: `/${APP_FOLDER_NAME}/${FILE_NAME}` })
+          'Dropbox-API-Arg': dropboxApiArg({ path: `/${APP_FOLDER_NAME}/${FILE_NAME}` })
         }
       });
 
@@ -1605,7 +1614,7 @@
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${dropboxToken}`,
-            'Dropbox-API-Arg': JSON.stringify({ path, mode: 'overwrite', autorename: false, mute: true }),
+            'Dropbox-API-Arg': dropboxApiArg({ path, mode: 'overwrite', autorename: false, mute: true }),
             'Content-Type': 'application/octet-stream'
           },
           body: file
@@ -1664,7 +1673,7 @@
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
-            'Dropbox-API-Arg': JSON.stringify({ path: record.photoRef })
+            'Dropbox-API-Arg': dropboxApiArg({ path: record.photoRef })
           }
         });
         if (res.ok) blob = await res.blob();
@@ -1810,7 +1819,7 @@
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${dropboxToken}`,
-            'Dropbox-API-Arg': JSON.stringify({ path, mode: 'overwrite', autorename: false, mute: true }),
+            'Dropbox-API-Arg': dropboxApiArg({ path, mode: 'overwrite', autorename: false, mute: true }),
             'Content-Type': 'application/octet-stream'
           },
           body: blob
@@ -2026,7 +2035,7 @@
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${DROPBOX_APP_TOKEN}`,
-          'Dropbox-API-Arg': JSON.stringify({ url: ref })
+          'Dropbox-API-Arg': dropboxApiArg({ url: ref })
         }
       });
       if (!res.ok) return null;
