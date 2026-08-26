@@ -1815,7 +1815,11 @@
           },
           body: blob
         });
-        if (!uploadRes.ok) return null;
+        if (!uploadRes.ok) {
+          const errText = await uploadRes.text().catch(() => '(無法讀取錯誤內容)');
+          console.error(`[分享檔] Dropbox 檔案上傳失敗 (HTTP ${uploadRes.status}):`, errText);
+          return null;
+        }
 
         // 若已建立過分享連結就直接沿用（避免重複建立），否則新建一個
         if (grant.shareProvider === 'dropbox' && grant.shareRef) {
@@ -1830,6 +1834,17 @@
           const data = await linkRes.json();
           return { provider: 'dropbox', ref: data.url };
         }
+        const linkErrText = await linkRes.text().catch(() => '(無法讀取錯誤內容)');
+        console.warn(`[分享檔] Dropbox 建立分享連結失敗 (HTTP ${linkRes.status})，改嘗試讀取既有連結:`, linkErrText);
+        if (linkRes.status === 409 && /shared_link_already_exists/.test(linkErrText)) {
+          console.info('[分享檔] 連結已存在，將改用 list_shared_links 取得既有連結');
+        } else if (linkRes.status === 401 || /invalid_access_token|expired_access_token/.test(linkErrText)) {
+          console.error('[分享檔] Dropbox token 已失效或權限不足，請重新連結 Dropbox');
+        } else if (/missing_scope/.test(linkErrText)) {
+          console.error('[分享檔] Dropbox App 缺少 sharing.write 權限（scope）。請至 Dropbox App Console → Permissions 分頁勾選 sharing.write（與 sharing.read），儲存後使用者需要重新連結 Dropbox（登出再登入）才會取得新權限的 token。');
+        } else if (/settings_error/.test(linkErrText)) {
+          console.error('[分享檔] Dropbox 帳號/團隊政策不允許建立公開（public）分享連結（settings_error）。若為 Dropbox Business 帳號，需要管理員開放公開分享權限，否則此免登入分享機制無法使用。');
+        }
         // 若連結已存在（常見於重複建立），改查詢既有連結
         const listRes = await fetch('https://api.dropboxapi.com/2/sharing/list_shared_links', {
           method: 'POST',
@@ -1839,6 +1854,10 @@
         if (listRes.ok) {
           const data = await listRes.json();
           if (data.links && data.links.length > 0) return { provider: 'dropbox', ref: data.links[0].url };
+          console.error('[分享檔] list_shared_links 成功但沒有回傳任何連結，路徑:', path);
+        } else {
+          const listErrText = await listRes.text().catch(() => '(無法讀取錯誤內容)');
+          console.error(`[分享檔] Dropbox list_shared_links 也失敗 (HTTP ${listRes.status}):`, listErrText);
         }
         return null;
       } catch (err) {
@@ -2750,7 +2769,7 @@
     submitBtn.textContent = originalText;
 
     if (!shareUrl) {
-      showToast('無法建立加密分享檔，請確認已連結 Google Drive 或 Dropbox');
+      showToast('無法建立加密分享檔，請開啟瀏覽器主控台（Console）查看詳細錯誤原因');
       return;
     }
 
