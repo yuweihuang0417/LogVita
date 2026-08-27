@@ -135,7 +135,7 @@
     position:relative;
     width:100%;
     max-width:420px;
-    aspect-ratio:1.586 / 1;
+    min-height:260px;
     border-radius:20px;
     padding:22px 24px;
     color:var(--paper);
@@ -146,7 +146,7 @@
     overflow:hidden;
     cursor:pointer;
     -webkit-user-select:none; user-select:none;
-    display:flex; flex-direction:column; justify-content:space-between;
+    display:flex; flex-direction:column; justify-content:space-between; gap:14px;
     transform:perspective(900px) rotateX(0deg) rotateY(0deg) scale(1);
     transform-style:preserve-3d;
     transition:transform .5s cubic-bezier(.22,1,.36,1), box-shadow .5s ease;
@@ -189,10 +189,14 @@
   .id-card-name{ font-family:"Noto Serif TC",serif; font-size:19px; font-weight:600; margin-bottom:7px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .id-card-row{ display:flex; gap:22px; font-size:12.5px; margin-top:4px; }
   .id-card-row .k, .id-card-bottom .k{ opacity:.6; margin-right:6px; }
-  .id-card-bottom{ display:flex; align-items:flex-end; justify-content:space-between; font-size:12.5px; position:relative; z-index:1; }
+  .id-card-bottom{
+    display:grid; grid-template-columns:1fr 1fr; gap:10px 18px;
+    font-size:12.5px; position:relative; z-index:1;
+  }
   .id-card-bottom .field-block{ min-width:0; }
-  .id-card-bottom .v{ display:block; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:220px; }
-  .id-card-chip{ width:34px; height:24px; border-radius:5px; background:linear-gradient(135deg,#e9d29e,#a9812f); opacity:.9; flex-shrink:0; }
+  .id-card-bottom .field-block.full{ grid-column:1 / -1; }
+  .id-card-bottom .v{ display:block; margin-top:2px; overflow-wrap:break-word; }
+  .id-card-bottom .field-block:not(.full) .v{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   @media (max-width:480px){
     .id-card{ padding:18px; }
     .id-card-name{ font-size:16.5px; }
@@ -617,7 +621,8 @@
           <div class="id-card-bottom">
             <div class="field-block"><span class="k">血型</span><span class="v" id="id-blood">—</span></div>
             <div class="field-block"><span class="k">聯絡電話</span><span class="v" id="id-phone">—</span></div>
-            <div class="id-card-chip"></div>
+            <div class="field-block"><span class="k">緊急聯絡人</span><span class="v" id="id-emergency">—</span></div>
+            <div class="field-block full"><span class="k">過敏史</span><span class="v" id="id-allergy">—</span></div>
           </div>
         </div>
       </div>
@@ -625,8 +630,8 @@
       <div class="card">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
           <div>
-            <h2 style="margin:0 0 4px;">緊急聯絡人</h2>
-            <div class="card-sub" style="margin:0;" id="id-emergency">尚未設定</div>
+            <h2 style="margin:0 0 4px;">需要更新資料？</h2>
+            <div class="card-sub" style="margin:0;">點選卡片右上角齒輪或這裡的按鈕，前往個人檔案編輯</div>
           </div>
           <button type="button" class="btn-primary" id="idcard-edit-btn">前往個人檔案編輯</button>
         </div>
@@ -2661,6 +2666,7 @@
     document.getElementById('id-blood').textContent = currentConfig.blood ? `${currentConfig.blood} 型` : '—';
     document.getElementById('id-phone').textContent = currentConfig.phone || '—';
     document.getElementById('id-emergency').textContent = currentConfig.emergency || '尚未設定';
+    document.getElementById('id-allergy').textContent = (currentConfig.allergy && currentConfig.allergy.trim()) ? currentConfig.allergy : '無已知過敏';
   }
 
   function renderOverview() {
