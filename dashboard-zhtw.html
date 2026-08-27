@@ -1020,9 +1020,59 @@
 
   // ---- 端到端加密共享：免登入讀取憑證（僅用來抓取「已設為可讀」的加密檔，內容本身仍需金鑰才能解密）----
   const GOOGLE_DRIVE_API_KEY = 'AIzaSyC9sfJMMlo4-fVtk6u323IwLyFhWL3S2Cc';     // Google Cloud Console → 憑證 → API 金鑰（請設定 HTTP 參照網址限制為你的網域）
-  const DROPBOX_APP_TOKEN = 'sl.u.AGuSUFuQjo4W8Un9SIVlUucARBwxJjoCLEOmwrHysNyEhA8A7xt386w1JJcVZHzmmmKcqbY5Fb3Uaus1zTcVBJfbXjuiQIFaBB84GS4LFNOhj_GVVR82RqjkoLgP8KAo3c0hIJUynIH8j_T7bw8Mgx7IzUgpR0mic78ErHS2MLvwe4uFmOCLTMRExXf8HYknzCukPNYHr5EzekWC-Yql4WkbGgr7VRnRuz7-BG1ZuOMasgg6gs11HG8gYbeM9V6Qpkf1S45KwRbSeqQbUWZUWLsTjZhmxG_EHzieDJxMJyduD9l4zMILzQRL_Eg6FE5GHKBcaWF1iXgsbHfcDpkZwbc-WgrqPCHWMhp2RlCJYVKwALLfoeWEfC_WNSH-LsyRbzCq_-tyWaeObnfm6xKX_arLI8C6VEqUTxE633ULSmgxY1SSVgRsGVZSV-I5Re6eoYGfRAXvFGj-lCzx0WcgwAz9V69KLzHqJ51bGTpY14REypB2D9eRbzF-b2geIoqp224u4Vxi__ggMl7z-ylBmIPDghOpItoQcEqBjmK2G2aXtoJ3DNEUGDFAEPkp6TmgWb8WfENkBTcMdbjLdFFBj4toXkFHJKVm0MY2yc4WqGX8DEoE_8EC5dSxrK0AapiCArHiUrFbSy8zn8EYzu0FO3UUe1cmmsOR7JC5pZ9L9WiDTRb_DXJCJcxwGtOij03bcUYldQq7PVaDVktusleLEaTwTGAco0k9Y_qp2y5_Mn3-j8b-9hiEHxRfiC0BKqMGIIEL4NcsbwpIrwCVfiHgL3RTtFid29OR0f2rNfQgZF2FdcL_3M8Zk7JbcjGXrMP4etspb_pcdTl5Pbq99f6IdnDCAtzhMMxyUugzNnP_HN40k3sVqknlBAjTJKsz-pNHoNkl7Ysg8UHHqgTYoLa-hGsAVfWEtm4YrZQ3qWWDOzYpcMP0jM4oZ1DXTG77g0mhXDuYF9HAM25JHXdDFRKfA8QeoAssncC68SSZsYgbgcoFtKkkl9bg5i8u71uYAlFjyF_US0iKfEknaVtWlBxVHzimwCmIfdK3G_zWT_jpOvyRTk5hxpCvLZDUFatnHN208W8im1qgoywqSQl4DCIaKln8GezuWYNVNwVbfasCER83QBVDfShEkgeDFMLFUANx2Z1kkzoD1na9iz6ayuf8oG8ODiqo3Go-InzniYykcdmztzxAuKED45c5qGDxzo94wK6akClPDMRLugSZJgXztuj5FMzGTFBjEt1CrwzJAOjD953QjJMXcWOzpc1Mf5txtvnYFXzXNKDkYyA_-pNyZUhiM-XtmKLDrDNOwovDNkiKUU-14ne3mZ23-yPimP_dW5GdEZDYOynp1WIiyZblX66SWI-owIqm2P3ZQUmiQxpw5dCW9ecuJbinSr3i7fTAlX5AqkMRzj6UEmDoN--INCgk5UJgTNysyfL_hi1NMoYtpga1UsiZnaca6HOGuEZ1QKg';    // Dropbox App Console → 你的 App → Generated access token
+  // 注意：Dropbox App Console「Generated access token」現在只能產生短效 token（約 4 小時就過期），
+  // 不適合用在「收件人免登入讀取」這種需要長期穩定運作的地方。改用你（App 擁有者）自己帳號授權出的
+  // refresh token（跟一般使用者連結 Dropbox 走一樣的 PKCE 流程拿到的那種），可以無限期自動換發新的 access token。
+  const DROPBOX_APP_REFRESH_TOKEN = '9St1n23MAZwAAAAAAAAAASAz5hXSws77qOunx0oZLaTK5MJntdyv-vz3famfCZRR';    // 用你自己的帳號走一次「連結 Dropbox」流程，把拿到的 refresh token 貼在這裡
   const DRIVE_SHARE_ENABLED = !GOOGLE_DRIVE_API_KEY.startsWith('YOUR_');
-  const DROPBOX_SHARE_ENABLED = !DROPBOX_APP_TOKEN.startsWith('YOUR_');
+  const DROPBOX_SHARE_ENABLED = !DROPBOX_APP_REFRESH_TOKEN.startsWith('YOUR_');
+
+  // 快取「app 層級」的 Dropbox access token（跟使用者自己連結 Dropbox 的 session token 分開存放，避免互相覆蓋）
+  let appDropboxRefreshPromise = null;
+  function getCachedAppDropboxAccessToken() {
+    const token = sessionStorage.getItem('dropbox_app_access_token');
+    const expiresAt = parseInt(sessionStorage.getItem('dropbox_app_token_expires_at') || '0', 10);
+    if (token && Date.now() < expiresAt - 60000) return token;
+    return null;
+  }
+  async function getValidAppDropboxAccessToken() {
+    if (!DROPBOX_SHARE_ENABLED) return null;
+    const cached = getCachedAppDropboxAccessToken();
+    if (cached) return cached;
+    if (appDropboxRefreshPromise) return appDropboxRefreshPromise;
+
+    appDropboxRefreshPromise = (async () => {
+      try {
+        const res = await fetch('https://api.dropboxapi.com/oauth2/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            grant_type: 'refresh_token',
+            refresh_token: DROPBOX_APP_REFRESH_TOKEN,
+            client_id: DROPBOX_APP_KEY
+          })
+        });
+        if (!res.ok) {
+          const errText = await res.text().catch(() => '');
+          console.error(`[Dropbox] App 層級 token 換發失敗 (HTTP ${res.status}):`, errText);
+          return null;
+        }
+        const data = await res.json();
+        sessionStorage.setItem('dropbox_app_access_token', data.access_token);
+        sessionStorage.setItem('dropbox_app_token_expires_at', String(Date.now() + (data.expires_in || 14400) * 1000));
+        return data.access_token;
+      } catch (err) {
+        console.error('[Dropbox] App 層級 token 換發時發生例外:', err);
+        return null;
+      }
+    })();
+
+    try {
+      return await appDropboxRefreshPromise;
+    } finally {
+      appDropboxRefreshPromise = null;
+    }
+  }
 
   // 逾時保護：避免網路異常或請求卡住時，畫面看起來像凍結一樣沒有反應
   function withTimeout(promise, ms, fallbackValue){
@@ -1799,7 +1849,9 @@
   }
 
   async function uploadPhotoFile(file, recordId) {
-    const dropboxToken = await getValidDropboxAccessToken();
+    const driveTokenPreCheck = getAccessToken();
+    // 同上：Drive／Dropbox 互斥，Drive 使用者不需要也不該先去查 Dropbox
+    const dropboxToken = driveTokenPreCheck ? null : await withTimeout(getValidDropboxAccessToken(), 8000, null);
     if (dropboxToken) {
       const path = `/${APP_FOLDER_NAME}/photos/${recordId}.${getFileExtension(file)}`;
       try {
@@ -2000,8 +2052,10 @@
   // 將加密後的分享檔上傳/覆蓋到「目前連結的那個雲端硬碟」（Drive 與 Dropbox 互斥，只會有一種）
   // 並設定成「知道連結的人可讀取」，回傳 { provider, ref } 供之後產生邀請連結、更新、刪除使用
   async function uploadShareFile(bytes, grant) {
-    const dropboxToken = await getValidDropboxAccessToken();
     const driveToken = getAccessToken();
+    // Drive／Dropbox 互斥，一次只會連結其中一種：driveToken 存在時完全不用去查 Dropbox，
+    // 避免每次分享都白白多等一次 Firestore 查詢（且該查詢先前沒有逾時保護，一卡住就會讓畫面停在「加密並上傳中」）
+    const dropboxToken = driveToken ? null : await withTimeout(getValidDropboxAccessToken(), 8000, null);
     const fileName = `share_${grant.id}.enc`;
     const blob = new Blob([bytes], { type: 'application/octet-stream' });
 
@@ -2224,14 +2278,20 @@
     }
     if (provider === 'dropbox') {
       if (!DROPBOX_SHARE_ENABLED) { console.warn('尚未設定 Dropbox App 權杖，無法讀取 Dropbox 端的共享資料'); return null; }
+      const appToken = await withTimeout(getValidAppDropboxAccessToken(), 8000, null);
+      if (!appToken) { console.error('[分享檔] 無法取得 Dropbox App 層級 access token（refresh token 可能已失效，需要重新授權）'); return null; }
       const res = await fetch('https://content.dropboxapi.com/2/sharing/get_shared_link_file', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${DROPBOX_APP_TOKEN}`,
+          'Authorization': `Bearer ${appToken}`,
           'Dropbox-API-Arg': dropboxApiArg({ url: ref })
         }
       });
-      if (!res.ok) return null;
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        console.error(`[分享檔] Dropbox 共享檔讀取失敗 (HTTP ${res.status}):`, errText);
+        return null;
+      }
       return new Uint8Array(await res.arrayBuffer());
     }
     return null;
