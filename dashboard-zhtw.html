@@ -407,10 +407,6 @@
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         個人檔案
       </button>
-      <button data-panel="privacy">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L4 5v6c0 5 3.4 8.7 8 9.9 4.6-1.2 8-4.9 8-9.9V5l-8-3z"/></svg>
-        隱私設定
-      </button>
       <button data-panel="access">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         授權管理
@@ -605,54 +601,6 @@
           </div>
           <button type="submit" class="btn-primary">儲存變更至雲端硬碟</button>
         </form>
-      </div>
-    </section>
-
-    <!-- 隱私設定 -->
-    <section class="panel panel-narrow" id="panel-privacy">
-      <div class="page-head">
-        <h1>隱私設定</h1>
-        <div class="sub">控制你的健康資料可以被如何使用與分享</div>
-      </div>
-
-      <div class="card">
-        <h2>資料分享</h2>
-        <div class="card-sub">管理誰可以看到你的健康紀錄</div>
-
-        <div class="toggle-row">
-          <div>
-            <div class="t-title">允許家人查看我的紀錄</div>
-            <div class="t-desc">開啟後，被授權的家庭成員可以在「授權管理」中查看你的病歷摘要</div>
-          </div>
-          <label class="switch"><input type="checkbox" id="p-share-family" checked><span class="track"></span><span class="thumb"></span></label>
-        </div>
-        <div class="toggle-row">
-          <div>
-            <div class="t-title">允許家人匯入報告</div>
-            <div class="t-desc">開啟後，被授權的家庭成員可以代替你上傳檢驗報告或就診紀錄</div>
-          </div>
-          <label class="switch"><input type="checkbox" id="p-import-family" checked><span class="track"></span><span class="thumb"></span></label>
-        </div>
-        <div class="toggle-row">
-          <div>
-            <div class="t-title">將去識別化資料用於醫學研究</div>
-            <div class="t-desc">資料會移除姓名等個人識別資訊後，用於公共衛生研究，可隨時關閉</div>
-          </div>
-          <label class="switch"><input type="checkbox" id="p-research"><span class="track"></span><span class="thumb"></span></label>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>通知偏好</h2>
-        <div class="card-sub">選擇你想收到的通知方式</div>
-        <div class="toggle-row">
-          <div><div class="t-title">電子郵件通知</div><div class="t-desc">新報告上傳、授權異動時寄送通知</div></div>
-          <label class="switch"><input type="checkbox" id="p-notify-email" checked><span class="track"></span><span class="thumb"></span></label>
-        </div>
-        <div class="toggle-row">
-          <div><div class="t-title">簡訊通知</div><div class="t-desc">僅在重要帳號安全事件時發送</div></div>
-          <label class="switch"><input type="checkbox" id="p-notify-sms"><span class="track"></span><span class="thumb"></span></label>
-        </div>
       </div>
     </section>
 
@@ -1988,14 +1936,6 @@
     if (config.weight) document.getElementById('p-weight').value = config.weight;
     if (config.allergy) document.getElementById('p-allergy').value = config.allergy;
 
-    if (config.privacy) {
-      document.getElementById('p-share-family').checked = config.privacy.shareFamily ?? true;
-      document.getElementById('p-import-family').checked = config.privacy.importFamily ?? true;
-      document.getElementById('p-research').checked = config.privacy.research ?? false;
-      document.getElementById('p-notify-email').checked = config.privacy.notifyEmail ?? true;
-      document.getElementById('p-notify-sms').checked = config.privacy.notifySms ?? false;
-    }
-
     renderOverview();
     renderRecordList();
     renderAccessList();
@@ -2910,13 +2850,6 @@
       height: document.getElementById('p-height').value,
       weight: document.getElementById('p-weight').value,
       allergy: document.getElementById('p-allergy').value,
-      privacy: {
-        shareFamily: document.getElementById('p-share-family').checked,
-        importFamily: document.getElementById('p-import-family').checked,
-        research: document.getElementById('p-research').checked,
-        notifyEmail: document.getElementById('p-notify-email').checked,
-        notifySms: document.getElementById('p-notify-sms').checked,
-      },
       records: currentConfig.records || [],
       updatedAt: new Date().toISOString()
     };
