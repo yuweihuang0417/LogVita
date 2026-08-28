@@ -622,6 +622,7 @@
             <div class="field-block"><span class="k">血型</span><span class="v" id="id-blood">—</span></div>
             <div class="field-block"><span class="k">聯絡電話</span><span class="v" id="id-phone">—</span></div>
             <div class="field-block"><span class="k">緊急聯絡人</span><span class="v" id="id-emergency">—</span></div>
+            <div class="field-block"><span class="k">緊急聯絡電話</span><span class="v" id="id-emergency-phone">—</span></div>
             <div class="field-block full"><span class="k">過敏史</span><span class="v" id="id-allergy">—</span></div>
           </div>
         </div>
@@ -709,14 +710,20 @@
             </div>
             <div class="field">
               <label for="p-emergency">緊急聯絡人</label>
-              <input type="text" id="p-emergency" placeholder="姓名 / 電話">
+              <input type="text" id="p-emergency" placeholder="姓名">
             </div>
           </div>
           <div class="row">
             <div class="field">
+              <label for="p-emergency-phone">緊急聯絡人電話</label>
+              <input type="tel" id="p-emergency-phone" placeholder="0912-345-678">
+            </div>
+            <div class="field">
               <label for="p-height">身高（公分）</label>
               <input type="number" id="p-height" placeholder="例如：170" min="0" step="0.1">
             </div>
+          </div>
+          <div class="row">
             <div class="field">
               <label for="p-weight">體重（公斤）</label>
               <input type="number" id="p-weight" placeholder="例如：65" min="0" step="0.1">
@@ -2096,6 +2103,7 @@
     if (config.blood) document.getElementById('p-blood').value = config.blood;
     if (config.phone) document.getElementById('p-phone').value = config.phone;
     if (config.emergency) document.getElementById('p-emergency').value = config.emergency;
+    if (config.emergencyPhone) document.getElementById('p-emergency-phone').value = config.emergencyPhone;
     if (config.height) document.getElementById('p-height').value = config.height;
     if (config.weight) document.getElementById('p-weight').value = config.weight;
     if (config.allergy) document.getElementById('p-allergy').value = config.allergy;
@@ -2156,6 +2164,7 @@
         blood: currentConfig.blood || '',
         allergy: currentConfig.allergy || '',
         emergency: currentConfig.emergency || '',
+        emergencyPhone: currentConfig.emergencyPhone || '',
         phone: currentConfig.phone || ''
       },
       records,
@@ -2585,6 +2594,7 @@
             <div class="shared-profile-grid">
               <div><div class="sp-label">血型</div><div class="sp-value">${escapeHtml(s.profile?.blood || '未提供')}</div></div>
               <div><div class="sp-label">緊急聯絡人</div><div class="sp-value">${escapeHtml(s.profile?.emergency || '未提供')}</div></div>
+              <div><div class="sp-label">緊急聯絡電話</div><div class="sp-value">${escapeHtml(s.profile?.emergencyPhone || '未提供')}</div></div>
               <div><div class="sp-label">過敏史</div><div class="sp-value">${escapeHtml(s.profile?.allergy || '無')}</div></div>
               <div><div class="sp-label">聯絡電話</div><div class="sp-value">${escapeHtml(s.profile?.phone || '未提供')}</div></div>
             </div>
@@ -2666,6 +2676,7 @@
     document.getElementById('id-blood').textContent = currentConfig.blood ? `${currentConfig.blood} 型` : '—';
     document.getElementById('id-phone').textContent = currentConfig.phone || '—';
     document.getElementById('id-emergency').textContent = currentConfig.emergency || '尚未設定';
+    document.getElementById('id-emergency-phone').textContent = currentConfig.emergencyPhone || '—';
     document.getElementById('id-allergy').textContent = (currentConfig.allergy && currentConfig.allergy.trim()) ? currentConfig.allergy : '無已知過敏';
   }
 
@@ -3004,6 +3015,7 @@
       blood: document.getElementById('p-blood').value,
       phone: document.getElementById('p-phone').value,
       emergency: document.getElementById('p-emergency').value,
+      emergencyPhone: document.getElementById('p-emergency-phone').value,
       height: document.getElementById('p-height').value,
       weight: document.getElementById('p-weight').value,
       allergy: document.getElementById('p-allergy').value,
