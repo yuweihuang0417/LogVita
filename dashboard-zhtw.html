@@ -384,7 +384,7 @@
   .btn-danger-text:hover{ color:var(--error); background:#fdf1f0; }
   .link-remove{
     background:none; border:none; cursor:pointer;
-    color:#8b6a68; font-family:inherit; font-size:13px; font-weight:600;
+    color:var(--error); font-family:inherit; font-size:13px; font-weight:600;
     text-decoration:underline; padding:9px 6px; border-radius:8px;
   }
   .link-remove:hover{ color:var(--error); background:#fdf1f0; }
@@ -416,10 +416,10 @@
   .photo-preview-wrap img{ width:100%; max-height:220px; object-fit:cover; display:block; }
   .photo-remove-btn{
     position:absolute; top:10px; right:10px; width:28px; height:28px; border-radius:50%;
-    background:rgba(15,42,43,.65); color:#fff; border:none; cursor:pointer;
+    background:rgba(214,69,58,.82); color:#fff; border:none; cursor:pointer;
     display:flex; align-items:center; justify-content:center;
   }
-  .photo-remove-btn:hover{ background:rgba(15,42,43,.85); }
+  .photo-remove-btn:hover{ background:var(--error); }
 
   .record-thumb{
     width:40px; height:40px; border-radius:10px; object-fit:cover; flex-shrink:0; cursor:pointer;
@@ -2401,7 +2401,7 @@
             <div class="meta">${escapeHtml(metaBits.join(' · '))}</div>
           </div>
           <span class="auth-scope ${g.scope === 'full' ? 'full' : ''}">${SCOPE_LABEL[g.scope] || '自訂項目'}</span>
-          <button type="button" class="btn-ghost revoke-btn">撤銷</button>
+          <button type="button" class="btn-danger revoke-btn">撤銷</button>
         </div>`;
     }).join('');
 
@@ -2410,6 +2410,7 @@
 
     list.querySelectorAll('.revoke-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
+        if (!confirm('確定要撤銷這個人的存取權限嗎？撤銷後對方將無法再讀取此份加密資料，此動作無法復原。')) return;
         const item = e.currentTarget.closest('.auth-item');
         const id = item.dataset.id;
         const grant = (currentConfig.accessList || []).find(g => g.id === id);
@@ -2658,6 +2659,7 @@
     list.querySelectorAll('.remove-shared-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
+        if (!confirm('確定要將這個共享項目從清單中移除嗎？')) return;
         const id = e.currentTarget.closest('.shared-item').dataset.id;
         currentConfig.receivedShares = (currentConfig.receivedShares || []).filter(s => s.grantId !== id);
         loadSharedWithMe();
@@ -2840,6 +2842,7 @@
 
     document.getElementById('record-detail-done').addEventListener('click', closeRecordDetailModal);
     document.getElementById('record-detail-delete').addEventListener('click', async () => {
+      if (!confirm('確定要刪除這筆紀錄嗎？此動作無法復原。')) return;
       currentConfig.records = (currentConfig.records || []).filter(r => r.id !== record.id);
       renderOverview();
       renderRecordList();
@@ -2978,6 +2981,15 @@
   // 7. 表單提交與事件觸發
   document.getElementById('connect-dropbox-btn').addEventListener('click', connectDropbox);
 
+  // ---- 刪除帳號（危險區域）----
+  const deleteAccountBtn = document.getElementById('delete-account');
+  if (deleteAccountBtn) {
+    deleteAccountBtn.addEventListener('click', () => {
+      if (!confirm('確定要刪除你的帳號嗎？所有健康紀錄將永久移除，此動作無法復原。')) return;
+      showToast('帳號刪除功能尚未開放，請聯繫客服協助處理');
+    });
+  }
+
   // ---- 更換 / 移除大頭貼照片 ----
   const avatarFileInput = document.getElementById('avatar-file-input');
   const changeAvatarBtn = document.getElementById('change-avatar');
@@ -3025,6 +3037,7 @@
   });
 
   removeAvatarBtn.addEventListener('click', async () => {
+    if (!confirm('確定要移除目前的大頭貼照片嗎？')) return;
     if (currentConfig.avatarProvider && currentConfig.avatarRef) {
       deletePhotoFile({ id: 'avatar', photoProvider: currentConfig.avatarProvider, photoRef: currentConfig.avatarRef });
     }
