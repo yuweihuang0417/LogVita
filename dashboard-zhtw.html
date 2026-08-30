@@ -167,8 +167,7 @@
   }
   .id-card.tilting .id-card-shine{ opacity:1; }
   .id-card-diamond{
-    position:absolute; right:0; bottom:0; width:48%; height:48%;
-    pointer-events:none;
+    position:absolute; inset:0; pointer-events:none; border-radius:inherit;
     background-image:
       repeating-linear-gradient(45deg, rgba(255,255,255,.18) 0 1.5px, transparent 1.5px 16px),
       repeating-linear-gradient(-45deg, rgba(255,255,255,.18) 0 1.5px, transparent 1.5px 16px),
@@ -177,18 +176,23 @@
     background-position:0 0, 0 0, 8px 8px, 8px 8px;
     mix-blend-mode:overlay;
     opacity:.5;
-    -webkit-mask-image:radial-gradient(circle at 100% 100%, black 0%, black 45%, transparent 90%);
-    mask-image:radial-gradient(circle at 100% 100%, black 0%, black 45%, transparent 90%);
+    -webkit-mask-image:radial-gradient(circle at 100% 100%, black 0%, black 18%, transparent 55%);
+    mask-image:radial-gradient(circle at 100% 100%, black 0%, black 18%, transparent 55%);
   }
   .id-card-diamond-glow{
-    position:absolute; right:0; bottom:0; width:48%; height:48%;
-    pointer-events:none;
+    position:absolute; inset:0; pointer-events:none; border-radius:inherit;
     background-image:
       repeating-linear-gradient(45deg, rgba(255,255,255,.95) 0 1.5px, transparent 1.5px 16px),
       repeating-linear-gradient(-45deg, rgba(255,255,255,.95) 0 1.5px, transparent 1.5px 16px);
     mix-blend-mode:overlay;
-    -webkit-mask-image:radial-gradient(circle at var(--mx,50%) var(--my,50%), black 0%, transparent 50%);
-    mask-image:radial-gradient(circle at var(--mx,50%) var(--my,50%), black 0%, transparent 50%);
+    -webkit-mask-image:
+      radial-gradient(circle at var(--mx,50%) var(--my,50%), black 0%, transparent 45%),
+      radial-gradient(circle at 100% 100%, black 0%, black 18%, transparent 55%);
+    -webkit-mask-composite:source-in;
+    mask-image:
+      radial-gradient(circle at var(--mx,50%) var(--my,50%), black 0%, transparent 45%),
+      radial-gradient(circle at 100% 100%, black 0%, black 18%, transparent 55%);
+    mask-composite:intersect;
     opacity:0;
     transition:opacity .4s ease;
   }
