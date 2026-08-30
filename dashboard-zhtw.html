@@ -166,6 +166,29 @@
     transition:opacity .4s ease;
   }
   .id-card.tilting .id-card-shine{ opacity:1; }
+  .id-card-diamond{
+    position:absolute; inset:0; pointer-events:none; border-radius:inherit;
+    background-image:
+      repeating-linear-gradient(45deg, rgba(255,255,255,.16) 0 1.5px, transparent 1.5px 18px),
+      repeating-linear-gradient(-45deg, rgba(255,255,255,.16) 0 1.5px, transparent 1.5px 18px),
+      repeating-linear-gradient(45deg, rgba(121,226,196,.1) 0 1.5px, transparent 1.5px 18px),
+      repeating-linear-gradient(-45deg, rgba(121,226,196,.1) 0 1.5px, transparent 1.5px 18px);
+    background-position:0 0, 0 0, 9px 9px, 9px 9px;
+    mix-blend-mode:overlay;
+    opacity:.4;
+  }
+  .id-card-diamond-glow{
+    position:absolute; inset:0; pointer-events:none; border-radius:inherit;
+    background-image:
+      repeating-linear-gradient(45deg, rgba(255,255,255,.95) 0 1.5px, transparent 1.5px 18px),
+      repeating-linear-gradient(-45deg, rgba(255,255,255,.95) 0 1.5px, transparent 1.5px 18px);
+    mix-blend-mode:overlay;
+    -webkit-mask-image:radial-gradient(circle at var(--mx,50%) var(--my,50%), black 0%, transparent 42%);
+    mask-image:radial-gradient(circle at var(--mx,50%) var(--my,50%), black 0%, transparent 42%);
+    opacity:0;
+    transition:opacity .4s ease;
+  }
+  .id-card.tilting .id-card-diamond-glow{ opacity:1; }
   .id-card-gear{
     position:absolute; top:16px; right:16px; z-index:2;
     width:32px; height:32px; border-radius:50%;
@@ -597,6 +620,8 @@
 
       <div class="idcard-stage">
         <div class="id-card" id="id-card">
+          <div class="id-card-diamond"></div>
+          <div class="id-card-diamond-glow"></div>
           <div class="id-card-shine" id="id-card-shine"></div>
           <button type="button" class="id-card-gear" id="id-card-gear" title="編輯個人檔案" aria-label="編輯個人檔案">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
