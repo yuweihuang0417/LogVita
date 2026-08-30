@@ -44,6 +44,30 @@
     box-shadow:0 0 10px rgba(121,226,196,.7);
   }
 
+  /* LANGUAGE SELECTOR */
+  .language-switcher{
+    padding:0 10px 16px;
+  }
+  .language-switcher select{
+    appearance:none;
+    width:100%;
+    border:1px solid rgba(223,230,226,.8);
+    background:rgba(255,255,255,.08);
+    color:var(--paper);
+    border-radius:999px;
+    padding:8px 34px 8px 12px;
+    font:500 12.5px/1 "Noto Sans TC",sans-serif;
+    cursor:pointer;
+    outline:none;
+    background-image:linear-gradient(45deg,transparent 50%,#b9ccc8 50%),linear-gradient(135deg,#b9ccc8 50%,transparent 50%);
+    background-position:calc(100% - 16px) 50%,calc(100% - 11px) 50%;
+    background-size:5px 5px,5px 5px;
+    background-repeat:no-repeat;
+    line-height:1;
+  }
+  .language-switcher select:hover{ background-color:rgba(255,255,255,.14); }
+  .language-switcher select option{ color:var(--ink); background:#fff; }
+
   .nav{ display:flex; flex-direction:column; gap:2px; flex:1; }
   .nav button, .nav a{
     display:flex; align-items:center; gap:12px;

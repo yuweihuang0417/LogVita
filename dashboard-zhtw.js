@@ -1,6 +1,58 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getAuth, signOut, onAuthStateChanged, GoogleAuthProvider, reauthenticateWithPopup, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { dashboardTranslations, detectLanguage, saveLanguage } from "./i18n.js";
+
+  // ---- 多語言（與登入頁共用同一份翻譯來源 i18n.js）----
+  let currentLanguage = detectLanguage();
+  function T(){ return dashboardTranslations[currentLanguage] || dashboardTranslations['zh-TW']; }
+
+  // 依 "a.b.c" 路徑從翻譯物件取值
+  function resolveI18nKey(key){
+    return key.split('.').reduce((obj, part) => (obj == null ? undefined : obj[part]), T());
+  }
+
+  // 套用語言：更新所有帶 data-i18n* 屬性的靜態文字，並重新渲染會用到翻譯的動態內容
+  function applyLanguage(lang){
+    currentLanguage = dashboardTranslations[lang] ? lang : 'zh-TW';
+    saveLanguage(currentLanguage);
+    const t = T();
+
+    document.documentElement.lang = t.htmlLang;
+    document.title = t.title;
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const val = resolveI18nKey(el.getAttribute('data-i18n'));
+      if (typeof val === 'string') el.textContent = val;
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const val = resolveI18nKey(el.getAttribute('data-i18n-placeholder'));
+      if (typeof val === 'string') el.setAttribute('placeholder', val);
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+      const val = resolveI18nKey(el.getAttribute('data-i18n-title'));
+      if (typeof val === 'string') el.setAttribute('title', val);
+    });
+    document.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+      const val = resolveI18nKey(el.getAttribute('data-i18n-aria-label'));
+      if (typeof val === 'string') el.setAttribute('aria-label', val);
+    });
+    document.querySelectorAll('[data-i18n-alt]').forEach(el => {
+      const val = resolveI18nKey(el.getAttribute('data-i18n-alt'));
+      if (typeof val === 'string') el.setAttribute('alt', val);
+    });
+
+    const langSelect = document.getElementById('language-select');
+    if (langSelect) langSelect.value = currentLanguage;
+
+    // 重新渲染會用到目前語言的動態內容（統計數字、紀錄列表、授權清單、個人資料卡等）
+    if (typeof renderOverview === 'function') renderOverview();
+    if (typeof renderRecordList === 'function') renderRecordList();
+    if (typeof renderAccessList === 'function') renderAccessList();
+    if (typeof renderIdCard === 'function') renderIdCard();
+    const sharedPanel = document.getElementById('panel-shared');
+    if (sharedPanel && sharedPanel.classList.contains('active') && typeof loadSharedWithMe === 'function') loadSharedWithMe();
+  }
 
   const firebaseConfig = {
     apiKey: "AIzaSyDsKJOzaQKosJeJgUfZXBc0pahDzBKV7e8",
@@ -168,7 +220,7 @@
     return JSON.parse(new TextDecoder().decode(plainBuf));
   }
 
-  const TYPE_LABEL = { lab: '檢驗報告', med: '用藥紀錄', img: '影像資料', visit: '就診紀錄' };
+  function typeLabel(type){ const t = T().recordModal; return { lab:t.typeLab, med:t.typeMed, img:t.typeImg, visit:t.typeVisit }[type] || t.recordFallbackLabel; }
   const TYPE_ICON = {
     lab: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2v6L4 20a1 1 0 0 0 .9 1.5h14.2A1 1 0 0 0 20 20l-5-12V2"/><line x1="9" y1="2" x2="15" y2="2"/></svg>',
     med: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M12 8v8"/></svg>',
@@ -179,8 +231,8 @@
   let currentConfig = {};
   let activeFilter = 'all';
   const photoUrlCache = new Map();
-  let currentDisplayName = '使用者';
-  let currentInitial = '使';
+  let currentDisplayName = T().misc.defaultUserName;
+  let currentInitial = T().misc.defaultUserInitial;
   let currentGooglePhotoURL = '';
   let currentUserUid = '';
   let currentUserEmail = '';
@@ -281,26 +333,28 @@
   // 1. 真實裝置與國家判斷
   function detectDeviceType() {
     const ua = navigator.userAgent;
-    if (/iPhone|iPad|iPod/i.test(ua)) return "iPhone / iPad 裝置";
-    if (/Android/i.test(ua)) return "Android 裝置";
-    if (/Windows/i.test(ua)) return "Windows 電腦";
-    if (/Macintosh/i.test(ua)) return "Mac 電腦";
-    if (/Linux/i.test(ua)) return "Linux 電腦";
-    return "行動/電腦裝置";
+    const d = T().device;
+    if (/iPhone|iPad|iPod/i.test(ua)) return d.iphone;
+    if (/Android/i.test(ua)) return d.android;
+    if (/Windows/i.test(ua)) return d.windows;
+    if (/Macintosh/i.test(ua)) return d.mac;
+    if (/Linux/i.test(ua)) return d.linux;
+    return d.generic;
   }
 
   function detectCountry() {
+    const c = T().country;
     try {
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
-      if (tz.includes("Taipei")) return "台灣";
-      if (tz.includes("Tokyo")) return "日本";
-      if (tz.includes("Seoul")) return "韓國";
-      if (tz.includes("Shanghai") || tz.includes("Chongqing")) return "中國";
-      if (tz.includes("Hong_Kong")) return "香港";
-      if (tz.includes("America")) return "美國";
-      return "本地地區";
+      if (tz.includes("Taipei")) return c.taiwan;
+      if (tz.includes("Tokyo")) return c.japan;
+      if (tz.includes("Seoul")) return c.korea;
+      if (tz.includes("Shanghai") || tz.includes("Chongqing")) return c.china;
+      if (tz.includes("Hong_Kong")) return c.hongkong;
+      if (tz.includes("America")) return c.usa;
+      return c.local;
     } catch {
-      return "未知國家";
+      return c.unknown;
     }
   }
 
@@ -315,6 +369,11 @@
   navButtons.forEach(btn => {
     btn.addEventListener('click', () => switchToPanel(btn.dataset.panel));
   });
+
+  // 語言切換器
+  const languageSelect = document.getElementById('language-select');
+  if (languageSelect) languageSelect.addEventListener('change', (e) => applyLanguage(e.target.value));
+  applyLanguage(currentLanguage);
 
   // 個人資料卡：齒輪／按鈕跳轉至個人檔案編輯頁
   const idCardGearBtn = document.getElementById('id-card-gear');
@@ -360,40 +419,41 @@
     const btnGoogle = document.getElementById('connect-google-btn');
     const btnDropbox = document.getElementById('connect-dropbox-btn');
 
+    const s = T().security;
     if (activeProvider === 'dropbox') {
       // 連結 Dropbox 時：啟用 Dropbox、反黑停用 Google
       itemDropbox.classList.remove('disabled-item');
       btnDropbox.disabled = false;
-      btnDropbox.textContent = '已連結';
+      btnDropbox.textContent = s.connected;
 
       itemGoogle.classList.add('disabled-item');
       btnGoogle.disabled = true;
-      btnGoogle.textContent = '已停用（已使用Dropbox）';
+      btnGoogle.textContent = s.disabledUsingDropbox;
     } else if (activeProvider === 'google') {
       // 連結 Google 時：啟用 Google、反黑停用 Dropbox
       itemGoogle.classList.remove('disabled-item');
       btnGoogle.disabled = false;
-      btnGoogle.textContent = '已連結';
+      btnGoogle.textContent = s.connected;
 
       itemDropbox.classList.add('disabled-item');
       btnDropbox.disabled = true;
-      btnDropbox.textContent = '已停用（已使用Google）';
+      btnDropbox.textContent = s.disabledUsingGoogle;
     } else {
       // 兩者皆未連結 (如用 Email 登入)
       itemGoogle.classList.remove('disabled-item');
       btnGoogle.disabled = false;
-      btnGoogle.textContent = '連結 Google Drive';
+      btnGoogle.textContent = s.connectGoogle;
 
       itemDropbox.classList.remove('disabled-item');
       btnDropbox.disabled = false;
-      btnDropbox.textContent = '連結 Dropbox';
+      btnDropbox.textContent = s.connectDropbox;
     }
   }
 
   // 3. Auth 狀態變更監聽與跨裝置 Token 同步
   onAuthStateChanged(auth, async (user) => {
     if (user) {
-      currentDisplayName = user.displayName || '使用者';
+      currentDisplayName = user.displayName || T().misc.defaultUserName;
       currentInitial = currentDisplayName.charAt(0).toUpperCase();
       currentGooglePhotoURL = user.photoURL || '';
       currentUserUid = user.uid;
@@ -406,7 +466,7 @@
 
       // 即時填入真實裝置資訊
       document.getElementById('current-device-info').textContent = detectDeviceType();
-      document.getElementById('current-loc-info').textContent = `${detectCountry()} · 最後活動：剛剛`;
+      document.getElementById('current-loc-info').textContent = T().security.locInfo(detectCountry());
 
       try {
         // 檢查網頁網址是否剛好為 Dropbox OAuth 回傳畫面（Authorization Code + PKCE 流程用 query string 帶 code 回來，不是舊版的 hash）
@@ -445,7 +505,7 @@
                 return;
               }
             } else {
-              showToast('Dropbox 授權失敗，請重新嘗試連結');
+              showToast(T().cloud.dropboxAuthFailedToast);
             }
           } else {
             console.error('找不到 PKCE code_verifier，可能是在不同的分頁/裝置完成授權導致的');
@@ -458,30 +518,30 @@
         const driveToken = getAccessToken();
 
         if (dropboxToken) {
-          document.getElementById('dropbox-status').textContent = '已連結';
-          document.getElementById('google-auth-email').textContent = '未連結';
+          document.getElementById('dropbox-status').textContent = T().security.connected;
+          document.getElementById('google-auth-email').textContent = T().security.notConnected;
           updateStorageConnectionUI('dropbox');
-          showLoadingToast('正在從 Dropbox 載入資料...');
+          showLoadingToast(T().cloud.loadingDropboxToast);
           await withTimeout(loadFromDropbox(), 15000, null);
         } else if (driveToken) {
-          document.getElementById('google-auth-email').textContent = `${user.email} · 已連結`;
-          document.getElementById('dropbox-status').textContent = '未連結';
+          document.getElementById('google-auth-email').textContent = `${user.email} · ${T().security.connected}`;
+          document.getElementById('dropbox-status').textContent = T().security.notConnected;
           updateStorageConnectionUI('google');
-          showLoadingToast('正在從 Google Drive 載入資料...');
+          showLoadingToast(T().cloud.loadingDriveToast);
           await withTimeout(loadFromDrive(), 15000, null);
         } else {
-          document.getElementById('google-auth-email').textContent = '未連結';
-          document.getElementById('dropbox-status').textContent = '未連結';
+          document.getElementById('google-auth-email').textContent = T().security.notConnected;
+          document.getElementById('dropbox-status').textContent = T().security.notConnected;
           updateStorageConnectionUI(null);
           // 若 Firestore 裡曾經存過 refresh token，但剛剛換發新 access token 失敗，代表使用者可能在 Dropbox 端撤銷了授權
           const hadRefreshToken = await withTimeout(getDropboxRefreshTokenFromFirestore(user.uid), 8000, null);
           if (hadRefreshToken) {
-            showToast('Dropbox 連線已失效，請重新點選「連結 Dropbox」授權一次');
+            showToast(T().cloud.dropboxDisconnectedToast);
           }
         }
       } catch (err) {
         console.error('登入初始化流程發生非預期錯誤:', err);
-        showToast('載入雲端資料時發生問題，請重新整理再試一次');
+        showToast(T().cloud.loadErrorToast);
       } finally {
         // 無論上面流程是否順利完成，都確保畫面一定會渲染出來、載入提示一定會關閉，
         // 避免因網路異常或未預期錯誤讓整個頁面看起來像卡死一樣沒有反應
@@ -506,14 +566,14 @@
       const credential = GoogleAuthProvider.credentialFromResult(result);
       if (credential && credential.accessToken) {
         sessionStorage.setItem('drive_access_token', credential.accessToken);
-        document.getElementById('google-auth-email').textContent = `${result.user.email} · 已連結`;
+        document.getElementById('google-auth-email').textContent = `${result.user.email} · ${T().security.connected}`;
         updateStorageConnectionUI('google');
-        showLoadingToast('正在從 Google Drive 載入資料...');
+        showLoadingToast(T().cloud.loadingDriveToast);
         await loadFromDrive();
       }
     } catch (err) {
       console.error('Google Drive 連結失敗:', err);
-      showToast('Google Drive 授權失敗');
+      showToast(T().cloud.driveAuthFailedToast);
     }
   });
 
@@ -523,7 +583,7 @@
       const userRef = doc(db, 'users', uid);
       // 只存 refresh token（長效）；access token 只留在 sessionStorage，不必也不該存進資料庫
       await setDoc(userRef, { dropboxRefreshToken: refreshToken, dropboxToken: null }, { merge: true });
-      showToast('已成功跨裝置連結您的 Dropbox');
+      showToast(T().cloud.dropboxConnectedCrossDeviceToast);
     } catch (err) {
       console.error("寫入 Firestore 失敗:", err);
     }
@@ -630,7 +690,7 @@
       const config = await res.json();
 
       applyConfigToForm(config);
-      showToast('已成功從您的 Google Drive 載入資料');
+      showToast(T().cloud.driveLoadedToast);
     } catch (err) {
       console.error('載入 Drive 內容失敗:', err);
       hideLoadingToast();
@@ -685,16 +745,16 @@
   async function finishDropboxConnect(accessToken, expiresIn) {
     if (sessionStorage.getItem('dropbox_access_token') === accessToken) return; // 已經處理過，避免重複執行
     cacheDropboxAccessToken(accessToken, expiresIn);
-    document.getElementById('dropbox-status').textContent = '已連結';
-    document.getElementById('google-auth-email').textContent = '未連結';
+    document.getElementById('dropbox-status').textContent = T().security.connected;
+    document.getElementById('google-auth-email').textContent = T().security.notConnected;
     updateStorageConnectionUI('dropbox');
-    showLoadingToast('正在從 Dropbox 載入資料...');
+    showLoadingToast(T().cloud.loadingDropboxToast);
     await withTimeout(loadFromDropbox(), 15000, null);
     hideLoadingToast();
     renderOverview();
     renderRecordList();
     renderAccessList();
-    showToast('已成功連結 Dropbox');
+    showToast(T().cloud.dropboxConnectedToast);
   }
 
   function connectDropbox() {
@@ -715,7 +775,7 @@
 
       const popup = window.open(authUrl, 'ConnectDropbox', 'width=500,height=600');
       if (!popup) {
-        showToast('請允許瀏覽器的彈出視窗權限後再試一次');
+        showToast(T().cloud.popupBlockedToast);
         return;
       }
 
@@ -882,7 +942,7 @@
       if (res.ok) {
         const config = await res.json();
         applyConfigToForm(config);
-        showToast('已成功從 Dropbox 載入您的資料');
+        showToast(T().cloud.dropboxLoadedToast);
       } else {
         renderOverview();
         renderRecordList();
@@ -914,7 +974,7 @@
 
     driveTokenExpired = false;
     dropboxTokenExpired = false;
-    showToast('雲端連線已逾時，為確保資料安全同步，即將登出請重新登入');
+    showToast(T().cloud.timeoutToast);
     setTimeout(async () => {
       try { await signOut(auth); } catch (err) { console.error('登出失敗:', err); }
       window.location.href = 'index.html';
@@ -1081,7 +1141,7 @@
   }
 
   // ---- 授權清單（授權管理頁）與端到端加密跨帳號共享 ----
-  const SCOPE_LABEL = { full: '完整病歷', summary: '僅摘要', lab: '僅檢驗報告', custom: '自訂項目' };
+  function scopeLabel(scope){ const t = T().access; return { full:t.scopeFull, summary:t.scopeSummary, lab:t.scopeLab, custom:t.scopeCustom }[scope] || t.scopeCustom; }
   const APP_BASE_URL = 'https://yuweihuang0417.github.io/emr/dashboard-zhtw.html';
 
   function grantRecordTypes(grant) {
@@ -1301,17 +1361,18 @@
 
     if (grants.length === 0) {
       list.innerHTML = `<div class="empty-state" style="padding:24px 0;">
-        <div class="e-desc">目前沒有授權任何人查看你的紀錄，點選右上角「＋ 新增授權」開始邀請</div>
+        <div class="e-desc">${T().access.emptyDesc}</div>
       </div>`;
-      if (countEl) countEl.textContent = '共 0 位可存取你的紀錄';
+      if (countEl) countEl.textContent = T().access.countLabel(0);
       document.getElementById('stat-access').textContent = '0';
       return;
     }
 
     list.innerHTML = grants.map(g => {
       const initial = (g.name || g.email || '?').charAt(0).toUpperCase();
-      const metaBits = [g.type === 'family' ? '家庭成員' : (g.type === 'doctor' ? '醫療人員' : '其他'),
-        g.expiryDate ? `授權至 ${formatDate(g.expiryDate)}` : '永久授權'];
+      const at = T().access;
+      const metaBits = [g.type === 'family' ? at.typeFamilyMeta : (g.type === 'doctor' ? at.typeDoctor : at.typeOther),
+        g.expiryDate ? at.authorizedUntil(formatDate(g.expiryDate)) : at.permanent];
       return `
         <div class="auth-item" data-id="${g.id}">
           <div class="auth-avatar">${escapeHtml(initial)}</div>
@@ -1319,17 +1380,17 @@
             <div class="name">${escapeHtml(g.name || g.email)}</div>
             <div class="meta">${escapeHtml(metaBits.join(' · '))}</div>
           </div>
-          <span class="auth-scope ${g.scope === 'full' ? 'full' : ''}">${SCOPE_LABEL[g.scope] || '自訂項目'}</span>
-          <button type="button" class="btn-danger revoke-btn">撤銷</button>
+          <span class="auth-scope ${g.scope === 'full' ? 'full' : ''}">${scopeLabel(g.scope)}</span>
+          <button type="button" class="btn-danger revoke-btn">${T().access.revoke}</button>
         </div>`;
     }).join('');
 
-    if (countEl) countEl.textContent = `共 ${grants.length} 位可存取你的紀錄`;
+    if (countEl) countEl.textContent = T().access.countLabel(grants.length);
     document.getElementById('stat-access').textContent = grants.length;
 
     list.querySelectorAll('.revoke-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
-        if (!(await showConfirmDialog('撤銷後對方將無法再讀取此份加密資料，此動作無法復原。', '確定要撤銷這個人的存取權限嗎？'))) return;
+        if (!(await showConfirmDialog(T().access.revokeConfirmMsg, T().access.revokeConfirmTitle))) return;
         const item = e.currentTarget.closest('.auth-item');
         const id = item.dataset.id;
         const grant = (currentConfig.accessList || []).find(g => g.id === id);
@@ -1338,7 +1399,7 @@
         renderOverview();
         if (grant) await deleteShareFile(grant);
         const { driveSuccess, dropboxSuccess } = await syncConfigToCloud(currentConfig);
-        showToast((driveSuccess || dropboxSuccess) ? '已撤銷授權，對方將無法再讀取此份加密資料' : '已撤銷授權');
+        showToast((driveSuccess || dropboxSuccess) ? T().access.revokedToast : T().access.revokedSimpleToast);
       });
     });
   }
@@ -1394,7 +1455,7 @@
 
     const entry = {
       grantId: params.get('grant') || ('recv_' + Date.now()),
-      ownerName: params.get('owner') || '未知使用者',
+      ownerName: params.get('owner') || T().misc.defaultUserName,
       provider: params.get('provider'),
       ref: params.get('ref'),
       key: params.get('key'),
@@ -1408,7 +1469,7 @@
     if (!exists) {
       currentConfig.receivedShares.push(entry);
       const { driveSuccess, dropboxSuccess } = await syncConfigToCloud(currentConfig);
-      showToast((driveSuccess || dropboxSuccess) ? `已加入 ${entry.ownerName} 的共享資料` : `已加入 ${entry.ownerName} 的共享資料（尚未連結雲端硬碟，暫存於本次瀏覽）`);
+      showToast((driveSuccess || dropboxSuccess) ? T().shared.joinedToast(entry.ownerName) : T().shared.joinedLocalToast(entry.ownerName));
     }
 
     // 切換到「共享給我」頁面並重新整理清單
@@ -1441,12 +1502,12 @@
         <div class="auth-avatar">${escapeHtml((inv.ownerName || inv.ownerEmail || '?').charAt(0).toUpperCase())}</div>
         <div class="auth-main">
           <div class="name">${escapeHtml(inv.ownerName || inv.ownerEmail)}</div>
-          <div class="meta">${escapeHtml(inv.ownerEmail || '')} · ${SCOPE_LABEL[inv.scope] || '自訂項目'}</div>
+          <div class="meta">${escapeHtml(inv.ownerEmail || '')} · ${scopeLabel(inv.scope)}</div>
           ${inv.note ? `<div style="font-size:12.5px; color:#5c6b68; margin-top:6px; line-height:1.6;">「${escapeHtml(inv.note)}」</div>` : ''}
         </div>
         <div style="display:flex; flex-direction:column; gap:6px; flex-shrink:0;">
-          <button type="button" class="btn-primary accept-invite-btn" style="padding:7px 14px; font-size:12.5px;">加入</button>
-          <button type="button" class="btn-ghost dismiss-invite-btn" style="padding:7px 14px; font-size:12.5px;">忽略</button>
+          <button type="button" class="btn-primary accept-invite-btn" style="padding:7px 14px; font-size:12.5px;">${T().invite.accept}</button>
+          <button type="button" class="btn-ghost dismiss-invite-btn" style="padding:7px 14px; font-size:12.5px;">${T().invite.ignore}</button>
         </div>
       </div>
     `).join('');
@@ -1476,7 +1537,7 @@
           await syncConfigToCloud(currentConfig);
         }
         await removeInviteRecord(inv.id);
-        showToast(`已加入 ${inv.ownerName} 的共享資料`);
+        showToast(T().shared.joinedToast(inv.ownerName));
         removeItemAndMaybeClose(item);
         loadSharedWithMe();
       });
@@ -1509,7 +1570,7 @@
       return;
     }
 
-    list.innerHTML = `<div class="empty-state" style="padding:24px 0;"><div class="e-desc">載入中...</div></div>`;
+    list.innerHTML = `<div class="empty-state" style="padding:24px 0;"><div class="e-desc">${T().shared.loading}</div></div>`;
     empty.style.display = 'none';
 
     const results = await Promise.all(entries.map(async (entry) => {
@@ -1530,8 +1591,9 @@
 
     list.innerHTML = valid.map(({ entry, data: s }) => {
       const initial = (s.ownerName || entry.ownerName || '?').charAt(0).toUpperCase();
-      const metaBits = [s.relationship === 'family' ? '家庭成員' : (s.relationship === 'doctor' ? '醫療人員' : '其他'),
-        s.expiryDate ? `授權至 ${formatDate(s.expiryDate)}` : '永久授權'];
+      const at = T().access, ic = T().idcard, sh = T().shared, dt = T().detail;
+      const metaBits = [s.relationship === 'family' ? at.typeFamilyMeta : (s.relationship === 'doctor' ? at.typeDoctor : at.typeOther),
+        s.expiryDate ? at.authorizedUntil(formatDate(s.expiryDate)) : at.permanent];
       return `
         <div class="shared-item" data-id="${entry.grantId}">
           <div class="shared-item-head">
@@ -1540,19 +1602,19 @@
               <div class="name">${escapeHtml(s.ownerName || entry.ownerName)}</div>
               <div class="meta">${escapeHtml(metaBits.join(' · '))}</div>
             </div>
-            <span class="auth-scope ${s.scope === 'full' ? 'full' : ''}">${SCOPE_LABEL[s.scope] || '自訂項目'}</span>
+            <span class="auth-scope ${s.scope === 'full' ? 'full' : ''}">${scopeLabel(s.scope)}</span>
             <svg class="shared-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
           <div class="shared-detail">
             <div class="shared-profile-grid">
-              <div><div class="sp-label">血型</div><div class="sp-value">${escapeHtml(s.profile?.blood || '未提供')}</div></div>
-              <div><div class="sp-label">緊急聯絡人</div><div class="sp-value">${escapeHtml(s.profile?.emergency || '未提供')}</div></div>
-              <div><div class="sp-label">緊急聯絡電話</div><div class="sp-value">${escapeHtml(s.profile?.emergencyPhone || '未提供')}</div></div>
-              <div><div class="sp-label">過敏史</div><div class="sp-value">${escapeHtml(s.profile?.allergy || '無')}</div></div>
-              <div><div class="sp-label">聯絡電話</div><div class="sp-value">${escapeHtml(s.profile?.phone || '未提供')}</div></div>
+              <div><div class="sp-label">${ic.kBlood}</div><div class="sp-value">${escapeHtml(s.profile?.blood || dt.notProvided)}</div></div>
+              <div><div class="sp-label">${ic.kEmergency}</div><div class="sp-value">${escapeHtml(s.profile?.emergency || dt.notProvided)}</div></div>
+              <div><div class="sp-label">${ic.kEmergencyPhone}</div><div class="sp-value">${escapeHtml(s.profile?.emergencyPhone || dt.notProvided)}</div></div>
+              <div><div class="sp-label">${ic.kAllergy}</div><div class="sp-value">${escapeHtml(s.profile?.allergy || ic.noKnownAllergy)}</div></div>
+              <div><div class="sp-label">${ic.kPhone}</div><div class="sp-value">${escapeHtml(s.profile?.phone || dt.notProvided)}</div></div>
             </div>
             ${(s.records && s.records.length > 0) ? `
-              <div class="shared-records-title">醫療紀錄（${s.records.length} 筆）</div>
+              <div class="shared-records-title">${sh.recordsCount(s.records.length)}</div>
               ${s.records.map(r => `
                 <div class="shared-record-item">
                   <div class="record-icon ${r.type}">${TYPE_ICON[r.type] || TYPE_ICON.visit}</div>
@@ -1563,8 +1625,8 @@
                   </div>
                 </div>
               `).join('')}
-            ` : `<div class="shared-records-title" style="color:#9fb0ac; font-weight:500;">此授權範圍未包含個別醫療紀錄</div>`}
-            <button type="button" class="link-remove remove-shared-btn" style="margin-top:14px;">移除這個共享項目</button>
+            ` : `<div class="shared-records-title" style="color:#9fb0ac; font-weight:500;">${sh.noRecordsInScope}</div>`}
+            <button type="button" class="link-remove remove-shared-btn" style="margin-top:14px;">${sh.removeBtn}</button>
           </div>
         </div>`;
     }).join('');
@@ -1578,12 +1640,12 @@
     list.querySelectorAll('.remove-shared-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
-        if (!(await showConfirmDialog('移除後將不再顯示於清單中，可重新透過分享連結加入。', '確定要移除這個共享項目嗎？'))) return;
+        if (!(await showConfirmDialog(T().shared.removeConfirmMsg, T().shared.removeConfirmTitle))) return;
         const id = e.currentTarget.closest('.shared-item').dataset.id;
         currentConfig.receivedShares = (currentConfig.receivedShares || []).filter(s => s.grantId !== id);
         loadSharedWithMe();
         const { driveSuccess, dropboxSuccess } = await syncConfigToCloud(currentConfig);
-        showToast((driveSuccess || dropboxSuccess) ? '已從清單移除' : '已從清單移除');
+        showToast(T().shared.removedToast);
       });
     });
   }
@@ -1627,11 +1689,11 @@
     nameEl.textContent = currentConfig.name || currentDisplayName || '—';
     document.getElementById('id-birth').textContent = currentConfig.birth ? formatDate(currentConfig.birth) : '—';
     document.getElementById('id-gender').textContent = currentConfig.gender || '—';
-    document.getElementById('id-blood').textContent = currentConfig.blood ? `${currentConfig.blood} 型` : '—';
+    document.getElementById('id-blood').textContent = currentConfig.blood ? `${currentConfig.blood}${T().idcard.bloodTypeSuffix}` : '—';
     document.getElementById('id-phone').textContent = currentConfig.phone || '—';
-    document.getElementById('id-emergency').textContent = currentConfig.emergency || '尚未設定';
+    document.getElementById('id-emergency').textContent = currentConfig.emergency || T().idcard.notSet;
     document.getElementById('id-emergency-phone').textContent = currentConfig.emergencyPhone || '—';
-    document.getElementById('id-allergy').textContent = (currentConfig.allergy && currentConfig.allergy.trim()) ? currentConfig.allergy : '無已知過敏';
+    document.getElementById('id-allergy').textContent = (currentConfig.allergy && currentConfig.allergy.trim()) ? currentConfig.allergy : T().idcard.noKnownAllergy;
   }
 
   function renderOverview() {
@@ -1641,10 +1703,10 @@
     if (records.length > 0) {
       const sorted = [...records].sort((a,b) => new Date(b.date) - new Date(a.date));
       document.getElementById('stat-recent').textContent = formatDate(sorted[0].date);
-      document.getElementById('stat-recent-type').textContent = TYPE_LABEL[sorted[0].type] || '—';
+      document.getElementById('stat-recent-type').textContent = typeLabel(sorted[0].type) || '—';
     } else {
       document.getElementById('stat-recent').textContent = '—';
-      document.getElementById('stat-recent-type').textContent = '尚無紀錄';
+      document.getElementById('stat-recent-type').textContent = T().home.statRecentNone;
     }
 
     const allergyBanner = document.getElementById('allergy-banner');
@@ -1679,7 +1741,7 @@
           <div class="record-main">
             <div class="r-top">
               <span class="r-title">${escapeHtml(r.title)}</span>
-              <span class="record-tag">${TYPE_LABEL[r.type] || '紀錄'}</span>
+              <span class="record-tag">${typeLabel(r.type)}</span>
             </div>
             <div class="r-meta">${formatDate(r.date)}${r.doctor ? ' · ' + escapeHtml(r.doctor) : ''}</div>
           </div>
@@ -1694,7 +1756,7 @@
       const url = await fetchPhotoBlobUrl(r);
       const slot = list.querySelector(`.record-thumb-slot[data-photo-id="${r.id}"]`);
       if (!slot) return;
-      slot.innerHTML = url ? `<img src="${url}" class="record-thumb" alt="紀錄照片">` : '';
+      slot.innerHTML = url ? `<img src="${url}" class="record-thumb" alt="${T().detail.photoAlt}">` : '';
     });
 
     list.querySelectorAll('.record-item-head').forEach(head => {
@@ -1738,30 +1800,31 @@
 
   async function openRecordDetailModal(record) {
     const content = document.getElementById('record-detail-content');
+    const dt = T().detail;
     content.innerHTML = `
       <div style="display:flex; align-items:center; gap:14px; margin-bottom:20px;">
         <div class="record-icon ${record.type}" style="width:48px; height:48px; border-radius:14px;">${TYPE_ICON[record.type] || TYPE_ICON.visit}</div>
         <div>
           <h3 style="margin:0 0 6px;">${escapeHtml(record.title)}</h3>
-          <span class="record-tag">${TYPE_LABEL[record.type] || '紀錄'}</span>
+          <span class="record-tag">${typeLabel(record.type)}</span>
         </div>
       </div>
       <div class="shared-profile-grid" style="margin-bottom:18px;">
-        <div><div class="sp-label">日期</div><div class="sp-value">${formatDate(record.date)}</div></div>
-        <div><div class="sp-label">醫師 / 科別</div><div class="sp-value">${escapeHtml(record.doctor || '未提供')}</div></div>
+        <div><div class="sp-label">${dt.dateLabel}</div><div class="sp-value">${formatDate(record.date)}</div></div>
+        <div><div class="sp-label">${dt.doctorLabel}</div><div class="sp-value">${escapeHtml(record.doctor || dt.notProvided)}</div></div>
       </div>
-      <div class="sp-label" style="margin-bottom:6px;">備註內容</div>
-      ${record.note ? `<div class="r-note-full">${escapeHtml(record.note)}</div>` : `<div class="r-note-full" style="color:#9fb0ac;">（無備註內容）</div>`}
+      <div class="sp-label" style="margin-bottom:6px;">${dt.noteLabel}</div>
+      ${record.note ? `<div class="r-note-full">${escapeHtml(record.note)}</div>` : `<div class="r-note-full" style="color:#9fb0ac;">${dt.noNoteContent}</div>`}
       <div id="record-detail-photo-slot">${record.photoProvider ? `<span class="thumb-loading" style="display:block; width:100%; height:160px; border-radius:12px; margin-top:14px;"></span>` : ''}</div>
       <div class="modal-actions">
-        <button type="button" class="btn-danger" id="record-detail-delete">刪除紀錄</button>
-        <button type="button" class="btn-primary" id="record-detail-done" style="justify-content:center;">關閉</button>
+        <button type="button" class="btn-danger" id="record-detail-delete">${dt.delete}</button>
+        <button type="button" class="btn-primary" id="record-detail-done" style="justify-content:center;">${dt.done}</button>
       </div>
     `;
 
     document.getElementById('record-detail-done').addEventListener('click', closeRecordDetailModal);
     document.getElementById('record-detail-delete').addEventListener('click', async () => {
-      if (!(await showConfirmDialog('此動作無法復原。', '確定要刪除這筆紀錄嗎？'))) return;
+      if (!(await showConfirmDialog(T().detail.deleteConfirmMsg, T().detail.deleteConfirmTitle))) return;
       currentConfig.records = (currentConfig.records || []).filter(r => r.id !== record.id);
       renderOverview();
       renderRecordList();
@@ -1769,7 +1832,7 @@
       if (record.photoProvider) deletePhotoFile(record);
       const { driveSuccess, dropboxSuccess } = await syncConfigToCloud(currentConfig);
       syncAllActiveShares();
-      showToast((driveSuccess || dropboxSuccess) ? '已刪除紀錄並同步至雲端' : '已刪除紀錄（請先連結雲端硬碟）');
+      showToast((driveSuccess || dropboxSuccess) ? T().detail.deletedCloudToast : T().detail.deletedLocalToast);
     });
 
     recordDetailBackdrop.classList.add('show');
@@ -1780,7 +1843,7 @@
       const slot = document.getElementById('record-detail-photo-slot');
       if (!slot) return;
       slot.innerHTML = url
-        ? `<div class="record-detail-photo"><img src="${url}" alt="紀錄照片"></div>`
+        ? `<div class="record-detail-photo"><img src="${url}" alt="${T().detail.photoAlt}"></div>`
         : '';
       if (url) slot.querySelector('.record-detail-photo').addEventListener('click', () => openLightbox(url));
     }
@@ -1810,11 +1873,11 @@
     const file = photoInput.files && photoInput.files[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      showToast('請上傳圖片格式的檔案');
+      showToast(T().recordModal.invalidImageToast);
       return;
     }
     if (file.size > 8 * 1024 * 1024) {
-      showToast('照片檔案請小於 8MB');
+      showToast(T().recordModal.tooLargeToast);
       return;
     }
     selectedPhotoFile = file;
@@ -1872,13 +1935,13 @@
 
     if (photoToUpload) {
       submitBtn.disabled = true;
-      submitBtn.textContent = '照片上傳中...';
+      submitBtn.textContent = T().recordModal.uploading;
       const uploadResult = await uploadPhotoFile(photoToUpload, newRecord.id);
       if (uploadResult) {
         newRecord.photoProvider = uploadResult.photoProvider;
         newRecord.photoRef = uploadResult.photoRef;
       } else {
-        showToast('照片上傳失敗，紀錄仍會保留文字內容');
+        showToast(T().recordModal.uploadFailedToast);
       }
       submitBtn.disabled = false;
       submitBtn.textContent = originalBtnText;
@@ -1894,7 +1957,7 @@
 
     const { driveSuccess, dropboxSuccess } = await syncConfigToCloud(currentConfig);
     syncAllActiveShares();
-    showToast((driveSuccess || dropboxSuccess) ? '已新增紀錄並同步至雲端硬碟' : '已新增紀錄（請先連結 Google Drive 或 Dropbox 以同步）');
+    showToast((driveSuccess || dropboxSuccess) ? T().recordModal.addedCloudToast : T().recordModal.addedLocalToast);
   });
 
   // 7. 表單提交與事件觸發
@@ -1904,8 +1967,8 @@
   const deleteAccountBtn = document.getElementById('delete-account');
   if (deleteAccountBtn) {
     deleteAccountBtn.addEventListener('click', async () => {
-      if (!(await showConfirmDialog('所有健康紀錄將永久移除，此動作無法復原。', '確定要刪除你的帳號嗎？'))) return;
-      showToast('帳號刪除功能尚未開放，請聯繫客服協助處理');
+      if (!(await showConfirmDialog(T().security.deleteConfirmMsg, T().security.deleteConfirmTitle))) return;
+      showToast(T().security.deleteToast);
     });
   }
 
@@ -1922,17 +1985,17 @@
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      showToast('請上傳圖片格式的檔案');
+      showToast(T().avatar.invalidImageToast);
       return;
     }
     if (file.size > 8 * 1024 * 1024) {
-      showToast('照片檔案請小於 8MB');
+      showToast(T().avatar.tooLargeToast);
       return;
     }
 
     const originalText = changeAvatarBtn.textContent;
     changeAvatarBtn.disabled = true;
-    changeAvatarBtn.textContent = '上傳中...';
+    changeAvatarBtn.textContent = T().avatar.uploading;
 
     const uploadResult = await uploadPhotoFile(file, 'avatar');
 
@@ -1940,7 +2003,7 @@
     changeAvatarBtn.textContent = originalText;
 
     if (!uploadResult) {
-      showToast('請先連結 Google Drive 或 Dropbox 以上傳照片');
+      showToast(T().avatar.needCloudToast);
       return;
     }
 
@@ -1952,11 +2015,11 @@
     await refreshAvatarDisplay();
 
     const { driveSuccess, dropboxSuccess } = await syncConfigToCloud(currentConfig);
-    showToast((driveSuccess || dropboxSuccess) ? '大頭貼已更新並同步至雲端' : '大頭貼已更新（尚未連結雲端硬碟，暫存於本次瀏覽）');
+    showToast((driveSuccess || dropboxSuccess) ? T().avatar.updatedCloudToast : T().avatar.updatedLocalToast);
   });
 
   removeAvatarBtn.addEventListener('click', async () => {
-    if (!(await showConfirmDialog('移除後將改回預設頭像。', '確定要移除目前的大頭貼照片嗎？'))) return;
+    if (!(await showConfirmDialog(T().avatar.removeConfirmMsg, T().avatar.removeConfirmTitle))) return;
     if (currentConfig.avatarProvider && currentConfig.avatarRef) {
       deletePhotoFile({ id: 'avatar', photoProvider: currentConfig.avatarProvider, photoRef: currentConfig.avatarRef });
     }
@@ -1967,7 +2030,7 @@
     await refreshAvatarDisplay();
 
     const { driveSuccess, dropboxSuccess } = await syncConfigToCloud(currentConfig);
-    showToast((driveSuccess || dropboxSuccess) ? '已移除自訂大頭貼，改回預設頭像' : '已移除自訂大頭貼');
+    showToast((driveSuccess || dropboxSuccess) ? T().avatar.removedCloudToast : T().avatar.removedLocalToast);
   });
 
   document.getElementById('profile-form').addEventListener('submit', async (e) => {
@@ -1994,9 +2057,9 @@
     renderIdCard();
 
     if (driveSuccess || dropboxSuccess) {
-      showToast('已同步儲存至您的雲端硬碟');
+      showToast(T().cloud.profileSavedToast);
     } else {
-      showToast('請先授權連結 Google Drive 或 Dropbox');
+      showToast(T().cloud.needCloudToast);
     }
   });
 
@@ -2025,7 +2088,7 @@
   }
 
   // 自訂確認視窗，取代瀏覽器原生 confirm()，回傳 Promise<boolean>
-  function showConfirmDialog(message, title = '確認操作'){
+  function showConfirmDialog(message, title = T().confirm.defaultTitle){
     return new Promise((resolve) => {
       const backdrop = document.getElementById('confirm-backdrop');
       document.getElementById('confirm-title').textContent = title;
@@ -2140,13 +2203,13 @@
 
     const originalText = submitBtn.textContent;
     submitBtn.disabled = true;
-    submitBtn.textContent = '加密並上傳中...';
+    submitBtn.textContent = T().cloud.encryptingUploadingLabel;
     const shareUrl = await createOrUpdateShareLink(grant);
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
 
     if (!shareUrl) {
-      showToast('無法建立加密分享檔，請開啟瀏覽器主控台（Console）查看詳細錯誤原因');
+      showToast(T().cloud.shareCreateFailedToast);
       return;
     }
 
@@ -2161,10 +2224,10 @@
 
     const readEnabled = (grant.shareProvider === 'drive') ? DRIVE_SHARE_ENABLED : DROPBOX_SHARE_ENABLED;
     if (!readEnabled) {
-      showToast('已建立加密授權，但尚未設定讀取憑證，對方暫時無法開啟連結');
+      showToast(T().cloud.shareCreatedNoKeyToast);
     } else if (inviteCreated) {
-      showToast('已新增授權，對方登入後會看到通知');
+      showToast(T().cloud.accessAddedToast);
     } else {
-      showToast('已建立加密授權，但通知建立失敗，請確認 Firestore 規則設定');
+      showToast(T().cloud.shareCreatedNotifyFailedToast);
     }
   });

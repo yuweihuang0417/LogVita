@@ -12,34 +12,43 @@
 
 <div class="app">
   <aside class="sidebar">
-    <div class="brand-mark"><span class="dot"></span> 健康庫 LogVita</div>
+    <div class="brand-mark"><span class="dot"></span> <span data-i18n="nav.brand">健康庫 LogVita</span></div>
+    <div class="language-switcher" aria-label="Language selector">
+      <select id="language-select">
+        <option value="zh-TW">繁體中文</option>
+        <option value="zh-CN">简体中文</option>
+        <option value="en">English</option>
+        <option value="ja">日本語</option>
+        <option value="ko">한국어</option>
+      </select>
+    </div>
     <nav class="nav">
-      <div class="section-label">總覽</div>
+      <div class="section-label" data-i18n="nav.sectionOverview">總覽</div>
       <button data-panel="home" class="active">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-5h2v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V10"/></svg>
-        首頁
+        <span data-i18n="nav.home">首頁</span>
       </button>
       <button data-panel="idcard">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2.5"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="14.5" x2="11" y2="14.5"/></svg>
-        個人資料卡
+        <span data-i18n="nav.idcard">個人資料卡</span>
       </button>
       <button data-panel="shared">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        共享給我
+        <span data-i18n="nav.shared">共享給我</span>
       </button>
       <div class="nav-divider"></div>
-      <div class="section-label">帳號設定</div>
+      <div class="section-label" data-i18n="nav.sectionAccount">帳號設定</div>
       <button data-panel="profile">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        個人檔案
+        <span data-i18n="nav.profile">個人檔案</span>
       </button>
       <button data-panel="access">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        授權管理
+        <span data-i18n="nav.access">授權管理</span>
       </button>
       <button data-panel="security">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="16" r="1.5"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        帳號安全
+        <span data-i18n="nav.security">帳號安全</span>
       </button>
     </nav>
 
@@ -49,7 +58,7 @@
         <div class="name" id="user-name">載入中...</div>
         <div class="mail" id="user-email">載入中...</div>
       </div>
-      <button class="logout-btn" id="logout-btn" title="登出" aria-label="登出">
+      <button class="logout-btn" id="logout-btn" title="登出" aria-label="登出" data-i18n-title="nav.logout" data-i18n-aria-label="nav.logout">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       </button>
     </div>
@@ -61,19 +70,19 @@
     <section class="panel active" id="panel-home">
       <div class="page-head with-action">
         <div>
-          <h1>總覽</h1>
-          <div class="sub">你的健康紀錄一目了然，隨時新增最新的就診與檢驗資訊</div>
+          <h1 data-i18n="home.title">總覽</h1>
+          <div class="sub" data-i18n="home.sub">你的健康紀錄一目了然，隨時新增最新的就診與檢驗資訊</div>
         </div>
         <button type="button" class="btn-primary" id="add-record-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          新增醫療紀錄
+          <span data-i18n="home.addRecord">新增醫療紀錄</span>
         </button>
       </div>
 
       <div class="allergy-banner" id="allergy-banner" style="display:none;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <div>
-          <div class="a-title">過敏史提醒</div>
+          <div class="a-title" data-i18n="home.allergyBanner">過敏史提醒</div>
           <div class="a-desc" id="allergy-text">—</div>
         </div>
       </div>
@@ -82,47 +91,47 @@
         <div class="stat-card">
           <div class="stat-label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            健康紀錄總數
+            <span data-i18n="home.statTotal">健康紀錄總數</span>
           </div>
           <div class="stat-value" id="stat-total">0</div>
-          <div class="stat-note">筆紀錄</div>
+          <div class="stat-note" data-i18n="home.statTotalNote">筆紀錄</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            最新紀錄
+            <span data-i18n="home.statRecent">最新紀錄</span>
           </div>
           <div class="stat-value" id="stat-recent" style="font-size:18px;">—</div>
-          <div class="stat-note" id="stat-recent-type">尚無紀錄</div>
+          <div class="stat-note" id="stat-recent-type" data-i18n="home.statRecentNone">尚無紀錄</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            已授權查看人數
+            <span data-i18n="home.statAccess">已授權查看人數</span>
           </div>
           <div class="stat-value" id="stat-access">2</div>
-          <div class="stat-note">位家人 / 醫療人員</div>
+          <div class="stat-note" data-i18n="home.statAccessNote">位家人 / 醫療人員</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            共享給我人數
+            <span data-i18n="home.statShared">共享給我人數</span>
           </div>
           <div class="stat-value" id="stat-shared">0</div>
-          <div class="stat-note">位分享者</div>
+          <div class="stat-note" data-i18n="home.statSharedNote">位分享者</div>
         </div>
       </div>
 
       <div class="card">
-        <h2>醫療紀錄</h2>
-        <div class="card-sub">依類型篩選，快速找到你需要的紀錄</div>
+        <h2 data-i18n="home.recordsTitle">醫療紀錄</h2>
+        <div class="card-sub" data-i18n="home.recordsSub">依類型篩選，快速找到你需要的紀錄</div>
 
         <div class="filter-row" id="filter-row">
-          <button type="button" class="chip active" data-filter="all">全部</button>
-          <button type="button" class="chip" data-filter="lab">檢驗報告</button>
-          <button type="button" class="chip" data-filter="med">用藥紀錄</button>
-          <button type="button" class="chip" data-filter="img">影像資料</button>
-          <button type="button" class="chip" data-filter="visit">就診紀錄</button>
+          <button type="button" class="chip active" data-filter="all" data-i18n="home.filterAll">全部</button>
+          <button type="button" class="chip" data-filter="lab" data-i18n="home.filterLab">檢驗報告</button>
+          <button type="button" class="chip" data-filter="med" data-i18n="home.filterMed">用藥紀錄</button>
+          <button type="button" class="chip" data-filter="img" data-i18n="home.filterImg">影像資料</button>
+          <button type="button" class="chip" data-filter="visit" data-i18n="home.filterVisit">就診紀錄</button>
         </div>
 
         <div id="record-list"></div>
@@ -131,8 +140,8 @@
           <div class="e-icon">
             <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
           </div>
-          <div class="e-title">還沒有醫療紀錄</div>
-          <div class="e-desc">點選「新增醫療紀錄」開始建立你的健康資料庫</div>
+          <div class="e-title" data-i18n="home.emptyTitle">還沒有醫療紀錄</div>
+          <div class="e-desc" data-i18n="home.emptyDesc">點選「新增醫療紀錄」開始建立你的健康資料庫</div>
         </div>
       </div>
     </section>
@@ -140,8 +149,8 @@
     <!-- 個人資料卡 -->
     <section class="panel" id="panel-idcard">
       <div class="page-head">
-        <h1>個人資料卡</h1>
-        <div class="sub">隨身攜帶的健康身分卡，緊急時刻一眼掌握關鍵資訊</div>
+        <h1 data-i18n="idcard.title">個人資料卡</h1>
+        <div class="sub" data-i18n="idcard.sub">隨身攜帶的健康身分卡，緊急時刻一眼掌握關鍵資訊</div>
       </div>
 
       <div class="idcard-stage">
@@ -149,13 +158,13 @@
           <div class="id-card-diamond"></div>
           <div class="id-card-diamond-glow"></div>
           <div class="id-card-shine" id="id-card-shine"></div>
-          <button type="button" class="id-card-gear" id="id-card-gear" title="編輯個人檔案" aria-label="編輯個人檔案">
+          <button type="button" class="id-card-gear" id="id-card-gear" title="編輯個人檔案" aria-label="編輯個人檔案" data-i18n-title="idcard.editGear" data-i18n-aria-label="idcard.editGear">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </button>
 
           <div class="id-card-top">
-            <div class="id-card-brand"><span class="dot"></span> 健康庫 LogVita</div>
-            <div class="id-card-label">健康身分卡</div>
+            <div class="id-card-brand"><span class="dot"></span> <span data-i18n="nav.brand">健康庫 LogVita</span></div>
+            <div class="id-card-label" data-i18n="idcard.label">健康身分卡</div>
           </div>
 
           <div class="id-card-body">
@@ -163,18 +172,18 @@
             <div class="id-card-info">
               <div class="id-card-name" id="id-name">—</div>
               <div class="id-card-row">
-                <div><span class="k">出生</span><span class="v" id="id-birth">—</span></div>
-                <div><span class="k">性別</span><span class="v" id="id-gender">—</span></div>
+                <div><span class="k" data-i18n="idcard.kBirth">出生</span><span class="v" id="id-birth">—</span></div>
+                <div><span class="k" data-i18n="idcard.kGender">性別</span><span class="v" id="id-gender">—</span></div>
               </div>
             </div>
           </div>
 
           <div class="id-card-bottom">
-            <div class="field-block"><span class="k">血型</span><span class="v" id="id-blood">—</span></div>
-            <div class="field-block"><span class="k">聯絡電話</span><span class="v" id="id-phone">—</span></div>
-            <div class="field-block"><span class="k">緊急聯絡人</span><span class="v" id="id-emergency">—</span></div>
-            <div class="field-block"><span class="k">緊急聯絡電話</span><span class="v" id="id-emergency-phone">—</span></div>
-            <div class="field-block full"><span class="k">過敏史</span><span class="v" id="id-allergy">—</span></div>
+            <div class="field-block"><span class="k" data-i18n="idcard.kBlood">血型</span><span class="v" id="id-blood">—</span></div>
+            <div class="field-block"><span class="k" data-i18n="idcard.kPhone">聯絡電話</span><span class="v" id="id-phone">—</span></div>
+            <div class="field-block"><span class="k" data-i18n="idcard.kEmergency">緊急聯絡人</span><span class="v" id="id-emergency">—</span></div>
+            <div class="field-block"><span class="k" data-i18n="idcard.kEmergencyPhone">緊急聯絡電話</span><span class="v" id="id-emergency-phone">—</span></div>
+            <div class="field-block full"><span class="k" data-i18n="idcard.kAllergy">過敏史</span><span class="v" id="id-allergy">—</span></div>
           </div>
         </div>
       </div>
@@ -182,10 +191,10 @@
       <div class="card">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
           <div>
-            <h2 style="margin:0 0 4px;">需要更新資料？</h2>
-            <div class="card-sub" style="margin:0;">點選卡片右上角齒輪或這裡的按鈕，前往個人檔案編輯</div>
+            <h2 style="margin:0 0 4px;" data-i18n="idcard.updateTitle">需要更新資料？</h2>
+            <div class="card-sub" style="margin:0;" data-i18n="idcard.updateDesc">點選卡片右上角齒輪或這裡的按鈕，前往個人檔案編輯</div>
           </div>
-          <button type="button" class="btn-primary" id="idcard-edit-btn">前往個人檔案編輯</button>
+          <button type="button" class="btn-primary" id="idcard-edit-btn" data-i18n="idcard.editBtn">前往個人檔案編輯</button>
         </div>
       </div>
     </section>
@@ -193,13 +202,13 @@
     <!-- 共享給我 -->
     <section class="panel" id="panel-shared">
       <div class="page-head">
-        <h1>共享給我</h1>
-        <div class="sub">家人或醫療人員授權讓你查看的健康紀錄</div>
+        <h1 data-i18n="shared.title">共享給我</h1>
+        <div class="sub" data-i18n="shared.sub">家人或醫療人員授權讓你查看的健康紀錄</div>
       </div>
 
       <div class="card">
-        <h2>分享清單</h2>
-        <div class="card-sub">以下是目前有效、授權給你查看的健康資料</div>
+        <h2 data-i18n="shared.listTitle">分享清單</h2>
+        <div class="card-sub" data-i18n="shared.listSub">以下是目前有效、授權給你查看的健康資料</div>
 
         <div id="shared-list"></div>
 
@@ -207,8 +216,8 @@
           <div class="e-icon">
             <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
-          <div class="e-title">目前沒有人與你分享健康紀錄</div>
-          <div class="e-desc">當家人或醫療人員在「授權管理」中把資料分享給你的帳號 Email 後，會顯示在這裡</div>
+          <div class="e-title" data-i18n="shared.emptyTitle">目前沒有人與你分享健康紀錄</div>
+          <div class="e-desc" data-i18n="shared.emptyDesc">當家人或醫療人員在「授權管理」中把資料分享給你的帳號 Email 後，會顯示在這裡</div>
         </div>
       </div>
     </section>
@@ -216,8 +225,8 @@
     <!-- 個人檔案 -->
     <section class="panel panel-narrow" id="panel-profile">
       <div class="page-head">
-        <h1>個人檔案</h1>
-        <div class="sub">這些資訊會安全儲存於您的個人 Google Drive 或 Dropbox</div>
+        <h1 data-i18n="profile.title">個人檔案</h1>
+        <div class="sub" data-i18n="profile.sub">這些資訊會安全儲存於您的個人 Google Drive 或 Dropbox</div>
       </div>
 
       <div class="card">
@@ -225,66 +234,66 @@
           <div class="avatar-lg" id="avatar-lg-text">用</div>
           <div>
             <input type="file" id="avatar-file-input" accept="image/*" style="display:none;">
-            <button type="button" class="btn-ghost" id="change-avatar">更換照片</button>
-            <button type="button" class="link-remove" id="remove-avatar" style="display:none; margin-left:6px;">移除照片</button>
+            <button type="button" class="btn-ghost" id="change-avatar" data-i18n="profile.changePhoto">更換照片</button>
+            <button type="button" class="link-remove" id="remove-avatar" style="display:none; margin-left:6px;" data-i18n="profile.removePhoto">移除照片</button>
           </div>
         </div>
         <form id="profile-form">
           <div class="row">
             <div class="field">
-              <label for="p-name">姓名</label>
-              <input type="text" id="p-name" placeholder="讀取中...">
+              <label for="p-name" data-i18n="profile.name">姓名</label>
+              <input type="text" id="p-name" placeholder="讀取中..." data-i18n-placeholder="profile.loading">
             </div>
             <div class="field">
-              <label for="p-birth">出生日期</label>
+              <label for="p-birth" data-i18n="profile.birth">出生日期</label>
               <input type="date" id="p-birth" value="1990-04-12">
             </div>
           </div>
           <div class="row">
             <div class="field">
-              <label for="p-gender">性別</label>
+              <label for="p-gender" data-i18n="profile.gender">性別</label>
               <select id="p-gender">
-                <option>男</option><option>女</option><option>不透露</option>
+                <option data-i18n="profile.genderMale">男</option><option data-i18n="profile.genderFemale">女</option><option data-i18n="profile.genderUndisclosed">不透露</option>
               </select>
             </div>
             <div class="field">
-              <label for="p-blood">血型</label>
+              <label for="p-blood" data-i18n="profile.blood">血型</label>
               <select id="p-blood">
-                <option>A</option><option>B</option><option>AB</option><option>O</option><option>不確定</option>
+                <option>A</option><option>B</option><option>AB</option><option>O</option><option data-i18n="profile.bloodUnsure">不確定</option>
               </select>
             </div>
           </div>
           <div class="row">
             <div class="field" style="grid-column:1 / -1;">
-              <label for="p-phone">聯絡電話</label>
-              <input type="tel" id="p-phone" placeholder="0912-345-678">
+              <label for="p-phone" data-i18n="profile.phone">聯絡電話</label>
+              <input type="tel" id="p-phone" placeholder="0912-345-678" data-i18n-placeholder="profile.phonePh">
             </div>
           </div>
           <div class="row">
             <div class="field">
-              <label for="p-emergency">緊急聯絡人</label>
-              <input type="text" id="p-emergency" placeholder="姓名">
+              <label for="p-emergency" data-i18n="profile.emergency">緊急聯絡人</label>
+              <input type="text" id="p-emergency" placeholder="姓名" data-i18n-placeholder="profile.emergencyPh">
             </div>
             <div class="field">
-              <label for="p-emergency-phone">緊急聯絡人電話</label>
-              <input type="tel" id="p-emergency-phone" placeholder="0912-345-678">
+              <label for="p-emergency-phone" data-i18n="profile.emergencyPhone">緊急聯絡人電話</label>
+              <input type="tel" id="p-emergency-phone" placeholder="0912-345-678" data-i18n-placeholder="profile.phonePh">
             </div>
           </div>
           <div class="row">
             <div class="field">
-              <label for="p-height">身高（公分）</label>
-              <input type="number" id="p-height" placeholder="例如：170" min="0" step="0.1">
+              <label for="p-height" data-i18n="profile.height">身高（公分）</label>
+              <input type="number" id="p-height" placeholder="例如：170" min="0" step="0.1" data-i18n-placeholder="profile.heightPh">
             </div>
             <div class="field">
-              <label for="p-weight">體重（公斤）</label>
-              <input type="number" id="p-weight" placeholder="例如：65" min="0" step="0.1">
+              <label for="p-weight" data-i18n="profile.weight">體重（公斤）</label>
+              <input type="number" id="p-weight" placeholder="例如：65" min="0" step="0.1" data-i18n-placeholder="profile.weightPh">
             </div>
           </div>
           <div class="field">
-            <label for="p-allergy">過敏史</label>
-            <textarea id="p-allergy" placeholder="例如：青黴素過敏"></textarea>
+            <label for="p-allergy" data-i18n="profile.allergy">過敏史</label>
+            <textarea id="p-allergy" placeholder="例如：青黴素過敏" data-i18n-placeholder="profile.allergyPh"></textarea>
           </div>
-          <button type="submit" class="btn-primary">儲存變更至雲端硬碟</button>
+          <button type="submit" class="btn-primary" data-i18n="profile.save">儲存變更至雲端硬碟</button>
         </form>
       </div>
     </section>
@@ -292,14 +301,14 @@
     <!-- 授權管理 -->
     <section class="panel panel-narrow" id="panel-access">
       <div class="page-head">
-        <h1>授權管理</h1>
-        <div class="sub">管理可以查看你健康紀錄的人員與機構</div>
+        <h1 data-i18n="access.title">授權管理</h1>
+        <div class="sub" data-i18n="access.sub">管理可以查看你健康紀錄的人員與機構</div>
       </div>
 
       <div class="card">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
-          <h2 style="margin:0;">目前已授權</h2>
-          <button type="button" class="btn-primary" id="add-access-btn">＋ 新增授權</button>
+          <h2 style="margin:0;" data-i18n="access.currentTitle">目前已授權</h2>
+          <button type="button" class="btn-primary" id="add-access-btn" data-i18n="access.addBtn">＋ 新增授權</button>
         </div>
         <div class="card-sub" id="access-count">共 0 位可存取你的紀錄</div>
 
@@ -310,73 +319,73 @@
     <!-- 帳號安全 -->
     <section class="panel panel-narrow" id="panel-security">
       <div class="page-head">
-        <h1>帳號安全</h1>
-        <div class="sub">管理登入方式、密碼與裝置</div>
+        <h1 data-i18n="security.title">帳號安全</h1>
+        <div class="sub" data-i18n="security.sub">管理登入方式、密碼與裝置</div>
       </div>
 
       <div class="card">
-        <h2>登入方式與雲端儲存</h2>
-        <div class="card-sub">請選擇並使用其中一種雲端硬碟備份與儲存您的健康資料</div>
+        <h2 data-i18n="security.cloudTitle">登入方式與雲端儲存</h2>
+        <div class="card-sub" data-i18n="security.cloudSub">請選擇並使用其中一種雲端硬碟備份與儲存您的健康資料</div>
         <div class="auth-item" id="item-google">
           <div class="auth-avatar" style="background:#e8f0fe; color:#4285F4;">G</div>
           <div class="auth-main">
             <div class="name">Google Drive</div>
-            <div class="meta" id="google-auth-email">未連結</div>
+            <div class="meta" id="google-auth-email" data-i18n="security.notConnected">未連結</div>
           </div>
-          <button type="button" class="btn-ghost" id="connect-google-btn">連結 Google Drive</button>
+          <button type="button" class="btn-ghost" id="connect-google-btn" data-i18n="security.connectGoogle">連結 Google Drive</button>
         </div>
         <div class="auth-item" id="item-dropbox">
           <div class="auth-avatar" style="background:#e3f2fd; color:#0061fe; font-weight:bold;">Db</div>
           <div class="auth-main">
-            <div class="name">Dropbox 雲端硬碟</div>
-            <div class="meta" id="dropbox-status">未連結</div>
+            <div class="name" data-i18n="security.dropbox">Dropbox 雲端硬碟</div>
+            <div class="meta" id="dropbox-status" data-i18n="security.notConnected">未連結</div>
           </div>
-          <button type="button" class="btn-ghost" id="connect-dropbox-btn">連結 Dropbox</button>
+          <button type="button" class="btn-ghost" id="connect-dropbox-btn" data-i18n="security.connectDropbox">連結 Dropbox</button>
         </div>
       </div>
 
       <div class="card">
-        <h2>變更密碼</h2>
-        <div class="card-sub">建議定期更換密碼，並避免與其他網站共用</div>
+        <h2 data-i18n="security.changePwTitle">變更密碼</h2>
+        <div class="card-sub" data-i18n="security.changePwSub">建議定期更換密碼，並避免與其他網站共用</div>
         <form id="password-form">
           <div class="field">
-            <label for="pw-current">目前密碼</label>
+            <label for="pw-current" data-i18n="security.currentPw">目前密碼</label>
             <input type="password" id="pw-current" placeholder="••••••••">
           </div>
           <div class="row">
             <div class="field">
-              <label for="pw-new">新密碼</label>
-              <input type="password" id="pw-new" placeholder="至少 8 個字元">
+              <label for="pw-new" data-i18n="security.newPw">新密碼</label>
+              <input type="password" id="pw-new" placeholder="至少 8 個字元" data-i18n-placeholder="security.newPwPh">
             </div>
             <div class="field">
-              <label for="pw-confirm">確認新密碼</label>
-              <input type="password" id="pw-confirm" placeholder="再輸入一次">
+              <label for="pw-confirm" data-i18n="security.confirmPw">確認新密碼</label>
+              <input type="password" id="pw-confirm" placeholder="再輸入一次" data-i18n-placeholder="security.confirmPwPh">
             </div>
           </div>
-          <button type="submit" class="btn-primary">更新密碼</button>
+          <button type="submit" class="btn-primary" data-i18n="security.updatePw">更新密碼</button>
         </form>
       </div>
 
       <div class="card">
-        <h2>登入中的裝置</h2>
+        <h2 data-i18n="security.devicesTitle">登入中的裝置</h2>
         <div class="card-sub" id="device-count-label">目前有 1 個裝置保持登入狀態</div>
         <div id="session-container">
           <!-- 僅即時偵測並顯示當前真實裝置 -->
           <div class="session-item" id="current-session-item">
             <div class="meta">
-              <div class="device" id="current-device-info">偵測中...</div>
+              <div class="device" id="current-device-info" data-i18n="security.detecting">偵測中...</div>
               <div class="loc" id="current-loc-info">台灣 · 最後活動：剛剛</div>
             </div>
-            <span class="badge-current">目前裝置</span>
-            <button type="button" class="btn-ghost session-logout-current" style="margin-left: 8px;">登出</button>
+            <span class="badge-current" data-i18n="security.currentDeviceBadge">目前裝置</span>
+            <button type="button" class="btn-ghost session-logout-current" style="margin-left: 8px;" data-i18n="security.deviceLogout">登出</button>
           </div>
         </div>
       </div>
 
       <div class="card danger-zone">
-        <h2 style="color:var(--error);">刪除帳號</h2>
-        <div class="card-sub">刪除後，你所有的健康紀錄將永久移除，此動作無法復原</div>
-        <button type="button" class="btn-danger" id="delete-account">刪除我的帳號</button>
+        <h2 style="color:var(--error);" data-i18n="security.dangerTitle">刪除帳號</h2>
+        <div class="card-sub" data-i18n="security.dangerSub">刪除後，你所有的健康紀錄將永久移除，此動作無法復原</div>
+        <button type="button" class="btn-danger" id="delete-account" data-i18n="security.deleteAccount">刪除我的帳號</button>
       </div>
     </section>
 
@@ -386,33 +395,33 @@
 <!-- 新增醫療紀錄 MODAL -->
 <div class="modal-backdrop" id="record-backdrop">
   <div class="modal modal-wide">
-    <button class="close-x" id="record-close" aria-label="關閉">
+    <button class="close-x" id="record-close" aria-label="關閉" data-i18n-aria-label="detail.close">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
-    <h3>新增醫療紀錄</h3>
-    <div class="card-sub" style="margin-bottom:20px;">紀錄會安全儲存於你的個人 Google Drive 或 Dropbox</div>
+    <h3 data-i18n="recordModal.newTitle">新增醫療紀錄</h3>
+    <div class="card-sub" style="margin-bottom:20px;" data-i18n="recordModal.newSub">紀錄會安全儲存於你的個人 Google Drive 或 Dropbox</div>
 
     <form id="record-form">
       <div class="record-form-grid">
         <div class="record-form-col">
           <div class="field">
-            <label>紀錄類型</label>
+            <label data-i18n="recordModal.typeLabel">紀錄類型</label>
             <div class="type-picker" id="type-picker">
               <div class="type-opt active" data-type="lab">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2v6L4 20a1 1 0 0 0 .9 1.5h14.2A1 1 0 0 0 20 20l-5-12V2"/><line x1="9" y1="2" x2="15" y2="2"/></svg>
-                檢驗報告
+                <span data-i18n="recordModal.typeLab">檢驗報告</span>
               </div>
               <div class="type-opt" data-type="med">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M12 8v8"/></svg>
-                用藥紀錄
+                <span data-i18n="recordModal.typeMed">用藥紀錄</span>
               </div>
               <div class="type-opt" data-type="img">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                影像資料
+                <span data-i18n="recordModal.typeImg">影像資料</span>
               </div>
               <div class="type-opt" data-type="visit">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                就診紀錄
+                <span data-i18n="recordModal.typeVisit">就診紀錄</span>
               </div>
             </div>
             <input type="hidden" id="r-type" value="lab">
@@ -420,38 +429,38 @@
 
           <div class="row">
             <div class="field">
-              <label for="r-title">標題 / 機構名稱</label>
-              <input type="text" id="r-title" placeholder="例如：血液常規檢查、萬芳醫院內科" required>
+              <label for="r-title" data-i18n="recordModal.titleLabel">標題 / 機構名稱</label>
+              <input type="text" id="r-title" placeholder="例如：血液常規檢查、萬芳醫院內科" required data-i18n-placeholder="recordModal.titlePh">
             </div>
             <div class="field">
-              <label for="r-date">日期</label>
+              <label for="r-date" data-i18n="recordModal.dateLabel">日期</label>
               <input type="date" id="r-date" required>
             </div>
           </div>
 
           <div class="field">
-            <label for="r-doctor">醫師 / 科別（選填）</label>
-            <input type="text" id="r-doctor" placeholder="例如：陳醫師 — 家庭醫學科">
+            <label for="r-doctor" data-i18n="recordModal.doctorLabel">醫師 / 科別（選填）</label>
+            <input type="text" id="r-doctor" placeholder="例如：陳醫師 — 家庭醫學科" data-i18n-placeholder="recordModal.doctorPh">
           </div>
         </div>
 
         <div class="record-form-col">
           <div class="field">
-            <label for="r-note">備註內容</label>
-            <textarea id="r-note" placeholder="例如：空腹血糖 92 mg/dL，數值正常"></textarea>
+            <label for="r-note" data-i18n="recordModal.noteLabel">備註內容</label>
+            <textarea id="r-note" placeholder="例如：空腹血糖 92 mg/dL，數值正常" data-i18n-placeholder="recordModal.notePh"></textarea>
           </div>
 
           <div class="field">
-            <label for="r-photo">附加照片（選填）</label>
+            <label for="r-photo" data-i18n="recordModal.photoLabel">附加照片（選填）</label>
             <div class="photo-upload" id="photo-upload-zone">
               <input type="file" id="r-photo" accept="image/*" style="display:none;">
               <div class="photo-upload-empty" id="photo-upload-empty">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                <span>點擊上傳報告或處方照片</span>
+                <span data-i18n="recordModal.photoUploadText">點擊上傳報告或處方照片</span>
               </div>
               <div class="photo-preview-wrap" id="photo-preview-wrap" style="display:none;">
-                <img id="photo-preview-img" alt="預覽照片">
-                <button type="button" class="photo-remove-btn" id="photo-remove-btn" aria-label="移除照片">
+                <img id="photo-preview-img" alt="預覽照片" data-i18n-alt="recordModal.photoUploadText">
+                <button type="button" class="photo-remove-btn" id="photo-remove-btn" aria-label="移除照片" data-i18n-aria-label="recordModal.removePhotoAria">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
               </div>
@@ -461,8 +470,8 @@
       </div>
 
       <div class="modal-actions">
-        <button type="button" class="btn-ghost" id="record-cancel">取消</button>
-        <button type="submit" class="btn-primary" style="justify-content:center;">儲存紀錄</button>
+        <button type="button" class="btn-ghost" id="record-cancel" data-i18n="recordModal.cancel">取消</button>
+        <button type="submit" class="btn-primary" style="justify-content:center;" data-i18n="recordModal.save">儲存紀錄</button>
       </div>
     </form>
   </div>
@@ -471,17 +480,17 @@
 <!-- 照片放大檢視 MODAL -->
 <div class="modal-backdrop" id="lightbox-backdrop">
   <div class="lightbox-inner">
-    <button class="close-x" id="lightbox-close" aria-label="關閉" style="color:#fff;">
+    <button class="close-x" id="lightbox-close" aria-label="關閉" style="color:#fff;" data-i18n-aria-label="detail.close">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
-    <img id="lightbox-img" alt="紀錄照片">
+    <img id="lightbox-img" alt="紀錄照片" data-i18n-alt="detail.photoAlt">
   </div>
 </div>
 
 <!-- 醫療紀錄詳情 MODAL -->
 <div class="modal-backdrop" id="record-detail-backdrop">
   <div class="modal">
-    <button class="close-x" id="record-detail-close" aria-label="關閉">
+    <button class="close-x" id="record-detail-close" aria-label="關閉" data-i18n-aria-label="detail.close">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
     <div id="record-detail-content"></div>
@@ -491,11 +500,11 @@
 <!-- 分享邀請通知 MODAL -->
 <div class="modal-backdrop" id="invite-notify-backdrop">
   <div class="modal">
-    <button class="close-x" id="invite-notify-close" aria-label="關閉">
+    <button class="close-x" id="invite-notify-close" aria-label="關閉" data-i18n-aria-label="detail.close">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
-    <h3>新的分享邀請</h3>
-    <div class="card-sub" style="margin-bottom:18px;">以下使用者想與你分享他們的健康紀錄</div>
+    <h3 data-i18n="invite.title">新的分享邀請</h3>
+    <div class="card-sub" style="margin-bottom:18px;" data-i18n="invite.sub">以下使用者想與你分享他們的健康紀錄</div>
     <div id="invite-notify-list"></div>
   </div>
 </div>
@@ -503,11 +512,11 @@
 <!-- 確認操作 MODAL（取代刪除類按鈕的瀏覽器 confirm）-->
 <div class="modal-backdrop" id="confirm-backdrop">
   <div class="modal" style="max-width:400px;">
-    <h3 id="confirm-title">確認操作</h3>
+    <h3 id="confirm-title" data-i18n="confirm.defaultTitle">確認操作</h3>
     <div class="card-sub" id="confirm-message" style="margin:0 0 4px;"></div>
     <div class="modal-actions">
-      <button type="button" class="btn-ghost" id="confirm-cancel">取消</button>
-      <button type="button" class="btn-danger" id="confirm-ok">確定</button>
+      <button type="button" class="btn-ghost" id="confirm-cancel" data-i18n="confirm.cancel">取消</button>
+      <button type="button" class="btn-danger" id="confirm-ok" data-i18n="confirm.ok">確定</button>
     </div>
   </div>
 </div>
@@ -515,48 +524,48 @@
 <!-- 新增授權 MODAL -->
 <div class="modal-backdrop" id="access-backdrop">
   <div class="modal modal-wide">
-    <button class="close-x" id="access-close" aria-label="關閉">
+    <button class="close-x" id="access-close" aria-label="關閉" data-i18n-aria-label="detail.close">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
-    <h3>新增授權</h3>
-    <div class="card-sub" style="margin-bottom:20px;">邀請家人或醫療人員查看你的健康紀錄，對方登入自己帳號時會看到通知彈窗</div>
+    <h3 data-i18n="access.modalTitle">新增授權</h3>
+    <div class="card-sub" style="margin-bottom:20px;" data-i18n="access.modalSub">邀請家人或醫療人員查看你的健康紀錄，對方登入自己帳號時會看到通知彈窗</div>
 
     <form id="access-form">
       <div class="record-form-grid">
         <div class="record-form-col">
           <div class="row">
             <div class="field">
-              <label for="a-type">授權對象</label>
+              <label for="a-type" data-i18n="access.fieldType">授權對象</label>
               <select id="a-type">
-                <option value="family">家人</option>
-                <option value="doctor">醫療人員</option>
-                <option value="other">其他</option>
+                <option value="family" data-i18n="access.typeFamily">家人</option>
+                <option value="doctor" data-i18n="access.typeDoctor">醫療人員</option>
+                <option value="other" data-i18n="access.typeOther">其他</option>
               </select>
             </div>
             <div class="field">
-              <label for="a-name">稱呼（選填）</label>
-              <input type="text" id="a-name" placeholder="例如：陳醫師、林小美">
+              <label for="a-name" data-i18n="access.fieldName">稱呼（選填）</label>
+              <input type="text" id="a-name" placeholder="例如：陳醫師、林小美" data-i18n-placeholder="access.fieldNamePh">
             </div>
           </div>
 
           <div class="field">
-            <label for="a-email">電子郵件</label>
-            <input type="email" id="a-email" placeholder="對方的電子郵件地址" required>
+            <label for="a-email" data-i18n="access.fieldEmail">電子郵件</label>
+            <input type="email" id="a-email" placeholder="對方的電子郵件地址" required data-i18n-placeholder="access.fieldEmailPh">
           </div>
 
           <div class="row">
             <div class="field">
-              <label for="a-expiry">授權期限</label>
+              <label for="a-expiry" data-i18n="access.fieldExpiry">授權期限</label>
               <select id="a-expiry">
-                <option value="permanent">永久，直到我撤銷</option>
-                <option value="30">30 天</option>
-                <option value="90">90 天</option>
-                <option value="365">1 年</option>
-                <option value="custom">自訂日期</option>
+                <option value="permanent" data-i18n="access.expiryPermanentOpt">永久，直到我撤銷</option>
+                <option value="30" data-i18n="access.expiry30">30 天</option>
+                <option value="90" data-i18n="access.expiry90">90 天</option>
+                <option value="365" data-i18n="access.expiry365">1 年</option>
+                <option value="custom" data-i18n="access.expiryCustom">自訂日期</option>
               </select>
             </div>
             <div class="field" id="a-expiry-date-field" style="display:none;">
-              <label for="a-expiry-date">到期日</label>
+              <label for="a-expiry-date" data-i18n="access.expiryDateLabel">到期日</label>
               <input type="date" id="a-expiry-date">
             </div>
           </div>
@@ -564,43 +573,43 @@
 
         <div class="record-form-col">
           <div class="field">
-            <label for="a-scope">存取範圍</label>
+            <label for="a-scope" data-i18n="access.fieldScope">存取範圍</label>
             <select id="a-scope">
-              <option value="full">完整病歷</option>
-              <option value="summary">僅摘要</option>
-              <option value="lab">僅檢驗報告</option>
-              <option value="custom">自訂項目</option>
+              <option value="full" data-i18n="access.scopeFull">完整病歷</option>
+              <option value="summary" data-i18n="access.scopeSummary">僅摘要</option>
+              <option value="lab" data-i18n="access.scopeLab">僅檢驗報告</option>
+              <option value="custom" data-i18n="access.scopeCustom">自訂項目</option>
             </select>
           </div>
 
           <div class="field" id="a-scope-custom" style="display:none;">
-            <label>可查看的紀錄類型</label>
+            <label data-i18n="access.scopeCustomLabel">可查看的紀錄類型</label>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; margin-top:4px;">
               <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink); white-space:nowrap; min-width:0;">
-                <input type="checkbox" id="a-type-lab" value="lab" checked style="flex-shrink:0; width:16px; height:16px; margin:0; padding:0;"> 檢驗報告
+                <input type="checkbox" id="a-type-lab" value="lab" checked style="flex-shrink:0; width:16px; height:16px; margin:0; padding:0;"> <span data-i18n="recordModal.typeLab">檢驗報告</span>
               </label>
               <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink); white-space:nowrap; min-width:0;">
-                <input type="checkbox" id="a-type-med" value="med" style="flex-shrink:0; width:16px; height:16px; margin:0; padding:0;"> 用藥紀錄
+                <input type="checkbox" id="a-type-med" value="med" style="flex-shrink:0; width:16px; height:16px; margin:0; padding:0;"> <span data-i18n="recordModal.typeMed">用藥紀錄</span>
               </label>
               <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink); white-space:nowrap; min-width:0;">
-                <input type="checkbox" id="a-type-img" value="img" style="flex-shrink:0; width:16px; height:16px; margin:0; padding:0;"> 影像資料
+                <input type="checkbox" id="a-type-img" value="img" style="flex-shrink:0; width:16px; height:16px; margin:0; padding:0;"> <span data-i18n="recordModal.typeImg">影像資料</span>
               </label>
               <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:500; color:var(--ink); white-space:nowrap; min-width:0;">
-                <input type="checkbox" id="a-type-visit" value="visit" style="flex-shrink:0; width:16px; height:16px; margin:0; padding:0;"> 就診紀錄
+                <input type="checkbox" id="a-type-visit" value="visit" style="flex-shrink:0; width:16px; height:16px; margin:0; padding:0;"> <span data-i18n="recordModal.typeVisit">就診紀錄</span>
               </label>
             </div>
           </div>
 
           <div class="field">
-            <label for="a-note">邀請訊息（選填）</label>
-            <textarea id="a-note" placeholder="會附在邀請信裡，例如：這是我這次回診要用的資料"></textarea>
+            <label for="a-note" data-i18n="access.fieldNote">邀請訊息（選填）</label>
+            <textarea id="a-note" placeholder="會附在邀請信裡，例如：這是我這次回診要用的資料" data-i18n-placeholder="access.fieldNotePh"></textarea>
           </div>
         </div>
       </div>
 
       <div class="modal-actions">
-        <button type="button" class="btn-ghost" id="access-cancel">取消</button>
-        <button type="submit" class="btn-primary">送出邀請</button>
+        <button type="button" class="btn-ghost" id="access-cancel" data-i18n="access.cancel">取消</button>
+        <button type="submit" class="btn-primary" data-i18n="access.submitInvite">送出邀請</button>
       </div>
     </form>
   </div>
