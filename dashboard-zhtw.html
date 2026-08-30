@@ -982,6 +982,18 @@
   </div>
 </div>
 
+<!-- 確認操作 MODAL（取代刪除類按鈕的瀏覽器 confirm）-->
+<div class="modal-backdrop" id="confirm-backdrop">
+  <div class="modal" style="max-width:400px;">
+    <h3 id="confirm-title">確認操作</h3>
+    <div class="card-sub" id="confirm-message" style="margin:0 0 4px;"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost" id="confirm-cancel">取消</button>
+      <button type="button" class="btn-danger" id="confirm-ok">確定</button>
+    </div>
+  </div>
+</div>
+
 <!-- 新增授權 MODAL -->
 <div class="modal-backdrop" id="access-backdrop">
   <div class="modal modal-wide">
@@ -2410,7 +2422,7 @@
 
     list.querySelectorAll('.revoke-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
-        if (!confirm('確定要撤銷這個人的存取權限嗎？撤銷後對方將無法再讀取此份加密資料，此動作無法復原。')) return;
+        if (!(await showConfirmDialog('撤銷後對方將無法再讀取此份加密資料，此動作無法復原。', '確定要撤銷這個人的存取權限嗎？'))) return;
         const item = e.currentTarget.closest('.auth-item');
         const id = item.dataset.id;
         const grant = (currentConfig.accessList || []).find(g => g.id === id);
@@ -2659,7 +2671,7 @@
     list.querySelectorAll('.remove-shared-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
-        if (!confirm('確定要將這個共享項目從清單中移除嗎？')) return;
+        if (!(await showConfirmDialog('移除後將不再顯示於清單中，可重新透過分享連結加入。', '確定要移除這個共享項目嗎？'))) return;
         const id = e.currentTarget.closest('.shared-item').dataset.id;
         currentConfig.receivedShares = (currentConfig.receivedShares || []).filter(s => s.grantId !== id);
         loadSharedWithMe();
@@ -2842,7 +2854,7 @@
 
     document.getElementById('record-detail-done').addEventListener('click', closeRecordDetailModal);
     document.getElementById('record-detail-delete').addEventListener('click', async () => {
-      if (!confirm('確定要刪除這筆紀錄嗎？此動作無法復原。')) return;
+      if (!(await showConfirmDialog('此動作無法復原。', '確定要刪除這筆紀錄嗎？'))) return;
       currentConfig.records = (currentConfig.records || []).filter(r => r.id !== record.id);
       renderOverview();
       renderRecordList();
@@ -2984,8 +2996,8 @@
   // ---- 刪除帳號（危險區域）----
   const deleteAccountBtn = document.getElementById('delete-account');
   if (deleteAccountBtn) {
-    deleteAccountBtn.addEventListener('click', () => {
-      if (!confirm('確定要刪除你的帳號嗎？所有健康紀錄將永久移除，此動作無法復原。')) return;
+    deleteAccountBtn.addEventListener('click', async () => {
+      if (!(await showConfirmDialog('所有健康紀錄將永久移除，此動作無法復原。', '確定要刪除你的帳號嗎？'))) return;
       showToast('帳號刪除功能尚未開放，請聯繫客服協助處理');
     });
   }
@@ -3037,7 +3049,7 @@
   });
 
   removeAvatarBtn.addEventListener('click', async () => {
-    if (!confirm('確定要移除目前的大頭貼照片嗎？')) return;
+    if (!(await showConfirmDialog('移除後將改回預設頭像。', '確定要移除目前的大頭貼照片嗎？'))) return;
     if (currentConfig.avatarProvider && currentConfig.avatarRef) {
       deletePhotoFile({ id: 'avatar', photoProvider: currentConfig.avatarProvider, photoRef: currentConfig.avatarRef });
     }
@@ -3103,6 +3115,36 @@
     toast.classList.add('show');
     if (toastHideTimer) clearTimeout(toastHideTimer);
     toastHideTimer = setTimeout(()=> toast.classList.remove('show'), 2600);
+  }
+
+  // 自訂確認視窗，取代瀏覽器原生 confirm()，回傳 Promise<boolean>
+  function showConfirmDialog(message, title = '確認操作'){
+    return new Promise((resolve) => {
+      const backdrop = document.getElementById('confirm-backdrop');
+      document.getElementById('confirm-title').textContent = title;
+      document.getElementById('confirm-message').textContent = message;
+      const okBtn = document.getElementById('confirm-ok');
+      const cancelBtn = document.getElementById('confirm-cancel');
+
+      function cleanup(result){
+        backdrop.classList.remove('show');
+        unlockBodyScroll();
+        okBtn.removeEventListener('click', onOk);
+        cancelBtn.removeEventListener('click', onCancel);
+        backdrop.removeEventListener('click', onBackdropClick);
+        resolve(result);
+      }
+      function onOk(){ cleanup(true); }
+      function onCancel(){ cleanup(false); }
+      function onBackdropClick(e){ if (e.target === backdrop) cleanup(false); }
+
+      okBtn.addEventListener('click', onOk);
+      cancelBtn.addEventListener('click', onCancel);
+      backdrop.addEventListener('click', onBackdropClick);
+
+      backdrop.classList.add('show');
+      lockBodyScroll();
+    });
   }
 
   // 載入中提示：不會自動消失，直到被 showToast() 覆蓋或呼叫 hideLoadingToast()
