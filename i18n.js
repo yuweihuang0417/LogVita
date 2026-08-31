@@ -370,7 +370,7 @@ export const loginTranslations = {
  'zh-TW': {
  htmlLang:'zh-Hant-TW', title:'健康庫 LogVita — 登入',
  brandMark:'健康庫 LogVita', h1:'把每一次<em>健康紀錄</em><br>安心留在身邊',
- brandDesc:'檢驗報告、用藥紀錄、影像資料、就診紀錄，通通存進你自己的 Google Drive 或 Dropbox，資料所有權永遠在你手上。隨身健康身分卡讓緊急時刻一眼掌握關鍵資訊，還能自訂期限與範圍，安心把資料分享給家人與醫療人員。',
+ brandDesc:'檢驗報告、用藥紀錄、影像資料，通通存進你自己的 Google Drive 或 Dropbox，並能自訂期限與範圍分享給家人與醫療人員。',
  trust:'資料採加密儲存，僅本人與您授權的對象可讀取',
  welcome:'歡迎回來', start:'開始使用', signInTitle:'登入您的健康紀錄', signUpTitle:'建立您的健康紀錄帳號',
  signIn:'登入', signUp:'註冊', google:'使用 Google 繼續', orEmail:'或使用電子郵件',
@@ -391,7 +391,7 @@ export const loginTranslations = {
  'zh-CN': {
  htmlLang:'zh-Hans-CN', title:'健康库 LogVita — 登录',
  brandMark:'健康库 LogVita', h1:'把每一次<em>健康记录</em><br>安心留在身边',
- brandDesc:'检验报告、用药记录、影像资料、就诊记录，统统存进你自己的 Google Drive 或 Dropbox，数据所有权永远在你手上。随身健康身份卡让紧急时刻一眼掌握关键信息，还能自定义期限与范围，放心把数据分享给家人与医疗人员。',
+ brandDesc:'检验报告、用药记录、影像资料，统统存进你自己的 Google Drive 或 Dropbox，并能自定义期限与范围分享给家人与医疗人员。',
  trust:'数据采用加密存储，仅本人与您授权的对象可读取',
  welcome:'欢迎回来', start:'开始使用', signInTitle:'登录您的健康记录', signUpTitle:'创建您的健康记录账号',
  signIn:'登录', signUp:'注册', google:'使用 Google 继续', orEmail:'或使用电子邮件',
@@ -412,7 +412,7 @@ export const loginTranslations = {
  'en': {
  htmlLang:'en', title:'LogVita — Sign in',
  brandMark:'LogVita', h1:'Keep every <em>health record</em><br>close and secure',
- brandDesc:'Lab reports, medications, imaging, and visit notes — all stored in your own Google Drive or Dropbox, so you always own your data. Carry a health ID card for instant access to key info in an emergency, and share records with family or providers on your terms, with custom expiry and scope.',
+ brandDesc:'Lab reports, medications, and imaging — stored in your own Google Drive or Dropbox, shared with family or providers on your terms.',
  trust:'Encrypted storage. Accessible only by you and the people you authorize.',
  welcome:'Welcome back', start:'Get started', signInTitle:'Sign in to your health records', signUpTitle:'Create your LogVita account',
  signIn:'Sign in', signUp:'Sign up', google:'Continue with Google', orEmail:'or use email',
@@ -433,7 +433,7 @@ export const loginTranslations = {
  'ja': {
  htmlLang:'ja', title:'LogVita — ログイン',
  brandMark:'LogVita', h1:'すべての<em>健康記録</em>を<br>安心して手元に',
- brandDesc:'検査結果、服薬記録、画像データ、受診記録を、ご自身の Google Drive や Dropbox にまとめて保存。データの所有権はいつでもあなたのもの。健康IDカードで緊急時も重要情報がひと目でわかり、有効期限や範囲を指定して家族や医療従事者に安心して共有できます。',
+ brandDesc:'検査結果、服薬記録、画像データを、ご自身の Google Drive や Dropbox に保存。期限や範囲を指定して家族や医療従事者に共有できます。',
  trust:'暗号化保管。あなたと許可した相手のみが閲覧可能です。',
  welcome:'おかえりなさい', start:'はじめる', signInTitle:'健康記録にログイン', signUpTitle:'LogVitaアカウントの作成',
  signIn:'ログイン', signUp:'新規登録', google:'Google で継続', orEmail:'またはメールアドレスで',
@@ -454,7 +454,7 @@ export const loginTranslations = {
  'ko': {
  htmlLang:'ko', title:'LogVita — 로그인',
  brandMark:'LogVita', h1:'모든 <em>건강 기록</em>을<br>내 손안에 안전하게',
- brandDesc:'검사 결과, 복약 기록, 영상 자료, 진료 기록까지 나만의 Google Drive 또는 Dropbox에 저장해 데이터 소유권을 항상 지키세요. 건강 신분증으로 응급 상황에도 핵심 정보를 한눈에 확인하고, 기간과 범위를 직접 설정해 가족이나 의료진에게 안심하고 공유할 수 있습니다.',
+ brandDesc:'검사 결과, 복약 기록, 영상 자료를 나만의 Google Drive 또는 Dropbox에 저장하고, 기간과 범위를 설정해 가족이나 의료진과 공유하세요.',
  trust:'암호화 저장. 본인과 승인한 대상만 접근할 수 있습니다.',
  welcome:'환영합니다', start:'시작하기', signInTitle:'건강 기록 로그인', signUpTitle:'LogVita 계정 생성',
  signIn:'로그인', signUp:'회원가입', google:'Google로 계속하기', orEmail:'또는 이메일 사용',
