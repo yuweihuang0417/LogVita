@@ -50,6 +50,7 @@
     if (typeof renderRecordList === 'function') renderRecordList();
     if (typeof renderAccessList === 'function') renderAccessList();
     if (typeof renderIdCard === 'function') renderIdCard();
+    if (typeof renderDeviceInfo === 'function') renderDeviceInfo();
     const sharedPanel = document.getElementById('panel-shared');
     if (sharedPanel && sharedPanel.classList.contains('active') && typeof loadSharedWithMe === 'function') loadSharedWithMe();
   }
@@ -358,6 +359,16 @@
     }
   }
 
+  // 更新裝置資訊區塊（裝置類型、地區/最後活動、裝置數量），語言切換時也需要重新套用
+  function renderDeviceInfo(){
+    const deviceInfoEl = document.getElementById('current-device-info');
+    const locInfoEl = document.getElementById('current-loc-info');
+    const countLabelEl = document.getElementById('device-count-label');
+    if (deviceInfoEl) deviceInfoEl.textContent = detectDeviceType();
+    if (locInfoEl) locInfoEl.textContent = T().security.locInfo(detectCountry());
+    if (countLabelEl) countLabelEl.textContent = T().security.deviceCountLabel(1);
+  }
+
   // 2. 切換 Panel 頁籤
   const navButtons = document.querySelectorAll('.nav button[data-panel]');
   function switchToPanel(name){
@@ -465,8 +476,7 @@
       document.getElementById('p-name').value = currentDisplayName;
 
       // 即時填入真實裝置資訊
-      document.getElementById('current-device-info').textContent = detectDeviceType();
-      document.getElementById('current-loc-info').textContent = T().security.locInfo(detectCountry());
+      renderDeviceInfo();
 
       try {
         // 檢查網頁網址是否剛好為 Dropbox OAuth 回傳畫面（Authorization Code + PKCE 流程用 query string 帶 code 回來，不是舊版的 hash）
