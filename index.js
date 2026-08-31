@@ -52,6 +52,8 @@
  const footText = document.getElementById('foot-text');
  const footSwitch = document.getElementById('foot-switch');
  const passwordInput = document.getElementById('password');
+ const passwordConfirmField = document.getElementById('password-confirm-field');
+ const passwordConfirmInput = document.getElementById('password-confirm');
  const googleBtn = document.getElementById('google-btn');
  const languageSelect = document.getElementById('language-select');
 
@@ -98,6 +100,8 @@
  tabSignin.setAttribute('aria-selected', String(!isSignup));
  tabSignup.setAttribute('aria-selected', String(isSignup));
  nameField.style.display = isSignup ? 'block' : 'none';
+ if (passwordConfirmField) passwordConfirmField.style.display = isSignup ? 'block' : 'none';
+ if (passwordConfirmInput) passwordConfirmInput.value = '';
 
  const forgotBtn = document.getElementById('forgot-password-btn');
  if (forgotBtn) {
@@ -137,12 +141,18 @@
  document.querySelector('label[for="password"]').textContent = t.password;
  passwordInput.placeholder = t.passwordPh;
 
+ const passwordConfirmLabel = document.querySelector('label[for="password-confirm"]');
+ if (passwordConfirmLabel) passwordConfirmLabel.textContent = t.confirmPassword;
+ if (passwordConfirmInput) passwordConfirmInput.placeholder = t.confirmPasswordPh;
+
  const forgotBtn = document.getElementById('forgot-password-btn');
  if (forgotBtn) forgotBtn.textContent = t.forgotPassword;
 
  document.querySelector('#name-field .err').textContent = t.errName;
  document.querySelector('#email-field .err').textContent = t.errEmail;
  document.querySelector('#password-field .err').textContent = t.errPassword;
+ const passwordConfirmErr = document.querySelector('#password-confirm-field .err');
+ if (passwordConfirmErr) passwordConfirmErr.textContent = t.errPasswordMismatch;
  document.querySelector('.legal').innerHTML = `${t.terms}<br>${t.privacy}`;
  
  if (legal) {
@@ -273,6 +283,14 @@
  if(password.length < 6){
  document.getElementById('password-field').classList.add('invalid');
  valid = false;
+ }
+
+ if(mode === 'signup'){
+ const passwordConfirm = passwordConfirmInput ? passwordConfirmInput.value : '';
+ if(password !== passwordConfirm){
+ if (passwordConfirmField) passwordConfirmField.classList.add('invalid');
+ valid = false;
+ }
  }
 
  if(!valid) return;
