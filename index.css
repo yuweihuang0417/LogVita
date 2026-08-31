@@ -331,6 +331,9 @@
  }
  .language-switcher select{
  appearance:none;
+ /* 這個選單固定是「深色底、淺色文字」設計，不論網站本身淺色/深色模式都長一樣；
+    明確指定 color-scheme:light，避免瀏覽器在深色模式下用原生樣式蓋掉自訂箭頭 */
+ color-scheme:light;
  border:1px solid rgba(223,230,226,.8);
  background:rgba(255,255,255,.08);
  color:var(--paper);
