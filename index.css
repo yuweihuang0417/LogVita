@@ -328,9 +328,26 @@
  .language-switcher{
  display:flex;
  align-items:center;
+ position:relative;
+ }
+ /* 箭頭改用獨立的偽元素疊加，不依賴 select 自身的 background-image，
+    避免瀏覽器對 <select> 的深色原生樣式把自訂箭頭蓋掉或無法正確渲染 */
+ .language-switcher::after{
+ content:"";
+ position:absolute;
+ right:14px;
+ top:50%;
+ width:7px;
+ height:7px;
+ border-right:2px solid #b9ccc8;
+ border-bottom:2px solid #b9ccc8;
+ transform:translateY(-65%) rotate(45deg);
+ pointer-events:none;
  }
  .language-switcher select{
  appearance:none;
+ -webkit-appearance:none;
+ -moz-appearance:none;
  /* 這個選單固定是「深色底、淺色文字」設計，不論網站本身淺色/深色模式都長一樣；
     明確指定 color-scheme:light，避免瀏覽器在深色模式下用原生樣式蓋掉自訂箭頭 */
  color-scheme:light;
@@ -342,10 +359,6 @@
  font:500 13px/1 "Noto Sans TC",sans-serif;
  cursor:pointer;
  outline:none;
- background-image:linear-gradient(45deg,transparent 50%,#b9ccc8 50%),linear-gradient(135deg,#b9ccc8 50%,transparent 50%);
- background-position:calc(100% - 16px) 50%,calc(100% - 11px) 50%;
- background-size:5px 5px,5px 5px;
- background-repeat:no-repeat;
  line-height:1;
  }
  .language-switcher select:hover{background-color:rgba(255,255,255,.14);}
