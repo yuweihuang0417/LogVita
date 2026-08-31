@@ -997,6 +997,85 @@
     return parts.length > 1 ? parts.pop().toLowerCase() : 'jpg';
   }
 
+  // 圖片壓縮：超過門檻大小的圖片會先縮小尺寸／降低品質再上傳，避免上傳失敗或占用過多雲端空間
+  const PHOTO_COMPRESS_THRESHOLD = 2.5 * 1024 * 1024; // 超過此大小才進行壓縮
+  const PHOTO_MAX_DIMENSION = 1920;                    // 長邊最大像素
+  const PHOTO_TARGET_SIZE = 2 * 1024 * 1024;           // 壓縮目標大小
+  const PHOTO_MAX_UPLOAD_SIZE = 8 * 1024 * 1024;       // 壓縮後仍不可超過的硬上限
+
+  function loadImageSource(file) {
+    if (typeof createImageBitmap === 'function') {
+      return createImageBitmap(file).catch(() => loadImageViaElement(file));
+    }
+    return loadImageViaElement(file);
+  }
+
+  function loadImageViaElement(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+      img.src = url;
+    });
+  }
+
+  function canvasToBlob(canvas, type, quality) {
+    return new Promise(resolve => canvas.toBlob(resolve, type, quality));
+  }
+
+  async function compressImageFile(file, {
+    maxDimension = PHOTO_MAX_DIMENSION,
+    targetSize = PHOTO_TARGET_SIZE,
+    initialQuality = 0.85,
+    minQuality = 0.5
+  } = {}) {
+    // 動態 GIF 重新編碼會失去動畫效果，維持原檔
+    if (file.type === 'image/gif') return file;
+    try {
+      const source = await loadImageSource(file);
+      let width = source.width || source.naturalWidth;
+      let height = source.height || source.naturalHeight;
+      if (!width || !height) return file;
+
+      if (width > maxDimension || height > maxDimension) {
+        const scale = maxDimension / Math.max(width, height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(source, 0, 0, width, height);
+      if (typeof source.close === 'function') source.close();
+
+      let quality = initialQuality;
+      let blob = await canvasToBlob(canvas, 'image/jpeg', quality);
+      while (blob && blob.size > targetSize && quality > minQuality) {
+        quality = Math.max(minQuality, quality - 0.1);
+        blob = await canvasToBlob(canvas, 'image/jpeg', quality);
+        if (quality <= minQuality) break;
+      }
+      if (!blob) return file;
+
+      const newName = (file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg';
+      return new File([blob], newName, { type: 'image/jpeg', lastModified: Date.now() });
+    } catch (err) {
+      console.warn('圖片壓縮失敗，將嘗試使用原始檔案上傳:', err);
+      return file;
+    }
+  }
+
+  // 統一入口：必要時壓縮圖片，回傳最終可上傳的檔案；若仍超過硬上限則回傳 null
+  async function prepareImageForUpload(file) {
+    if (file.size <= PHOTO_COMPRESS_THRESHOLD) return file;
+    const compressed = await compressImageFile(file);
+    if (compressed.size > PHOTO_MAX_UPLOAD_SIZE) return null;
+    return compressed;
+  }
+
   async function uploadPhotoFile(file, recordId) {
     const driveTokenPreCheck = getAccessToken();
     // 同上：Drive／Dropbox 互斥，Drive 使用者不需要也不該先去查 Dropbox
@@ -1879,19 +1958,29 @@
 
   photoUploadEmpty.addEventListener('click', () => photoInput.click());
 
-  photoInput.addEventListener('change', () => {
+  photoInput.addEventListener('change', async () => {
     const file = photoInput.files && photoInput.files[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       showToast(T().recordModal.invalidImageToast);
+      photoInput.value = '';
       return;
     }
-    if (file.size > 8 * 1024 * 1024) {
-      showToast(T().recordModal.tooLargeToast);
-      return;
+
+    let finalFile = file;
+    if (file.size > PHOTO_COMPRESS_THRESHOLD) {
+      photoUploadEmpty.querySelector('span').textContent = T().recordModal.compressing;
+      finalFile = await prepareImageForUpload(file);
+      photoUploadEmpty.querySelector('span').textContent = T().recordModal.photoUploadText;
+      if (!finalFile) {
+        showToast(T().recordModal.tooLargeToast);
+        photoInput.value = '';
+        return;
+      }
     }
-    selectedPhotoFile = file;
-    selectedPhotoPreviewUrl = URL.createObjectURL(file);
+
+    selectedPhotoFile = finalFile;
+    selectedPhotoPreviewUrl = URL.createObjectURL(finalFile);
     photoPreviewImg.src = selectedPhotoPreviewUrl;
     photoPreviewWrap.style.display = 'block';
     photoUploadEmpty.style.display = 'none';
@@ -1998,16 +2087,25 @@
       showToast(T().avatar.invalidImageToast);
       return;
     }
-    if (file.size > 8 * 1024 * 1024) {
-      showToast(T().avatar.tooLargeToast);
-      return;
-    }
 
     const originalText = changeAvatarBtn.textContent;
+    let finalFile = file;
+    if (file.size > PHOTO_COMPRESS_THRESHOLD) {
+      changeAvatarBtn.disabled = true;
+      changeAvatarBtn.textContent = T().avatar.compressing;
+      finalFile = await prepareImageForUpload(file);
+      if (!finalFile) {
+        changeAvatarBtn.disabled = false;
+        changeAvatarBtn.textContent = originalText;
+        showToast(T().avatar.tooLargeToast);
+        return;
+      }
+    }
+
     changeAvatarBtn.disabled = true;
     changeAvatarBtn.textContent = T().avatar.uploading;
 
-    const uploadResult = await uploadPhotoFile(file, 'avatar');
+    const uploadResult = await uploadPhotoFile(finalFile, 'avatar');
 
     changeAvatarBtn.disabled = false;
     changeAvatarBtn.textContent = originalText;
