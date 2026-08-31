@@ -503,3 +503,106 @@
     .sidebar{ position:static; height:auto; max-height:none; padding:16px; overflow-y:visible; }
     .main{ padding:24px 18px 50px; max-width:none; }
   }
+
+  /* ============================================================
+     深色模式：跟隨裝置系統設定（prefers-color-scheme）
+     側邊欄／健康身分卡本身已是深色設計，此處主要調整主內容區塊
+     ============================================================ */
+  @media (prefers-color-scheme: dark){
+    :root{
+      --ink:#e7f1ee; --card:#132d2c;
+      --navy:#123334; --navy-deep:#0a2021;
+      --mint:#79e2c4; --teal:#3dd2b3;
+      --muted:#7fa39d; --line:#244543;
+      --error:#f0716a; --amber:#eab55c;
+    }
+
+    /* 注意：--paper 在淺色模式下同時作為「頁面底色」與「深色元件（側邊欄／健康卡）上的淺色文字」，
+       這裡不直接覆寫 --paper，改為單獨設定主內容區塊底色 */
+    body{ background:#0b1f1f; }
+
+    .page-head .sub{ color:#8fada8; }
+    .card .card-sub{ color:#8fada8; }
+
+    .field label{ color:#b7d0cb; }
+    .field input, .field select, .field textarea{ background:var(--card); }
+
+    .btn-ghost{ background:var(--card); color:var(--muted); }
+    .btn-ghost:hover:not(:disabled){ border-color:#33615c; }
+    .btn-ghost:disabled{
+      background-color:#16302f !important;
+      border-color:var(--line) !important;
+      color:#5c7d78 !important;
+    }
+    .btn-primary{ background:var(--mint); color:var(--navy-deep); }
+    .btn-primary:hover{ background:#8fe9cf; }
+    .btn-danger{ background:var(--card); border-color:rgba(240,113,106,.4); }
+
+    .toggle-row .t-desc{ color:#8fada8; }
+    .switch .track{ background:#2a4b46; }
+
+    .auth-main .meta{ color:#8fada8; }
+    .auth-scope{ background:rgba(255,255,255,.06); color:var(--muted); }
+    .auth-scope.full{ background:rgba(91,111,214,.18); color:#9db0f5; }
+
+    .shared-item-head{ background:var(--card); }
+    .shared-item-head:hover{ background:#17322f; }
+    .shared-chevron{ color:#6f938d; }
+    .shared-profile-grid .sp-label{ color:#8fada8; }
+    .shared-records-title{ color:#c7ded9; }
+    .shared-record-item .r-meta{ color:#8fada8; }
+    .shared-record-item .r-note{ color:#a9c4bf; }
+
+    .session-item .loc{ color:#8fada8; }
+    .session-item .badge-current{ background:rgba(61,210,179,.16); }
+
+    .danger-zone{ border-color:rgba(240,113,106,.4); }
+
+    .stat-card .stat-label{ color:#8fada8; }
+    .stat-card .stat-value{ color:var(--mint); }
+    .stat-card .stat-note{ color:#6f938d; }
+
+    .allergy-banner{ background:rgba(234,181,92,.12); border-color:rgba(234,181,92,.35); }
+    .allergy-banner .a-title{ color:#f0c96a; }
+    .allergy-banner .a-desc{ color:#d9b877; }
+
+    .chip{ background:var(--card); color:var(--muted); }
+    .chip.active{ background:var(--mint); border-color:var(--mint); color:var(--navy-deep); }
+
+    .record-chevron{ color:#4f716c; }
+    .record-icon{ background:rgba(61,210,179,.14); }
+    .record-icon.lab{ background:rgba(91,111,214,.16); color:#9db0f5; }
+    .record-icon.med{ background:rgba(224,113,90,.16); color:#f0977e; }
+    .record-icon.img{ background:rgba(138,111,214,.16); color:#b39cf0; }
+    .record-icon.visit{ background:rgba(61,210,179,.14); }
+    .record-tag{ background:rgba(255,255,255,.06); color:var(--muted); }
+    .record-main .r-meta{ color:#8fada8; }
+    .r-note-full{ color:#c7ded9; }
+
+    .btn-danger-text{ color:#6f938d; }
+    .btn-danger-text:hover{ background:rgba(240,113,106,.14); }
+    .link-remove:hover{ background:rgba(240,113,106,.14); }
+
+    .empty-state{ color:#6f938d; }
+    .empty-state .e-title{ color:#b7d0cb; }
+
+    .type-opt{ background:var(--card); color:var(--muted); }
+    .type-opt.active{ background:rgba(61,210,179,.14); }
+
+    .photo-upload-empty{ color:#6f938d; }
+    .photo-upload-empty:hover{ background:rgba(61,210,179,.08); }
+
+    .thumb-loading{
+      background:var(--card);
+      background-image:linear-gradient(90deg, var(--card) 0%, #1a3634 50%, var(--card) 100%);
+    }
+
+    .modal{ background:var(--card); }
+    .close-x{ color:#6f938d; }
+
+    .toast{ background:var(--mint); color:var(--navy-deep); }
+    .toast .dot{ background:var(--navy-deep); }
+
+    /* 下拉選單清單本身多由作業系統原生渲染為白底，維持深色文字以確保可讀性 */
+    .language-switcher select option{ color:#0f2a2b; background:#fff; }
+  }

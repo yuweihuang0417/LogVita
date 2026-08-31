@@ -441,3 +441,71 @@
    flex: none;
  }
  }
+
+ /* ============================================================
+    深色模式：跟隨裝置系統設定（prefers-color-scheme）
+    左側品牌區塊本身已是深色設計，此處主要調整右側表單區塊
+    ============================================================ */
+ @media (prefers-color-scheme: dark){
+ :root{
+ --ink: #e7f1ee;
+ --navy: #123334;
+ --navy-deep: #0a2021;
+ --mint: #79e2c4;
+ --teal: #3dd2b3;
+ --muted: #7fa39d;
+ --line: #244543;
+ --error: #f0716a;
+ }
+
+ /* 注意：--paper 在淺色模式下同時作為「頁面底色」與「深色元件上的淺色文字」，
+    這裡不直接覆寫 --paper（避免影響 .brand／.toast 等深色元件的文字），
+    改為單獨設定右側表單區塊的底色 */
+ body{ background:#0b1f1f; }
+
+ .eyebrow{ color:#8fada8; }
+
+ .mode-toggle{ background:#132d2c; }
+ .mode-toggle button{ color:#8fada8; }
+ .mode-toggle button.active{ background:var(--mint); color:var(--navy-deep); }
+
+ .google-btn{ background:#132d2c; border-color:var(--line); color:var(--ink); }
+ .google-btn:hover{ border-color:#2c5450; box-shadow:0 2px 8px rgba(0,0,0,0.35); }
+
+ .divider{ color:#6f938d; }
+ .divider::before, .divider::after{ background:var(--line); }
+
+ .field label{ color:#b7d0cb; }
+ .field input{ background:#132d2c; border-color:var(--line); color:var(--ink); }
+ .field input::placeholder{ color:#5f8681; }
+
+ .submit-btn{ background:var(--mint); color:var(--navy-deep); }
+ .submit-btn:hover{ background:#8fe9cf; }
+
+ .foot{ color:#8fada8; }
+ .foot button{ color:var(--mint); }
+
+ .legal{ color:#6f938d; }
+ .legal a{ color:var(--mint); }
+
+ .language-switcher select{ background:rgba(255,255,255,.06); }
+ .language-switcher select:hover{ background-color:rgba(255,255,255,.1); }
+ /* 下拉選單清單本身多由作業系統原生渲染為白底，維持深色文字以確保可讀性 */
+ .language-switcher select option{ color:#0f2a2b; background:#fff; }
+
+ .toast{ background:var(--mint); color:var(--navy-deep); }
+ .toast .dot{ background:var(--navy-deep); }
+
+ .modal-box{ background:#132d2c; color:var(--ink); }
+ .modal-box h3{ color:var(--mint); border-bottom-color:var(--line); }
+ .modal-content{ color:#b7d0cb; }
+ .modal-content h4{ color:var(--mint); }
+ .modal-close{ color:#8fada8; }
+ .modal-date{ color:#6f938d; }
+ .modal-overlay{ background:rgba(0,0,0,.6); }
+
+ /* 深色模式下 outline 用亮色，避免深色邊框在深色背景上難以辨識 */
+ .google-btn:focus-visible, input:focus-visible, .mode-toggle button:focus-visible, .submit-btn:focus-visible{
+ outline-color: var(--mint);
+ }
+ }
