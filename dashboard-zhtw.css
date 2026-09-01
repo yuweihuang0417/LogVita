@@ -46,7 +46,8 @@
 
   /* LANGUAGE SELECTOR */
   .language-switcher{
-    padding:0 10px 16px;
+    padding:0 10px;
+    margin-bottom:16px;
     position:relative;
   }
   /* 箭頭改用獨立的偽元素疊加，不依賴 select 自身的 background-image，
