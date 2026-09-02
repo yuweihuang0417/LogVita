@@ -1,0 +1,13 @@
+{
+  "name": "健康庫 LogVita",
+  "short_name": "LogVita",
+  "description": "A secure, privacy-first personal health record platform.",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#0a2021",
+  "theme_color": "#123334",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
