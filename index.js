@@ -1,5 +1,5 @@
  // --- 多語言翻譯內容改為與主畫面共用同一個檔案（i18n.js）---
- import { legalTranslations, loginTranslations as translations, LANGUAGE_STORAGE_KEY } from "./i18n.js?v=4";
+ import { legalTranslations, loginTranslations as translations, LANGUAGE_STORAGE_KEY } from "./i18n.js?v=5";
 
  // --- Firebase 以動態 import 載入，並用 try/catch 包起來 ---
  let initializeApp, getAuth, GoogleAuthProvider, signInWithPopup,
@@ -223,7 +223,12 @@
 
  setLoading(true);
  try {
- await sendPasswordResetEmail(auth, email);
+ // 重設密碼信件會導向我們自訂的 reset-password.html（需在 Firebase 主控台設定「自訂動作網址」，
+ // 詳見 reset-password.html 旁的設定說明）
+ const actionCodeSettings = {
+ url: new URL('reset-password.html', window.location.href).toString()
+ };
+ await sendPasswordResetEmail(auth, email, actionCodeSettings);
  showToast(t.resetSentToast);
  } catch (err) {
  console.error(err);

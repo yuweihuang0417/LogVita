@@ -859,3 +859,129 @@ export const dashboardTranslations = {
   misc: { defaultUserName:'사용자', defaultUserInitial:'U' }
 }
 };
+
+// ============================================================================
+// reset-password.html（重設密碼頁）翻譯內容
+// ============================================================================
+export const resetPasswordTranslations = {
+'zh-TW': {
+  title:'健康庫 LogVita — 重設密碼',
+  verifyingEyebrow:'請稍候', verifyingHeading:'正在驗證重設連結…',
+  formEyebrow:'設定新密碼', formHeading:'請輸入新密碼',
+  accountEmailLine:(email)=>`為 ${email} 設定新密碼`,
+  newPassword:'新密碼', newPasswordPh:'至少 6 個字元',
+  confirmPassword:'確認新密碼', confirmPasswordPh:'請再輸入一次密碼',
+  errPasswordShort:'密碼至少需要 6 個字元。', errPasswordMismatch:'兩次輸入的密碼不一致。',
+  submit:'更新密碼', updating:'更新中…',
+  successEyebrow:'完成', successHeading:'密碼已更新',
+  successDesc:'您的密碼已成功重設，請使用新密碼登入。', backToLogin:'返回登入頁',
+  errorEyebrow:'連結無效', errorHeading:'連結無效或已過期',
+  errorDesc:'這個密碼重設連結可能已經使用過、已過期，或格式不正確，請重新申請一次。',
+  requestNewLink:'回登入頁重新申請',
+  genericError:'發生錯誤，請稍後再試。',
+  errors:{
+    'auth/expired-action-code':'這個重設連結已經過期，請重新申請一次。',
+    'auth/invalid-action-code':'這個重設連結無效或已被使用過，請重新申請一次。',
+    'auth/user-disabled':'此帳號已被停用。',
+    'auth/user-not-found':'找不到對應的帳號。',
+    'auth/weak-password':'密碼強度不足，請使用至少 6 個字元。',
+    'auth/network-request-failed':'網路連線發生問題，請稍後再試。'
+  }
+},
+'zh-CN': {
+  title:'健康库 LogVita — 重置密码',
+  verifyingEyebrow:'请稍候', verifyingHeading:'正在验证重置链接…',
+  formEyebrow:'设置新密码', formHeading:'请输入新密码',
+  accountEmailLine:(email)=>`为 ${email} 设置新密码`,
+  newPassword:'新密码', newPasswordPh:'至少 6 个字符',
+  confirmPassword:'确认新密码', confirmPasswordPh:'请再输入一次密码',
+  errPasswordShort:'密码至少需要 6 个字符。', errPasswordMismatch:'两次输入的密码不一致。',
+  submit:'更新密码', updating:'更新中…',
+  successEyebrow:'完成', successHeading:'密码已更新',
+  successDesc:'您的密码已成功重置，请使用新密码登录。', backToLogin:'返回登录页',
+  errorEyebrow:'链接无效', errorHeading:'链接无效或已过期',
+  errorDesc:'这个密码重置链接可能已经使用过、已过期，或格式不正确，请重新申请一次。',
+  requestNewLink:'回登录页重新申请',
+  genericError:'发生错误，请稍后再试。',
+  errors:{
+    'auth/expired-action-code':'这个重置链接已经过期，请重新申请一次。',
+    'auth/invalid-action-code':'这个重置链接无效或已被使用过，请重新申请一次。',
+    'auth/user-disabled':'此账号已被停用。',
+    'auth/user-not-found':'找不到对应的账号。',
+    'auth/weak-password':'密码强度不足，请使用至少 6 个字符。',
+    'auth/network-request-failed':'网络连接发生问题，请稍后再试。'
+  }
+},
+'en': {
+  title:'LogVita — Reset Password',
+  verifyingEyebrow:'Please wait', verifyingHeading:'Verifying reset link…',
+  formEyebrow:'Set a new password', formHeading:'Enter your new password',
+  accountEmailLine:(email)=>`Setting a new password for ${email}`,
+  newPassword:'New password', newPasswordPh:'At least 6 characters',
+  confirmPassword:'Confirm new password', confirmPasswordPh:'Re-enter your password',
+  errPasswordShort:'Password must be at least 6 characters.', errPasswordMismatch:'Passwords do not match.',
+  submit:'Update password', updating:'Updating…',
+  successEyebrow:'Done', successHeading:'Password updated',
+  successDesc:'Your password has been reset. Please sign in with your new password.', backToLogin:'Back to sign in',
+  errorEyebrow:'Invalid link', errorHeading:'This link is invalid or has expired',
+  errorDesc:'This password reset link may have already been used, expired, or is malformed. Please request a new one.',
+  requestNewLink:'Back to sign in to request a new link',
+  genericError:'Something went wrong. Please try again later.',
+  errors:{
+    'auth/expired-action-code':'This reset link has expired. Please request a new one.',
+    'auth/invalid-action-code':'This reset link is invalid or has already been used. Please request a new one.',
+    'auth/user-disabled':'This account has been disabled.',
+    'auth/user-not-found':'No matching account was found.',
+    'auth/weak-password':'Password is too weak — please use at least 6 characters.',
+    'auth/network-request-failed':'A network error occurred. Please try again later.'
+  }
+},
+'ja': {
+  title:'LogVita — パスワードの再設定',
+  verifyingEyebrow:'お待ちください', verifyingHeading:'再設定リンクを確認しています…',
+  formEyebrow:'新しいパスワードの設定', formHeading:'新しいパスワードを入力してください',
+  accountEmailLine:(email)=>`${email} の新しいパスワードを設定します`,
+  newPassword:'新しいパスワード', newPasswordPh:'6文字以上',
+  confirmPassword:'新しいパスワード（確認）', confirmPasswordPh:'もう一度パスワードを入力',
+  errPasswordShort:'パスワードは6文字以上である必要があります。', errPasswordMismatch:'パスワードが一致しません。',
+  submit:'パスワードを更新', updating:'更新中…',
+  successEyebrow:'完了', successHeading:'パスワードを更新しました',
+  successDesc:'パスワードの再設定が完了しました。新しいパスワードでログインしてください。', backToLogin:'ログインページへ戻る',
+  errorEyebrow:'リンクが無効です', errorHeading:'リンクが無効または期限切れです',
+  errorDesc:'このパスワード再設定リンクはすでに使用されたか、期限切れ、または形式が正しくない可能性があります。もう一度お試しください。',
+  requestNewLink:'ログインページへ戻って再度申請する',
+  genericError:'エラーが発生しました。しばらくしてから再度お試しください。',
+  errors:{
+    'auth/expired-action-code':'この再設定リンクは期限切れです。もう一度お試しください。',
+    'auth/invalid-action-code':'この再設定リンクは無効か、すでに使用されています。もう一度お試しください。',
+    'auth/user-disabled':'このアカウントは無効化されています。',
+    'auth/user-not-found':'該当するアカウントが見つかりません。',
+    'auth/weak-password':'パスワードの強度が不十分です。6文字以上にしてください。',
+    'auth/network-request-failed':'ネットワークエラーが発生しました。しばらくしてから再度お試しください。'
+  }
+},
+'ko': {
+  title:'LogVita — 비밀번호 재설정',
+  verifyingEyebrow:'잠시만 기다려 주세요', verifyingHeading:'재설정 링크를 확인하는 중…',
+  formEyebrow:'새 비밀번호 설정', formHeading:'새 비밀번호를 입력하세요',
+  accountEmailLine:(email)=>`${email} 계정의 새 비밀번호를 설정합니다`,
+  newPassword:'새 비밀번호', newPasswordPh:'최소 6자 이상',
+  confirmPassword:'새 비밀번호 확인', confirmPasswordPh:'비밀번호를 다시 입력하세요',
+  errPasswordShort:'비밀번호는 최소 6자 이상이어야 합니다.', errPasswordMismatch:'비밀번호가 일치하지 않습니다.',
+  submit:'비밀번호 업데이트', updating:'업데이트 중…',
+  successEyebrow:'완료', successHeading:'비밀번호가 변경되었습니다',
+  successDesc:'비밀번호 재설정이 완료되었습니다. 새 비밀번호로 로그인해 주세요.', backToLogin:'로그인 페이지로 돌아가기',
+  errorEyebrow:'링크가 유효하지 않습니다', errorHeading:'링크가 유효하지 않거나 만료되었습니다',
+  errorDesc:'이 비밀번호 재설정 링크는 이미 사용되었거나 만료되었거나 형식이 올바르지 않을 수 있습니다. 다시 요청해 주세요.',
+  requestNewLink:'로그인 페이지로 돌아가 다시 요청하기',
+  genericError:'오류가 발생했습니다. 나중에 다시 시도해 주세요.',
+  errors:{
+    'auth/expired-action-code':'이 재설정 링크는 만료되었습니다. 다시 요청해 주세요.',
+    'auth/invalid-action-code':'이 재설정 링크가 유효하지 않거나 이미 사용되었습니다. 다시 요청해 주세요.',
+    'auth/user-disabled':'이 계정은 비활성화되었습니다.',
+    'auth/user-not-found':'해당 계정을 찾을 수 없습니다.',
+    'auth/weak-password':'비밀번호가 너무 약합니다. 최소 6자 이상 입력해 주세요.',
+    'auth/network-request-failed':'네트워크 오류가 발생했습니다. 나중에 다시 시도해 주세요.'
+  }
+}
+};

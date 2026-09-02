@@ -142,6 +142,19 @@
  letter-spacing:0.01em;
  }
 
+ /* 重設密碼頁專用文字樣式 */
+ .reset-account-email{
+ font-size:14px;
+ color:#4c5a57;
+ margin:-16px 0 24px;
+ }
+ .reset-desc{
+ font-size:14.5px;
+ line-height:1.75;
+ color:#4c5a57;
+ margin:0 0 26px;
+ }
+
  .mode-toggle{
  display:flex;
  background:#e9efec;
@@ -493,6 +506,8 @@
  .divider::before, .divider::after{ background:var(--line); }
 
  .field label{ color:#b7d0cb; }
+ .reset-account-email{ color:#8fada8; }
+ .reset-desc{ color:#b7d0cb; }
  .field input{ background:#132d2c; border-color:var(--line); color:var(--ink); }
  .field input::placeholder{ color:#5f8681; }
 

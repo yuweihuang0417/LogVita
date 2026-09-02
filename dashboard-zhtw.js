@@ -1,7 +1,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getAuth, signOut, onAuthStateChanged, GoogleAuthProvider, reauthenticateWithPopup, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-  import { dashboardTranslations, detectLanguage, saveLanguage } from "./i18n.js?v=4";
+  import { dashboardTranslations, detectLanguage, saveLanguage } from "./i18n.js?v=5";
 
   // ---- 多語言（與登入頁共用同一份翻譯來源 i18n.js）----
   let currentLanguage = detectLanguage();
