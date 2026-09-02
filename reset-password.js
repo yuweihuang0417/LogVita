@@ -1,5 +1,5 @@
  // --- 多語言翻譯內容（與登入頁共用同一個檔案 i18n.js）---
- import { resetPasswordTranslations as translations, LANGUAGE_STORAGE_KEY } from "./i18n.js?v=6";
+ import { resetPasswordTranslations as translations, LANGUAGE_STORAGE_KEY } from "./i18n.js?v=7";
 
  // --- Firebase 以動態 import 載入，並用 try/catch 包起來 ---
  let initializeApp, getAuth, verifyPasswordResetCode, confirmPasswordReset;

@@ -1,7 +1,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getAuth, signOut, onAuthStateChanged, GoogleAuthProvider, reauthenticateWithPopup, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-  import { dashboardTranslations, detectLanguage, saveLanguage } from "./i18n.js?v=6";
+  import { dashboardTranslations, detectLanguage, saveLanguage } from "./i18n.js?v=7";
 
   // ---- 多語言（與登入頁共用同一份翻譯來源 i18n.js）----
   let currentLanguage = detectLanguage();
@@ -1784,6 +1784,231 @@
     document.getElementById('id-emergency-phone').textContent = currentConfig.emergencyPhone || '—';
     document.getElementById('id-allergy').textContent = (currentConfig.allergy && currentConfig.allergy.trim()) ? currentConfig.allergy : T().idcard.noKnownAllergy;
   }
+
+  // ---- 健康身分卡下載為圖片（純 canvas 繪製，不依賴外部截圖套件）----
+  function roundedRectPath(ctx, x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  // 簡易文字換行（給過敏史等可能較長的欄位使用）
+  function wrapCanvasText(ctx, text, maxWidth){
+    if (!text) return [''];
+    const chars = Array.from(text);
+    const lines = [];
+    let line = '';
+    for (const ch of chars) {
+      const test = line + ch;
+      if (ctx.measureText(test).width > maxWidth && line) {
+        lines.push(line);
+        line = ch;
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+    return lines.slice(0, 3); // 最多 3 行，避免卡片過長
+  }
+
+  function sanitizeFileNamePart(str){
+    return (str || '').replace(/[\\/:*?"<>|]/g, '').trim();
+  }
+
+  async function loadImageForCanvas(url){
+    return new Promise((resolve) => {
+      const img = new Image();
+      // blob: URL 為本機來源不會汙染 canvas；遠端頭像（如 Google 帳號照片）加上 crossOrigin 嘗試允許匿名 CORS 讀取
+      if (!url.startsWith('blob:')) img.crossOrigin = 'anonymous';
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = url;
+    });
+  }
+
+  async function downloadIdCard(){
+    const btn = document.getElementById('id-card-download-btn');
+    if (btn) btn.disabled = true;
+    try {
+      if (document.fonts && document.fonts.ready) {
+        try { await document.fonts.ready; } catch {}
+      }
+
+      const t = T();
+      const OUT_W = 1050, OUT_H = 640, PAD = 56, RADIUS = 46;
+      const canvas = document.createElement('canvas');
+      canvas.width = OUT_W;
+      canvas.height = OUT_H;
+      const ctx = canvas.getContext('2d');
+
+      roundedRectPath(ctx, 0, 0, OUT_W, OUT_H, RADIUS);
+      ctx.clip();
+
+      // 背景漸層（呼應畫面上卡片的深色品牌漸層）
+      const bgGrad = ctx.createLinearGradient(0, 0, OUT_W, OUT_H);
+      bgGrad.addColorStop(0, '#123334');
+      bgGrad.addColorStop(0.65, '#0a2021');
+      bgGrad.addColorStop(1, '#071819');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, OUT_W, OUT_H);
+
+      // 左上角薄荷色光暈
+      const glow = ctx.createRadialGradient(OUT_W * 0.18, -OUT_H * 0.15, 0, OUT_W * 0.18, -OUT_H * 0.15, OUT_W * 0.7);
+      glow.addColorStop(0, 'rgba(121,226,196,0.32)');
+      glow.addColorStop(1, 'rgba(121,226,196,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, OUT_W, OUT_H);
+
+      // 品牌列：左邊圓點 + 品牌名，右邊卡片標籤
+      ctx.fillStyle = '#79e2c4';
+      ctx.beginPath();
+      ctx.arc(PAD + 7, PAD + 10, 7, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#f6f8f6';
+      ctx.font = '600 32px "Noto Serif TC","Noto Serif SC",serif';
+      ctx.fillText(t.nav.brand, PAD + 26, PAD + 20);
+
+      ctx.font = '500 22px "Noto Sans TC","Noto Sans SC",sans-serif';
+      ctx.fillStyle = 'rgba(246,248,246,0.6)';
+      const labelText = t.idcard.label;
+      const labelWidth = ctx.measureText(labelText).width;
+      ctx.fillText(labelText, OUT_W - PAD - labelWidth, PAD + 18);
+
+      // 大頭貼
+      const avatarSize = 128;
+      const avatarX = PAD;
+      const avatarY = PAD + 62;
+      roundedRectPath(ctx, avatarX, avatarY, avatarSize, avatarSize, 24);
+      ctx.save();
+      ctx.clip();
+      ctx.fillStyle = 'rgba(255,255,255,.14)';
+      ctx.fillRect(avatarX, avatarY, avatarSize, avatarSize);
+
+      let avatarDrawn = false;
+      const avatarImgEl = document.querySelector('#id-card-avatar img');
+      if (avatarImgEl && avatarImgEl.src) {
+        const img = await loadImageForCanvas(avatarImgEl.src);
+        if (img) {
+          try {
+            const side = Math.min(img.naturalWidth, img.naturalHeight);
+            const sx = (img.naturalWidth - side) / 2;
+            const sy = (img.naturalHeight - side) / 2;
+            ctx.drawImage(img, sx, sy, side, side, avatarX, avatarY, avatarSize, avatarSize);
+            avatarDrawn = true;
+          } catch (err) {
+            console.warn('大頭貼繪製到匯出圖片失敗（可能為跨網域圖片），改用姓名縮寫代替:', err);
+          }
+        }
+      }
+      if (!avatarDrawn) {
+        ctx.fillStyle = '#f6f8f6';
+        ctx.font = '700 46px "Noto Sans TC","Noto Sans SC",sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(currentInitial || '?', avatarX + avatarSize / 2, avatarY + avatarSize / 2 + 16);
+        ctx.textAlign = 'left';
+      }
+      ctx.restore();
+      ctx.strokeStyle = 'rgba(255,255,255,.22)';
+      ctx.lineWidth = 2;
+      roundedRectPath(ctx, avatarX, avatarY, avatarSize, avatarSize, 24);
+      ctx.stroke();
+
+      // 姓名 + 出生／性別
+      const infoX = avatarX + avatarSize + 34;
+      const nameText = currentConfig.name || currentDisplayName || '—';
+      ctx.fillStyle = '#f6f8f6';
+      ctx.font = '600 38px "Noto Serif TC","Noto Serif SC",serif';
+      ctx.fillText(nameText, infoX, avatarY + 30);
+
+      function drawKV(x, y, kText, vText, fontSize = 24){
+        ctx.font = `500 ${fontSize}px "Noto Sans TC","Noto Sans SC",sans-serif`;
+        ctx.fillStyle = 'rgba(246,248,246,0.6)';
+        ctx.fillText(kText, x, y);
+        const kWidth = ctx.measureText(kText).width;
+        ctx.fillStyle = '#f6f8f6';
+        ctx.fillText(vText, x + kWidth + 8, y);
+      }
+
+      const birthText = currentConfig.birth ? formatDate(currentConfig.birth) : '—';
+      const genderText = currentConfig.gender || '—';
+      drawKV(infoX, avatarY + 78, t.idcard.kBirth, birthText);
+      ctx.font = '500 24px "Noto Sans TC","Noto Sans SC",sans-serif';
+      const birthKVWidth = ctx.measureText(t.idcard.kBirth).width + 8 + ctx.measureText(birthText).width;
+      drawKV(infoX + birthKVWidth + 30, avatarY + 78, t.idcard.kGender, genderText);
+
+      // 下方欄位（分隔線 + 2 欄格線）
+      const gridTop = avatarY + avatarSize + 40;
+      ctx.strokeStyle = 'rgba(255,255,255,.14)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(PAD, gridTop);
+      ctx.lineTo(OUT_W - PAD, gridTop);
+      ctx.stroke();
+
+      const colGap = 44;
+      const colWidth = (OUT_W - PAD * 2 - colGap) / 2;
+      const col1X = PAD;
+      const col2X = PAD + colWidth + colGap;
+      const rowH = 66;
+
+      const bloodText = currentConfig.blood ? `${currentConfig.blood}${t.idcard.bloodTypeSuffix}` : '—';
+      const phoneText = currentConfig.phone || '—';
+      const emergencyText = currentConfig.emergency || t.idcard.notSet;
+      const emergencyPhoneText = currentConfig.emergencyPhone || '—';
+      const allergyText = (currentConfig.allergy && currentConfig.allergy.trim()) ? currentConfig.allergy : t.idcard.noKnownAllergy;
+
+      function drawField(x, y, kText, vText){
+        ctx.font = '500 21px "Noto Sans TC","Noto Sans SC",sans-serif';
+        ctx.fillStyle = 'rgba(246,248,246,0.55)';
+        ctx.fillText(kText, x, y);
+        ctx.font = '600 25px "Noto Sans TC","Noto Sans SC",sans-serif';
+        ctx.fillStyle = '#f6f8f6';
+        ctx.fillText(vText, x, y + 30);
+      }
+
+      const row1Y = gridTop + 36;
+      const row2Y = row1Y + rowH;
+      drawField(col1X, row1Y, t.idcard.kBlood, bloodText);
+      drawField(col2X, row1Y, t.idcard.kPhone, phoneText);
+      drawField(col1X, row2Y, t.idcard.kEmergency, emergencyText);
+      drawField(col2X, row2Y, t.idcard.kEmergencyPhone, emergencyPhoneText);
+
+      const allergyY = row2Y + rowH;
+      ctx.font = '500 21px "Noto Sans TC","Noto Sans SC",sans-serif';
+      ctx.fillStyle = 'rgba(246,248,246,0.55)';
+      ctx.fillText(t.idcard.kAllergy, col1X, allergyY);
+      ctx.font = '600 25px "Noto Sans TC","Noto Sans SC",sans-serif';
+      ctx.fillStyle = '#f6f8f6';
+      const allergyLines = wrapCanvasText(ctx, allergyText, OUT_W - PAD * 2);
+      allergyLines.forEach((line, i) => ctx.fillText(line, col1X, allergyY + 30 + i * 30));
+
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('canvas.toBlob 回傳空白');
+
+      const fileName = `${sanitizeFileNamePart(t.idcard.label)}-${sanitizeFileNamePart(nameText) || 'LogVita'}.png`;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+
+      showToast(t.idcard.downloadedToast);
+    } catch (err) {
+      console.error('健康身分卡下載失敗:', err);
+      showToast(T().idcard.downloadFailedToast);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  document.getElementById('id-card-download-btn')?.addEventListener('click', downloadIdCard);
 
   function renderOverview() {
     const records = currentConfig.records || [];
