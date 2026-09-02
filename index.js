@@ -1,5 +1,5 @@
  // --- 多語言翻譯內容改為與主畫面共用同一個檔案（i18n.js）---
- import { legalTranslations, loginTranslations as translations, LANGUAGE_STORAGE_KEY } from "./i18n.js?v=5";
+ import { legalTranslations, loginTranslations as translations, LANGUAGE_STORAGE_KEY } from "./i18n.js?v=6";
 
  // --- Firebase 以動態 import 載入，並用 try/catch 包起來 ---
  let initializeApp, getAuth, GoogleAuthProvider, signInWithPopup,

@@ -1,7 +1,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getAuth, signOut, onAuthStateChanged, GoogleAuthProvider, reauthenticateWithPopup, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-  import { dashboardTranslations, detectLanguage, saveLanguage } from "./i18n.js?v=5";
+  import { dashboardTranslations, detectLanguage, saveLanguage } from "./i18n.js?v=6";
 
   // ---- 多語言（與登入頁共用同一份翻譯來源 i18n.js）----
   let currentLanguage = detectLanguage();
@@ -2072,6 +2072,178 @@
   }
 
   // ---- 更換 / 移除大頭貼照片 ----
+  // ---- 大頭貼裁切編輯器（拖曳位置、縮放、旋轉）----
+  const CROP_VIEWPORT_SIZE = 260; // 需與 CSS .avatar-crop-viewport 的 width/height 一致
+  const CROP_OUTPUT_SIZE = 640;   // 匯出的正方形頭像解析度
+
+  const cropBackdrop = document.getElementById('avatar-crop-backdrop');
+  const cropViewport = document.getElementById('avatar-crop-viewport');
+  const cropImg = document.getElementById('avatar-crop-img');
+  const cropZoomSlider = document.getElementById('avatar-crop-zoom');
+  const cropRotateSlider = document.getElementById('avatar-crop-rotate');
+  const cropRotateLeftBtn = document.getElementById('avatar-crop-rotate-left');
+  const cropRotateRightBtn = document.getElementById('avatar-crop-rotate-right');
+  const cropCancelBtn = document.getElementById('avatar-crop-cancel');
+  const cropConfirmBtn = document.getElementById('avatar-crop-confirm');
+  const cropCloseBtn = document.getElementById('avatar-crop-close');
+
+  let cropState = null;    // { naturalWidth, naturalHeight, objectUrl, minScale, scale, rotation, offsetX, offsetY }
+  let cropResolver = null; // 目前這次裁切流程的 Promise resolve
+
+  // 確保縮放/旋轉/拖曳後，圖片仍完整覆蓋圓形檢視窗（數學上與旋轉角度無關，見下方推導）：
+  // 圖片安全半徑 = min(寬,高)*scale / 2，此半徑圓在圖片中心平移 offset 後仍需完整覆蓋檢視窗（半徑 D/2）
+  function clampCropOffset(){
+    const safeRadius = (Math.min(cropState.naturalWidth, cropState.naturalHeight) * cropState.scale - CROP_VIEWPORT_SIZE) / 2;
+    const maxR = Math.max(0, safeRadius);
+    const dist = Math.hypot(cropState.offsetX, cropState.offsetY);
+    if (dist > maxR && dist > 0) {
+      const ratio = maxR / dist;
+      cropState.offsetX *= ratio;
+      cropState.offsetY *= ratio;
+    }
+  }
+
+  function renderCropTransform(){
+    cropImg.style.transform = `translate(-50%,-50%) translate(${cropState.offsetX}px, ${cropState.offsetY}px) rotate(${cropState.rotation}deg) scale(${cropState.scale})`;
+  }
+
+  function openAvatarCropModal(file){
+    return new Promise((resolve) => {
+      cropResolver = resolve;
+      const objectUrl = URL.createObjectURL(file);
+      cropImg.onload = () => {
+        const naturalWidth = cropImg.naturalWidth;
+        const naturalHeight = cropImg.naturalHeight;
+        const minScale = CROP_VIEWPORT_SIZE / Math.min(naturalWidth, naturalHeight);
+        cropState = {
+          naturalWidth, naturalHeight, objectUrl,
+          minScale, scale: minScale,
+          rotation: 0, offsetX: 0, offsetY: 0
+        };
+        cropZoomSlider.min = minScale;
+        cropZoomSlider.max = minScale * 4;
+        cropZoomSlider.step = ((minScale * 4) - minScale) / 100 || 0.01;
+        cropZoomSlider.value = minScale;
+        cropRotateSlider.value = 0;
+        renderCropTransform();
+        cropBackdrop.classList.add('show');
+        lockBodyScroll();
+      };
+      cropImg.src = objectUrl;
+    });
+  }
+
+  function closeAvatarCropModal(result){
+    cropBackdrop.classList.remove('show');
+    unlockBodyScroll();
+    if (cropState && cropState.objectUrl) URL.revokeObjectURL(cropState.objectUrl);
+    const resolve = cropResolver;
+    cropState = null;
+    cropResolver = null;
+    cropImg.removeAttribute('src');
+    if (resolve) resolve(result);
+  }
+
+  cropZoomSlider.addEventListener('input', () => {
+    if (!cropState) return;
+    cropState.scale = parseFloat(cropZoomSlider.value);
+    clampCropOffset();
+    renderCropTransform();
+  });
+
+  cropRotateSlider.addEventListener('input', () => {
+    if (!cropState) return;
+    cropState.rotation = parseFloat(cropRotateSlider.value);
+    clampCropOffset();
+    renderCropTransform();
+  });
+
+  function rotateCropBy(delta){
+    if (!cropState) return;
+    let next = cropState.rotation + delta;
+    while (next > 180) next -= 360;
+    while (next < -180) next += 360;
+    cropState.rotation = next;
+    cropRotateSlider.value = next;
+    clampCropOffset();
+    renderCropTransform();
+  }
+  cropRotateLeftBtn.addEventListener('click', () => rotateCropBy(-90));
+  cropRotateRightBtn.addEventListener('click', () => rotateCropBy(90));
+
+  // 拖曳平移（Pointer Events 同時支援滑鼠與觸控）
+  let cropDragPointerId = null;
+  let cropDragStart = null;
+  cropViewport.addEventListener('pointerdown', (e) => {
+    if (!cropState) return;
+    cropDragPointerId = e.pointerId;
+    cropDragStart = { x: e.clientX, y: e.clientY, offsetX: cropState.offsetX, offsetY: cropState.offsetY };
+    cropViewport.classList.add('dragging');
+    cropViewport.setPointerCapture(e.pointerId);
+  });
+  cropViewport.addEventListener('pointermove', (e) => {
+    if (!cropState || cropDragPointerId === null || e.pointerId !== cropDragPointerId) return;
+    const dx = e.clientX - cropDragStart.x;
+    const dy = e.clientY - cropDragStart.y;
+    cropState.offsetX = cropDragStart.offsetX + dx;
+    cropState.offsetY = cropDragStart.offsetY + dy;
+    clampCropOffset();
+    renderCropTransform();
+  });
+  function endCropDrag(){
+    if (cropDragPointerId === null) return;
+    cropViewport.classList.remove('dragging');
+    try { cropViewport.releasePointerCapture(cropDragPointerId); } catch {}
+    cropDragPointerId = null;
+    cropDragStart = null;
+  }
+  cropViewport.addEventListener('pointerup', endCropDrag);
+  cropViewport.addEventListener('pointercancel', endCropDrag);
+
+  // 滑鼠滾輪縮放（桌機選用；觸控裝置以縮放滑桿操作）
+  cropViewport.addEventListener('wheel', (e) => {
+    if (!cropState) return;
+    e.preventDefault();
+    const range = (cropState.minScale * 4) - cropState.minScale;
+    const delta = -e.deltaY * 0.0015 * range;
+    let next = cropState.scale + delta;
+    next = Math.max(parseFloat(cropZoomSlider.min), Math.min(parseFloat(cropZoomSlider.max), next));
+    cropState.scale = next;
+    cropZoomSlider.value = next;
+    clampCropOffset();
+    renderCropTransform();
+  }, { passive: false });
+
+  function exportCroppedAvatar(){
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = CROP_OUTPUT_SIZE;
+      canvas.height = CROP_OUTPUT_SIZE;
+      const ctx = canvas.getContext('2d');
+      const outputScaleFactor = CROP_OUTPUT_SIZE / CROP_VIEWPORT_SIZE;
+
+      ctx.save();
+      ctx.translate(CROP_OUTPUT_SIZE / 2, CROP_OUTPUT_SIZE / 2);
+      ctx.translate(cropState.offsetX * outputScaleFactor, cropState.offsetY * outputScaleFactor);
+      ctx.rotate(cropState.rotation * Math.PI / 180);
+      ctx.scale(cropState.scale * outputScaleFactor, cropState.scale * outputScaleFactor);
+      ctx.drawImage(cropImg, -cropState.naturalWidth / 2, -cropState.naturalHeight / 2, cropState.naturalWidth, cropState.naturalHeight);
+      ctx.restore();
+
+      canvas.toBlob((blob) => {
+        if (!blob) { resolve(null); return; }
+        resolve(new File([blob], 'avatar.jpg', { type: 'image/jpeg', lastModified: Date.now() }));
+      }, 'image/jpeg', 0.92);
+    });
+  }
+
+  cropCancelBtn.addEventListener('click', () => closeAvatarCropModal(null));
+  cropCloseBtn.addEventListener('click', () => closeAvatarCropModal(null));
+  cropConfirmBtn.addEventListener('click', async () => {
+    const croppedFile = await exportCroppedAvatar();
+    closeAvatarCropModal(croppedFile);
+  });
+
   const avatarFileInput = document.getElementById('avatar-file-input');
   const changeAvatarBtn = document.getElementById('change-avatar');
   const removeAvatarBtn = document.getElementById('remove-avatar');
@@ -2088,12 +2260,16 @@
       return;
     }
 
+    // 先讓使用者裁切（位置／縮放／旋轉），取消則整個流程中止
+    const croppedFile = await openAvatarCropModal(file);
+    if (!croppedFile) return;
+
     const originalText = changeAvatarBtn.textContent;
-    let finalFile = file;
-    if (file.size > PHOTO_COMPRESS_THRESHOLD) {
+    let finalFile = croppedFile;
+    if (croppedFile.size > PHOTO_COMPRESS_THRESHOLD) {
       changeAvatarBtn.disabled = true;
       changeAvatarBtn.textContent = T().avatar.compressing;
-      finalFile = await prepareImageForUpload(file);
+      finalFile = await prepareImageForUpload(croppedFile);
       if (!finalFile) {
         changeAvatarBtn.disabled = false;
         changeAvatarBtn.textContent = originalText;

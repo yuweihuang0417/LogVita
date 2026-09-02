@@ -472,6 +472,51 @@
 
   .page-head.with-action{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
 
+  /* 大頭貼裁切編輯器 */
+  .avatar-crop-viewport{
+    position:relative;
+    width:260px; height:260px;
+    margin:0 auto 22px;
+    border-radius:50%;
+    overflow:hidden;
+    background:repeating-conic-gradient(#e9efec 0% 25%, #f3f6f4 0% 50%) 50% / 20px 20px;
+    border:1px solid var(--line);
+    cursor:grab;
+    touch-action:none;
+    user-select:none;
+  }
+  .avatar-crop-viewport.dragging{ cursor:grabbing; }
+  .avatar-crop-viewport img{
+    position:absolute;
+    top:50%; left:50%;
+    max-width:none;
+    pointer-events:none;
+    transform-origin:center center;
+  }
+  .avatar-crop-controls{ display:flex; flex-direction:column; gap:14px; margin-bottom:8px; }
+  .avatar-crop-control-row{
+    display:flex; align-items:center; gap:10px;
+    font-size:13px; font-weight:600; color:#4c5a57;
+  }
+  .avatar-crop-control-row svg{ flex-shrink:0; color:#7c8c8a; }
+  .avatar-crop-control-row input[type="range"]{
+    flex:1; min-width:0;
+    accent-color:var(--navy);
+    cursor:pointer;
+  }
+  .avatar-crop-rotate-btn{
+    flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    width:30px; height:30px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:#fff;
+    color:#4c5a57;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .avatar-crop-rotate-btn:hover{ border-color:#b9c7c3; background:#f6faf8; }
+
   /* MODAL */
   .modal-backdrop{
     position:fixed; inset:0; background:rgba(15,42,43,.45);
@@ -616,6 +661,14 @@
     }
 
     .modal{ background:var(--card); }
+
+    .avatar-crop-viewport{
+      background:repeating-conic-gradient(#16302f 0% 25%, #1a3634 0% 50%) 50% / 20px 20px;
+    }
+    .avatar-crop-control-row{ color:#b7d0cb; }
+    .avatar-crop-control-row svg{ color:#8fada8; }
+    .avatar-crop-rotate-btn{ background:var(--card); border-color:var(--line); color:var(--muted); }
+    .avatar-crop-rotate-btn:hover{ border-color:#33615c; background:#17322f; }
     .close-x{ color:#6f938d; }
 
     .toast{ background:var(--mint); color:var(--navy-deep); }

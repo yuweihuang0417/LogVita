@@ -7,7 +7,7 @@
 <title>健康庫 LogVita — 帳號設定</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&family=Noto+Serif+TC:wght@400;600&family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="dashboard-zhtw.css?v=6">
+<link rel="stylesheet" href="dashboard-zhtw.css?v=7">
 </head>
 <body>
 
@@ -488,6 +488,44 @@
   </div>
 </div>
 
+<!-- 大頭貼裁切 MODAL -->
+<div class="modal-backdrop" id="avatar-crop-backdrop">
+  <div class="modal" style="max-width:420px;">
+    <button class="close-x" id="avatar-crop-close" aria-label="關閉" data-i18n-aria-label="detail.close">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <h3 data-i18n="avatarCrop.title">調整大頭貼</h3>
+    <div class="card-sub" style="margin-bottom:18px;" data-i18n="avatarCrop.sub">拖曳調整位置，使用下方滑桿縮放與旋轉</div>
+
+    <div class="avatar-crop-viewport" id="avatar-crop-viewport">
+      <img id="avatar-crop-img" alt="" draggable="false">
+    </div>
+
+    <div class="avatar-crop-controls">
+      <div class="avatar-crop-control-row">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span data-i18n="avatarCrop.zoom">縮放</span>
+        <input type="range" id="avatar-crop-zoom" min="0" max="100" value="0" step="1">
+      </div>
+      <div class="avatar-crop-control-row">
+        <span data-i18n="avatarCrop.rotate">旋轉</span>
+        <input type="range" id="avatar-crop-rotate" min="-180" max="180" value="0" step="1">
+        <button type="button" class="avatar-crop-rotate-btn" id="avatar-crop-rotate-left" data-i18n-aria-label="avatarCrop.rotateLeft" aria-label="向左旋轉 90 度">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
+        </button>
+        <button type="button" class="avatar-crop-rotate-btn" id="avatar-crop-rotate-right" data-i18n-aria-label="avatarCrop.rotateRight" aria-label="向右旋轉 90 度">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5v0A5.5 5.5 0 0 0 9.5 20H13"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost" id="avatar-crop-cancel" data-i18n="avatarCrop.cancel">取消</button>
+      <button type="button" class="btn-primary" id="avatar-crop-confirm" style="justify-content:center;" data-i18n="avatarCrop.confirm">完成</button>
+    </div>
+  </div>
+</div>
+
 <!-- 醫療紀錄詳情 MODAL -->
 <div class="modal-backdrop" id="record-detail-backdrop">
   <div class="modal">
@@ -618,7 +656,7 @@
 
 <div class="toast" id="toast"><span class="dot"></span><span id="toast-text"></span></div>
 
-<script type="module" src="dashboard-zhtw.js?v=5"></script>
+<script type="module" src="dashboard-zhtw.js?v=6"></script>
 
 
 </body>
