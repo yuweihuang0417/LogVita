@@ -1,6 +1,6 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getAuth, signOut, onAuthStateChanged, GoogleAuthProvider, reauthenticateWithPopup, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc, onSnapshot, deleteField } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
   import { dashboardTranslations, detectLanguage, saveLanguage } from "./i18n.js?v=7";
 
   // ---- 多語言（與登入頁共用同一份翻譯來源 i18n.js）----
@@ -343,6 +343,24 @@
     return d.generic;
   }
 
+  function detectBrowserName() {
+    const ua = navigator.userAgent;
+    if (/Edg\//i.test(ua)) return 'Edge';
+    if (/OPR\//i.test(ua) || /Opera/i.test(ua)) return 'Opera';
+    if (/CriOS/i.test(ua)) return 'Chrome';
+    if (/FxiOS/i.test(ua)) return 'Firefox';
+    if (/Firefox\//i.test(ua)) return 'Firefox';
+    if (/Chrome\//i.test(ua) && !/Edg\//i.test(ua)) return 'Chrome';
+    if (/Safari\//i.test(ua) && !/Chrome\//i.test(ua)) return 'Safari';
+    return '';
+  }
+
+  function detectDeviceLabel() {
+    const type = detectDeviceType();
+    const browser = detectBrowserName();
+    return browser ? `${type} · ${browser}` : type;
+  }
+
   function detectCountry() {
     const c = T().country;
     try {
@@ -359,14 +377,179 @@
     }
   }
 
-  // 更新裝置資訊區塊（裝置類型、地區/最後活動、裝置數量），語言切換時也需要重新套用
-  function renderDeviceInfo(){
-    const deviceInfoEl = document.getElementById('current-device-info');
-    const locInfoEl = document.getElementById('current-loc-info');
+  // ---- 裝置追蹤（多裝置登入清單，即時同步、可從其他裝置遠端登出）----
+  const SESSION_ID_STORAGE_KEY = 'healthkeep-session-id';
+  const SESSION_STALE_DAYS = 30;
+
+  let currentSessionId = null;
+  let sessionsUnsubscribe = null;
+  let sessionHeartbeatTimer = null;
+  let lastKnownSessions = null;
+  let lastKnownSessionsUid = null;
+
+  function getOrCreateLocalSessionId(){
+    let id = localStorage.getItem(SESSION_ID_STORAGE_KEY);
+    if (!id) {
+      id = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : ('sess-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+      localStorage.setItem(SESSION_ID_STORAGE_KEY, id);
+    }
+    return id;
+  }
+
+  async function registerCurrentSession(uid){
+    currentSessionId = getOrCreateLocalSessionId();
+    const userRef = doc(db, 'users', uid);
+    const nowIso = new Date().toISOString();
+    try {
+      const snap = await getDoc(userRef);
+      const existing = snap.exists() ? (snap.data().sessions || {})[currentSessionId] : null;
+      await setDoc(userRef, {
+        [`sessions.${currentSessionId}`]: {
+          deviceLabel: detectDeviceLabel(),
+          country: detectCountry(),
+          lastActiveAt: nowIso,
+          createdAt: (existing && existing.createdAt) || nowIso
+        }
+      }, { merge: true });
+    } catch (err) {
+      console.error('登記登入裝置失敗:', err);
+    }
+  }
+
+  async function updateSessionHeartbeat(uid){
+    if (!currentSessionId) return;
+    try {
+      const userRef = doc(db, 'users', uid);
+      await setDoc(userRef, { [`sessions.${currentSessionId}.lastActiveAt`]: new Date().toISOString() }, { merge: true });
+    } catch (err) {
+      console.error('更新裝置活動時間失敗:', err);
+    }
+  }
+
+  function startSessionHeartbeat(uid){
+    stopSessionHeartbeat();
+    sessionHeartbeatTimer = setInterval(() => {
+      if (document.visibilityState === 'visible') updateSessionHeartbeat(uid);
+    }, 120000); // 每 2 分鐘更新一次「最後活動」時間
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') updateSessionHeartbeat(uid);
+    });
+  }
+  function stopSessionHeartbeat(){
+    if (sessionHeartbeatTimer) { clearInterval(sessionHeartbeatTimer); sessionHeartbeatTimer = null; }
+  }
+
+  function watchSessions(uid){
+    const userRef = doc(db, 'users', uid);
+    if (sessionsUnsubscribe) sessionsUnsubscribe();
+    sessionsUnsubscribe = onSnapshot(userRef, (snap) => {
+      const sessions = snap.exists() ? (snap.data().sessions || {}) : {};
+      lastKnownSessions = sessions;
+      lastKnownSessionsUid = uid;
+      if (currentSessionId && !sessions[currentSessionId]) {
+        // 這台裝置的登入狀態已被從別台裝置遠端登出
+        forceLocalLogout();
+        return;
+      }
+      renderSessionList(sessions, uid);
+    }, (err) => {
+      console.error('監聽裝置清單失敗:', err);
+    });
+  }
+
+  function formatRelativeTime(isoStr){
+    const s = T().security;
+    const then = new Date(isoStr).getTime();
+    if (isNaN(then)) return s.justNow;
+    const diffSec = Math.max(0, Math.floor((Date.now() - then) / 1000));
+    if (diffSec < 60) return s.justNow;
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return s.minutesAgo(diffMin);
+    const diffHour = Math.floor(diffMin / 60);
+    if (diffHour < 24) return s.hoursAgo(diffHour);
+    const diffDay = Math.floor(diffHour / 24);
+    return s.daysAgo(diffDay);
+  }
+
+  function renderSessionList(sessions, uid){
+    const container = document.getElementById('session-container');
     const countLabelEl = document.getElementById('device-count-label');
-    if (deviceInfoEl) deviceInfoEl.textContent = detectDeviceType();
-    if (locInfoEl) locInfoEl.textContent = T().security.locInfo(detectCountry());
-    if (countLabelEl) countLabelEl.textContent = T().security.deviceCountLabel(1);
+    if (!container) return;
+    const s = T().security;
+
+    // 順手清掉太久沒活動的裝置紀錄（best-effort，不阻塞畫面渲染）
+    const staleCutoff = Date.now() - SESSION_STALE_DAYS * 24 * 60 * 60 * 1000;
+    const staleIds = Object.keys(sessions).filter(id => id !== currentSessionId && new Date(sessions[id].lastActiveAt).getTime() < staleCutoff);
+    if (staleIds.length > 0) {
+      const userRef = doc(db, 'users', uid);
+      const cleanup = {};
+      staleIds.forEach(id => { cleanup[`sessions.${id}`] = deleteField(); });
+      setDoc(userRef, cleanup, { merge: true }).catch(err => console.warn('清理過期裝置紀錄失敗:', err));
+    }
+
+    const entries = Object.entries(sessions)
+      .filter(([id]) => !staleIds.includes(id))
+      .sort((a, b) => new Date(b[1].lastActiveAt) - new Date(a[1].lastActiveAt));
+
+    if (countLabelEl) countLabelEl.textContent = s.deviceCountLabel(entries.length || 1);
+
+    if (entries.length === 0) {
+      container.innerHTML = `<div class="session-item"><div class="meta"><div class="device">${escapeHtml(s.detecting)}</div></div></div>`;
+      return;
+    }
+
+    container.innerHTML = entries.map(([id, sess]) => {
+      const isCurrent = id === currentSessionId;
+      const deviceLabel = sess.deviceLabel || T().device.generic;
+      const country = sess.country || T().country.unknown;
+      return `
+        <div class="session-item" data-session-id="${escapeHtml(id)}">
+          <div class="meta">
+            <div class="device">${escapeHtml(deviceLabel)}</div>
+            <div class="loc">${escapeHtml(country)} · ${escapeHtml(s.lastActiveLabel)}${escapeHtml(formatRelativeTime(sess.lastActiveAt))}</div>
+          </div>
+          ${isCurrent ? `<span class="badge-current">${escapeHtml(s.currentDeviceBadge)}</span>` : ''}
+          <button type="button" class="btn-ghost session-logout-btn" style="margin-left: 8px;" data-session-id="${escapeHtml(id)}">${escapeHtml(s.deviceLogout)}</button>
+        </div>`;
+    }).join('');
+
+    container.querySelectorAll('.session-logout-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.sessionId;
+        if (id === currentSessionId) {
+          await handleLogout();
+          return;
+        }
+        if (!(await showConfirmDialog(T().security.removeDeviceConfirmMsg, T().security.removeDeviceConfirmTitle))) return;
+        try {
+          const userRef = doc(db, 'users', uid);
+          await setDoc(userRef, { [`sessions.${id}`]: deleteField() }, { merge: true });
+          showToast(T().security.deviceRemovedToast);
+        } catch (err) {
+          console.error('登出裝置失敗:', err);
+          showToast(T().security.deviceRemoveFailedToast);
+        }
+      });
+    });
+  }
+
+  async function forceLocalLogout(){
+    stopSessionHeartbeat();
+    if (sessionsUnsubscribe) { sessionsUnsubscribe(); sessionsUnsubscribe = null; }
+    sessionStorage.removeItem('drive_access_token');
+    sessionStorage.removeItem('dropbox_access_token');
+    sessionStorage.removeItem('dropbox_token_expires_at');
+    sessionStorage.removeItem('dropbox_refresh_token');
+    sessionStorage.removeItem('dropbox_pkce_verifier');
+    try { await signOut(auth); } catch {}
+    window.location.href = 'index.html';
+  }
+
+  // 更新裝置資訊卡片標題等靜態文字（實際裝置清單由 renderSessionList 處理）
+  function renderDeviceInfo(){
+    if (lastKnownSessions) {
+      renderSessionList(lastKnownSessions, lastKnownSessionsUid);
+    }
   }
 
   // 2. 切換 Panel 頁籤
@@ -475,8 +658,10 @@
       document.getElementById('user-email').textContent = user.email || '';
       document.getElementById('p-name').value = currentDisplayName;
 
-      // 即時填入真實裝置資訊
-      renderDeviceInfo();
+      // 裝置追蹤：登記本裝置的登入 session、開始心跳更新，並即時監聽所有裝置清單
+      await registerCurrentSession(user.uid);
+      startSessionHeartbeat(user.uid);
+      watchSessions(user.uid);
 
       try {
         // 檢查網頁網址是否剛好為 Dropbox OAuth 回傳畫面（Authorization Code + PKCE 流程用 query string 帶 code 回來，不是舊版的 hash）
@@ -2574,6 +2759,16 @@
 
   // 8. 登出
   async function handleLogout() {
+    if (currentSessionId && auth.currentUser) {
+      try {
+        const userRef = doc(db, 'users', auth.currentUser.uid);
+        await setDoc(userRef, { [`sessions.${currentSessionId}`]: deleteField() }, { merge: true });
+      } catch (err) {
+        console.warn('登出時清除裝置紀錄失敗:', err);
+      }
+    }
+    if (sessionsUnsubscribe) { sessionsUnsubscribe(); sessionsUnsubscribe = null; }
+    stopSessionHeartbeat();
     sessionStorage.removeItem('drive_access_token');
     sessionStorage.removeItem('dropbox_access_token');
     sessionStorage.removeItem('dropbox_token_expires_at');
@@ -2584,7 +2779,6 @@
   }
 
   document.getElementById('logout-btn').addEventListener('click', handleLogout);
-  document.querySelector('.session-logout-current').addEventListener('click', handleLogout);
 
   let toastHideTimer = null;
 

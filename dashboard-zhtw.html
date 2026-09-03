@@ -378,15 +378,7 @@
         <h2 data-i18n="security.devicesTitle">登入中的裝置</h2>
         <div class="card-sub" id="device-count-label">目前有 1 個裝置保持登入狀態</div>
         <div id="session-container">
-          <!-- 僅即時偵測並顯示當前真實裝置 -->
-          <div class="session-item" id="current-session-item">
-            <div class="meta">
-              <div class="device" id="current-device-info" data-i18n="security.detecting">偵測中...</div>
-              <div class="loc" id="current-loc-info">台灣 · 最後活動：剛剛</div>
-            </div>
-            <span class="badge-current" data-i18n="security.currentDeviceBadge">目前裝置</span>
-            <button type="button" class="btn-ghost session-logout-current" style="margin-left: 8px;" data-i18n="security.deviceLogout">登出</button>
-          </div>
+          <!-- 由 JS 動態渲染所有已知登入裝置 -->
         </div>
       </div>
 
@@ -663,7 +655,7 @@
 
 <div class="toast" id="toast"><span class="dot"></span><span id="toast-text"></span></div>
 
-<script type="module" src="dashboard-zhtw.js?v=7"></script>
+<script type="module" src="dashboard-zhtw.js?v=8"></script>
 
 
 </body>
