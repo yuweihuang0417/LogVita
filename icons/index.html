@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="alternate icon" href="icons/favicon.ico">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="manifest" href="manifest.json">
+<title>健康庫 LogVita — 登入</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;600&family=Noto+Serif+TC:wght@400;600&display=swap" rel="stylesheet">
+
+<!-- Google reCAPTCHA v3 SDK -->
+<script src="https://www.google.com/recaptcha/api.js?render=6LdmRI0tAAAAADVz24cBddUISehgAZqtO9r2Qmp4"></script>
+
+<link rel="stylesheet" href="index.css?v=5">
+</head>
+<body>
+
+<div class="stage">
+ <div class="brand">
+ <div class="brand-top-row">
+ <div class="brand-mark"><span class="dot"></span> 健康庫 LogVita</div>
+ <div class="language-switcher" aria-label="Language selector">
+ <select id="language-select">
+ <option value="zh-TW">繁體中文</option>
+ <option value="zh-CN">简体中文</option>
+ <option value="en">English</option>
+ <option value="ja">日本語</option>
+ <option value="ko">한국어</option>
+ </select>
+ </div>
+ </div>
+ <div class="brand-copy">
+ <h1>把每一次<em>健康紀錄</em><br>安心留在身邊</h1>
+ <p>檢驗報告、用藥紀錄、影像資料，通通存進你自己的 Google Drive 或 Dropbox，並能自訂期限與範圍分享給家人與醫療人員。</p>
+ <div class="trust">
+ <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+ <path d="M12 2L4 5v6c0 5 3.4 8.7 8 9.9 4.6-1.2 8-4.9 8-9.9V5l-8-3z" stroke="#79e2c4" stroke-width="1.6" stroke-linejoin="round"/>
+ </svg>
+ <span>資料採加密儲存，僅本人與您授權的對象可讀取</span>
+ </div>
+ </div>
+ <div class="pulse-wrap" aria-hidden="true">
+ <svg viewBox="0 0 420 70" xmlns="http://www.w3.org/2000/svg">
+ <polyline class="pulse-line" points="0,35 60,35 80,35 95,10 110,60 125,35 150,35 170,35 185,20 200,50 215,35 420,35"/>
+ </svg>
+ </div>
+ </div>
+
+ <div class="panel">
+ <div class="card">
+ <p class="eyebrow" id="eyebrow">歡迎回來</p>
+ <h2 id="heading">登入您的健康紀錄</h2>
+
+ <div class="mode-toggle" role="tablist" aria-label="選擇登入或註冊">
+ <button type="button" class="active" id="tab-signin" role="tab" aria-selected="true">登入</button>
+ <button type="button" id="tab-signup" role="tab" aria-selected="false">註冊</button>
+ </div>
+
+ <button type="button" class="google-btn" id="google-btn">
+ <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+ <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/>
+ <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.81.55-1.85.87-3.04.87-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/>
+ <path fill="#FBBC05" d="M3.97 10.73A5.4 5.4 0 0 1 3.68 9c0-.6.1-1.19.29-1.73V4.94H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.06l3.01-2.33z"/>
+ <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.94l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/>
+ </svg>
+ 使用 Google 繼續
+ </button>
+
+ <div class="divider">或使用電子郵件</div>
+
+ <form id="auth-form" novalidate>
+ <div class="field" id="name-field" style="display:none;">
+ <label for="name">姓名</label>
+ <input type="text" id="name" placeholder="請輸入您的姓名" autocomplete="name">
+ <small class="err">請輸入姓名。</small>
+ </div>
+ <div class="field" id="email-field">
+ <label for="email">電子郵件</label>
+ <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+ <small class="err">請輸入有效的電子郵件地址。</small>
+ </div>
+ <div class="field" id="password-field">
+ <div class="label-row">
+ <label for="password">密碼</label>
+ <button type="button" class="forgot-btn-inline" id="forgot-password-btn">忘記密碼？</button>
+ </div>
+ <input type="password" id="password" placeholder="至少 6 個字元" autocomplete="current-password">
+ <small class="err">密碼至少需要 6 個字元。</small>
+ </div>
+ <div class="field" id="password-confirm-field" style="display:none;">
+ <label for="password-confirm">確認密碼</label>
+ <input type="password" id="password-confirm" placeholder="請再輸入一次密碼" autocomplete="new-password">
+ <small class="err">兩次輸入的密碼不一致。</small>
+ </div>
+
+ <button type="submit" class="submit-btn" id="submit-btn">登入</button>
+ </form>
+
+ <p class="foot">
+ <span id="foot-text">還沒有帳號？</span>
+ <button type="button" id="foot-switch">建立帳號</button>
+ </p>
+
+ <p class="legal">註冊即表示您同意我們的<a id="open-tos-btn">服務條款</a>與<a id="open-privacy-btn">隱私政策</a>，<br>您的健康資料受《個人資料保護法》規範保護。</p>
+ </div>
+ </div>
+</div>
+
+<!-- 服務條款 小方格 -->
+<div class="modal-overlay" id="tos-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="window.closeModal('tos-modal')">&times;</button>
+    <h3>服務條款（Terms of Service）</h3>
+    <div class="modal-content"></div>
+  </div>
+</div>
+
+<!-- 隱私政策 小方格 -->
+<div class="modal-overlay" id="privacy-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="window.closeModal('privacy-modal')">&times;</button>
+    <h3>隱私政策（Privacy Policy）</h3>
+    <div class="modal-content"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="dot"></span><span id="toast-text"></span></div>
+
+<script type="module" src="index.js?v=7"></script>
+
+
+</body>
+</html>
