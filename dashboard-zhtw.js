@@ -1,6 +1,6 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getAuth, signOut, onAuthStateChanged, GoogleAuthProvider, reauthenticateWithPopup, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc, onSnapshot, deleteField } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
   import { dashboardTranslations, detectLanguage, saveLanguage } from "./i18n.js?v=7";
 
   // ---- 多語言（與登入頁共用同一份翻譯來源 i18n.js）----
@@ -402,15 +402,15 @@
     const nowIso = new Date().toISOString();
     try {
       const snap = await getDoc(userRef);
-      const existing = snap.exists() ? (snap.data().sessions || {})[currentSessionId] : null;
-      await setDoc(userRef, {
-        [`sessions.${currentSessionId}`]: {
-          deviceLabel: detectDeviceLabel(),
-          country: detectCountry(),
-          lastActiveAt: nowIso,
-          createdAt: (existing && existing.createdAt) || nowIso
-        }
-      }, { merge: true });
+      const sessions = (snap.exists() && snap.data().sessions) ? { ...snap.data().sessions } : {};
+      const existing = sessions[currentSessionId];
+      sessions[currentSessionId] = {
+        deviceLabel: detectDeviceLabel(),
+        country: detectCountry(),
+        lastActiveAt: nowIso,
+        createdAt: (existing && existing.createdAt) || nowIso
+      };
+      await setDoc(userRef, { sessions }, { merge: true });
     } catch (err) {
       console.error('登記登入裝置失敗:', err);
     }
@@ -420,7 +420,11 @@
     if (!currentSessionId) return;
     try {
       const userRef = doc(db, 'users', uid);
-      await setDoc(userRef, { [`sessions.${currentSessionId}.lastActiveAt`]: new Date().toISOString() }, { merge: true });
+      const snap = await getDoc(userRef);
+      const sessions = (snap.exists() && snap.data().sessions) ? { ...snap.data().sessions } : {};
+      if (!sessions[currentSessionId]) return; // 這台裝置的登入紀錄已被移除，交由 watchSessions 處理強制登出
+      sessions[currentSessionId] = { ...sessions[currentSessionId], lastActiveAt: new Date().toISOString() };
+      await setDoc(userRef, { sessions }, { merge: true });
     } catch (err) {
       console.error('更新裝置活動時間失敗:', err);
     }
@@ -442,11 +446,16 @@
   function watchSessions(uid){
     const userRef = doc(db, 'users', uid);
     if (sessionsUnsubscribe) sessionsUnsubscribe();
+    let isFirstSnapshot = true;
     sessionsUnsubscribe = onSnapshot(userRef, (snap) => {
       const sessions = snap.exists() ? (snap.data().sessions || {}) : {};
       lastKnownSessions = sessions;
       lastKnownSessionsUid = uid;
-      if (currentSessionId && !sessions[currentSessionId]) {
+      // 保險：剛登記完 session 後的第一筆快照，若剛好還沒包含自己（極少數同步延遲情況），
+      // 不視為「已被登出」，避免誤判造成登入後立刻被踢出的迴圈
+      const shouldCheckForRemoval = !isFirstSnapshot;
+      isFirstSnapshot = false;
+      if (shouldCheckForRemoval && currentSessionId && !sessions[currentSessionId]) {
         // 這台裝置的登入狀態已被從別台裝置遠端登出
         forceLocalLogout();
         return;
@@ -482,9 +491,9 @@
     const staleIds = Object.keys(sessions).filter(id => id !== currentSessionId && new Date(sessions[id].lastActiveAt).getTime() < staleCutoff);
     if (staleIds.length > 0) {
       const userRef = doc(db, 'users', uid);
-      const cleanup = {};
-      staleIds.forEach(id => { cleanup[`sessions.${id}`] = deleteField(); });
-      setDoc(userRef, cleanup, { merge: true }).catch(err => console.warn('清理過期裝置紀錄失敗:', err));
+      const cleaned = { ...sessions };
+      staleIds.forEach(id => { delete cleaned[id]; });
+      setDoc(userRef, { sessions: cleaned }, { merge: true }).catch(err => console.warn('清理過期裝置紀錄失敗:', err));
     }
 
     const entries = Object.entries(sessions)
@@ -523,7 +532,10 @@
         if (!(await showConfirmDialog(T().security.removeDeviceConfirmMsg, T().security.removeDeviceConfirmTitle))) return;
         try {
           const userRef = doc(db, 'users', uid);
-          await setDoc(userRef, { [`sessions.${id}`]: deleteField() }, { merge: true });
+          const snap = await getDoc(userRef);
+          const latest = (snap.exists() && snap.data().sessions) ? { ...snap.data().sessions } : {};
+          delete latest[id];
+          await setDoc(userRef, { sessions: latest }, { merge: true });
           showToast(T().security.deviceRemovedToast);
         } catch (err) {
           console.error('登出裝置失敗:', err);
@@ -2759,16 +2771,19 @@
 
   // 8. 登出
   async function handleLogout() {
+    if (sessionsUnsubscribe) { sessionsUnsubscribe(); sessionsUnsubscribe = null; }
+    stopSessionHeartbeat();
     if (currentSessionId && auth.currentUser) {
       try {
         const userRef = doc(db, 'users', auth.currentUser.uid);
-        await setDoc(userRef, { [`sessions.${currentSessionId}`]: deleteField() }, { merge: true });
+        const snap = await getDoc(userRef);
+        const sessions = (snap.exists() && snap.data().sessions) ? { ...snap.data().sessions } : {};
+        delete sessions[currentSessionId];
+        await setDoc(userRef, { sessions }, { merge: true });
       } catch (err) {
         console.warn('登出時清除裝置紀錄失敗:', err);
       }
     }
-    if (sessionsUnsubscribe) { sessionsUnsubscribe(); sessionsUnsubscribe = null; }
-    stopSessionHeartbeat();
     sessionStorage.removeItem('drive_access_token');
     sessionStorage.removeItem('dropbox_access_token');
     sessionStorage.removeItem('dropbox_token_expires_at');
