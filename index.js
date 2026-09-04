@@ -223,11 +223,11 @@
 
  setLoading(true);
  try {
- // 重設密碼信件會直接導向我們自訂的 reset-password.html（用 actionCodeSettings.url +
- // handleCodeInApp:true，讓連結直接帶 oobCode 導向這裡，不需要在 Firebase 主控台另外設定「自訂動作網址」）
+ // 重設密碼信件會導向我們自訂的 reset-password.html（需在 Firebase 主控台的
+ // Authentication → Templates → Password reset 設定「自訂動作網址」，
+ // 詳見 reset-password.html 旁的設定說明）
  const actionCodeSettings = {
- url: new URL('reset-password.html', window.location.href).toString(),
- handleCodeInApp: true
+ url: new URL('reset-password.html', window.location.href).toString()
  };
  await sendPasswordResetEmail(auth, email, actionCodeSettings);
  showToast(t.resetSentToast);
