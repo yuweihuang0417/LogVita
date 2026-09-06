@@ -227,7 +227,11 @@
  // Authentication → Templates → Password reset 設定「自訂動作網址」，
  // 詳見 reset-password.html 旁的設定說明）
  const actionCodeSettings = {
- url: new URL('reset-password.html', window.location.href).toString()
+ // linkDomain 指向 Firebase Hosting 網域（tmu-medical.web.app），這是官方取代已停用的
+ // Dynamic Links 機制的新設定，讓重設密碼信件直接導向我們自己做的 reset-password.html，
+ // 不再需要透過主控台那個一直失敗的「自訂動作網址」設定
+ url: 'https://tmu-medical.web.app/reset-password.html',
+ linkDomain: 'tmu-medical.web.app'
  };
  await sendPasswordResetEmail(auth, email, actionCodeSettings);
  showToast(t.resetSentToast);
