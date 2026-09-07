@@ -222,6 +222,43 @@
   }
 
   function typeLabel(type){ const t = T().recordModal; return { lab:t.typeLab, med:t.typeMed, img:t.typeImg, visit:t.typeVisit }[type] || t.recordFallbackLabel; }
+
+  // ---- 性別／血型：儲存為語系無關代碼，顯示時依目前語言轉換 ----
+  // 舊資料相容：早期版本直接把當下選取的本地化文字存進資料（例如中文「女」、日文「女性」），
+  // 這裡在轉換前先掃過全部語言，把符合任一語言既有文字的舊資料也一併正規化成代碼
+  function normalizeGenderValue(val){
+    if (!val) return val;
+    if (['male', 'female', 'undisclosed'].includes(val)) return val;
+    for (const lang of Object.keys(dashboardTranslations)) {
+      const p = dashboardTranslations[lang].profile;
+      if (val === p.genderMale) return 'male';
+      if (val === p.genderFemale) return 'female';
+      if (val === p.genderUndisclosed) return 'undisclosed';
+    }
+    return val; // 無法辨識的舊資料，原樣顯示，避免資料消失
+  }
+  function getGenderLabel(val){
+    const code = normalizeGenderValue(val);
+    const p = T().profile;
+    const map = { male: p.genderMale, female: p.genderFemale, undisclosed: p.genderUndisclosed };
+    return map[code] || val || '—';
+  }
+
+  function normalizeBloodValue(val){
+    if (!val) return val;
+    if (['A', 'B', 'AB', 'O', 'unknown'].includes(val)) return val;
+    for (const lang of Object.keys(dashboardTranslations)) {
+      if (val === dashboardTranslations[lang].profile.bloodUnsure) return 'unknown';
+    }
+    return val; // 無法辨識的舊資料，原樣顯示，避免資料消失
+  }
+  function getBloodLabel(val){
+    const code = normalizeBloodValue(val);
+    if (!code) return '—';
+    if (code === 'unknown') return T().profile.bloodUnsure;
+    return `${code}${T().idcard.bloodTypeSuffix}`;
+  }
+
   const TYPE_ICON = {
     lab: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2v6L4 20a1 1 0 0 0 .9 1.5h14.2A1 1 0 0 0 20 20l-5-12V2"/><line x1="9" y1="2" x2="15" y2="2"/></svg>',
     med: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M12 8v8"/></svg>',
@@ -1397,8 +1434,8 @@
 
     if (config.name) document.getElementById('p-name').value = config.name;
     if (config.birth) document.getElementById('p-birth').value = config.birth;
-    if (config.gender) document.getElementById('p-gender').value = config.gender;
-    if (config.blood) document.getElementById('p-blood').value = config.blood;
+    if (config.gender) document.getElementById('p-gender').value = normalizeGenderValue(config.gender);
+    if (config.blood) document.getElementById('p-blood').value = normalizeBloodValue(config.blood);
     if (config.phone) document.getElementById('p-phone').value = config.phone;
     if (config.emergency) document.getElementById('p-emergency').value = config.emergency;
     if (config.emergencyPhone) document.getElementById('p-emergency-phone').value = config.emergencyPhone;
@@ -1893,7 +1930,7 @@
           </div>
           <div class="shared-detail">
             <div class="shared-profile-grid">
-              <div><div class="sp-label">${ic.kBlood}</div><div class="sp-value">${escapeHtml(s.profile?.blood || dt.notProvided)}</div></div>
+              <div><div class="sp-label">${ic.kBlood}</div><div class="sp-value">${s.profile?.blood ? escapeHtml(getBloodLabel(s.profile.blood)) : escapeHtml(dt.notProvided)}</div></div>
               <div><div class="sp-label">${ic.kEmergency}</div><div class="sp-value">${escapeHtml(s.profile?.emergency || dt.notProvided)}</div></div>
               <div><div class="sp-label">${ic.kEmergencyPhone}</div><div class="sp-value">${escapeHtml(s.profile?.emergencyPhone || dt.notProvided)}</div></div>
               <div><div class="sp-label">${ic.kAllergy}</div><div class="sp-value">${escapeHtml(s.profile?.allergy || ic.noKnownAllergy)}</div></div>
@@ -1974,8 +2011,8 @@
     if (!nameEl) return;
     nameEl.textContent = currentConfig.name || currentDisplayName || '—';
     document.getElementById('id-birth').textContent = currentConfig.birth ? formatDate(currentConfig.birth) : '—';
-    document.getElementById('id-gender').textContent = currentConfig.gender || '—';
-    document.getElementById('id-blood').textContent = currentConfig.blood ? `${currentConfig.blood}${T().idcard.bloodTypeSuffix}` : '—';
+    document.getElementById('id-gender').textContent = getGenderLabel(currentConfig.gender);
+    document.getElementById('id-blood').textContent = getBloodLabel(currentConfig.blood);
     document.getElementById('id-phone').textContent = currentConfig.phone || '—';
     document.getElementById('id-emergency').textContent = currentConfig.emergency || T().idcard.notSet;
     document.getElementById('id-emergency-phone').textContent = currentConfig.emergencyPhone || '—';
@@ -2132,7 +2169,7 @@
       }
 
       const birthText = currentConfig.birth ? formatDate(currentConfig.birth) : '—';
-      const genderText = currentConfig.gender || '—';
+      const genderText = getGenderLabel(currentConfig.gender);
       drawKV(infoX, avatarY + 78, t.idcard.kBirth, birthText);
       ctx.font = '500 24px "Noto Sans TC","Noto Sans SC",sans-serif';
       const birthKVWidth = ctx.measureText(t.idcard.kBirth).width + 8 + ctx.measureText(birthText).width;
@@ -2153,7 +2190,7 @@
       const col2X = PAD + colWidth + colGap;
       const rowH = 66;
 
-      const bloodText = currentConfig.blood ? `${currentConfig.blood}${t.idcard.bloodTypeSuffix}` : '—';
+      const bloodText = getBloodLabel(currentConfig.blood);
       const phoneText = currentConfig.phone || '—';
       const emergencyText = currentConfig.emergency || t.idcard.notSet;
       const emergencyPhoneText = currentConfig.emergencyPhone || '—';
