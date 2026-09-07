@@ -805,6 +805,13 @@
   document.getElementById('connect-google-btn').addEventListener('click', async () => {
     const provider = new GoogleAuthProvider();
     provider.addScope('https://www.googleapis.com/auth/drive.file');
+    // 強制每次都顯示 Google 的帳號選擇畫面，避免瀏覽器自動帶入裝置上其他已登入的 Google 帳號；
+    // 並提示（非強制）優先顯示目前登入本站所用的帳號，方便使用者一眼認出該選哪一個
+    const customParams = { prompt: 'select_account' };
+    if (auth.currentUser && auth.currentUser.email) {
+      customParams.login_hint = auth.currentUser.email;
+    }
+    provider.setCustomParameters(customParams);
     try {
       const result = await signInWithPopup(auth, provider);
       const credential = GoogleAuthProvider.credentialFromResult(result);
